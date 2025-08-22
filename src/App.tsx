@@ -7,6 +7,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import PortalProtectedRoute from '@/components/portal/PortalProtectedRoute';
 import { PortalLayout } from '@/components/portal/PortalLayout';
+import RoutePerfObserver from '@/components/perf/RoutePerfObserver';
 
 const Index = lazy(() => import('@/pages/Index'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
@@ -99,6 +100,7 @@ function App() {
           v7_relativeSplatPath: true,
         }}
       >
+        <RoutePerfObserver />
         <Suspense fallback={<div className="p-6 text-sm text-muted-foreground">Carregando…</div>}>
           <Routes>
             <Route path="/" element={<Index />} />

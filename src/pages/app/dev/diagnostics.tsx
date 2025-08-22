@@ -1,9 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-// Add PWA diagnostics section
 type WebManifest = {
   name?: string;
   start_url?: string;
@@ -136,3 +136,17 @@ const PWADiagnostics = () => {
     </Card>
   );
 };
+
+export default function DevDiagnosticsPage() {
+  return (
+    <div className="p-6 space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold mb-2">Diagnósticos do Sistema</h1>
+        <p className="text-muted-foreground">
+          Verificação de status e configurações PWA
+        </p>
+      </div>
+      <PWADiagnostics />
+    </div>
+  );
+}

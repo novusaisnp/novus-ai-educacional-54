@@ -1,0 +1,145 @@
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { DocumentRecord, uploadAvatar, uploadDoc, deleteStorageFile } from '@/lib/storage';
+
+export const useDocuments = (studentId?: string) => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Query para buscar organização do usuário
+  const { data: userOrg } = useQuery({
+    queryKey: ['userOrganization'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+      return data.organization_id;
+    },
+  });
+
+  // Query para buscar documentos do aluno
+  const { data: documents, isLoading } = useQuery({
+    queryKey: ['documents.byOwner', userOrg ?? null, 'student', studentId ?? null],
+    queryFn: async () => {
+      if (!studentId) return [];
+
+      const { data, error } = await supabase
+        .from('documents')
+        .select('id, title, file_path, created_at, tags')
+        .eq('owner_type', 'student')
+        .eq('owner_id', studentId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as DocumentRecord[];
+    },
+    enabled: !!studentId && !!userOrg,
+  });
+
+  // Avatar do aluno (primeiro documento com tag avatar)
+  const avatar = documents?.find(doc => 
+    doc.title === 'avatar' || doc.tags?.includes('avatar')
+  );
+
+  // Documentos que não são avatar
+  const attachments = documents?.filter(doc => 
+    doc.title !== 'avatar' && !doc.tags?.includes('avatar')
+  ) || [];
+
+  // Mutation para upload de avatar
+  const uploadAvatarMutation = useMutation({
+    mutationFn: async (file: File) => {
+      if (!userOrg || !studentId) throw new Error('Dados faltando');
+      return uploadAvatar(file, userOrg, studentId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['documents.byOwner', userOrg, 'student', studentId] });
+      toast({
+        title: 'Avatar atualizado',
+        description: 'Avatar do aluno foi atualizado com sucesso.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao fazer upload',
+        description: error.message,
+      });
+    },
+  });
+
+  // Mutation para upload de documentos
+  const uploadDocMutation = useMutation({
+    mutationFn: async (file: File) => {
+      if (!userOrg || !studentId) throw new Error('Dados faltando');
+      return uploadDoc(file, userOrg, studentId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['documents.byOwner', userOrg, 'student', studentId] });
+      toast({
+        title: 'Documento anexado',
+        description: 'Documento foi anexado com sucesso.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao fazer upload',
+        description: error.message,
+      });
+    },
+  });
+
+  // Mutation para deletar documento
+  const deleteDocMutation = useMutation({
+    mutationFn: async (doc: DocumentRecord) => {
+      // Extrair bucket e path do file_path
+      const [bucket, ...pathParts] = doc.file_path.split('/');
+      const path = pathParts.join('/');
+
+      // Deletar do storage
+      await deleteStorageFile(bucket, path);
+
+      // Deletar do banco
+      const { error } = await supabase
+        .from('documents')
+        .delete()
+        .eq('id', doc.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['documents.byOwner', userOrg, 'student', studentId] });
+      toast({
+        title: 'Documento removido',
+        description: 'Documento foi removido com sucesso.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao remover documento',
+        description: error.message,
+      });
+    },
+  });
+
+  return {
+    documents,
+    avatar,
+    attachments,
+    isLoading,
+    uploadAvatarMutation,
+    uploadDocMutation,
+    deleteDocMutation,
+  };
+};

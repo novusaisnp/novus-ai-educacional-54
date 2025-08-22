@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger';
 const PII_FIELDS = [
   'email', 'name', 'fullName', 'first_name', 'last_name', 
   'phone', 'cpf', 'cnpj', 'rg', 'address', 'password',
-  'token', 'secret', 'key', 'credential'
+  'token', 'secret', 'key', 'credential', 'search', 'hash', 'query'
 ];
 
 export function sanitizeAudit(input: unknown): Record<string, unknown> {

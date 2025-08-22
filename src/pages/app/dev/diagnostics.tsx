@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PerfDiagnosticsCard } from '@/components/dev/PerfDiagnosticsCard';
 
 type WebManifest = {
   name?: string;
@@ -147,6 +148,7 @@ export default function DevDiagnosticsPage() {
         </p>
       </div>
       <PWADiagnostics />
+      <PerfDiagnosticsCard />
     </div>
   );
 }

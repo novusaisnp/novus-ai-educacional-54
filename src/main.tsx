@@ -5,9 +5,17 @@ import App from './App.tsx';
 import './index.css';
 import { tapRuntimeErrors } from '@/lib/runtimeErrorTap';
 import { AppErrorBoundary } from '@/components/errors/AppErrorBoundary';
+import { initPerfVitals } from '@/utils/perfVitals';
 
 // Initialize runtime error tracking
 tapRuntimeErrors();
+
+// Initialize performance telemetry (idle)
+if (typeof window !== 'undefined') {
+  ;(window.requestIdleCallback || setTimeout)(() => {
+    initPerfVitals({ sampleRate: 0.25 })
+  }, 0)
+}
 
 // Create a client
 const queryClient = new QueryClient({

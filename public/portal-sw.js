@@ -1,4 +1,7 @@
 
+/// <reference lib="webworker" />
+export {}; // Isolar escopo de módulo
+
 // Portal dos Responsáveis - Service Worker
 // Apenas cache básico para assets e rotas do portal, sem dados sensíveis
 

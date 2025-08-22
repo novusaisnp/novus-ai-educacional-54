@@ -30,11 +30,17 @@ interface PWAProviderProps {
 
 export function PWAProvider({ children, enabled = true }: PWAProviderProps) {
   const [canInstall, setCanInstall] = useState(false);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnline, setIsOnline] = useState<boolean>(true);
   const [hasUpdate, setHasUpdate] = useState(false);
   const [swVersion, setSwVersion] = useState<string>();
 
   useEffect(() => {
+    // Guard: only in browser environment
+    if (typeof window === 'undefined') return;
+    
+    // Initialize online status
+    setIsOnline(navigator.onLine);
+    
     if (!enabled || !window.location.pathname.startsWith('/portal/')) {
       return;
     }
@@ -92,14 +98,18 @@ export function PWAProvider({ children, enabled = true }: PWAProviderProps) {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
     window.addEventListener('pwa-update-available', handlePWAUpdate);
-    navigator.serviceWorker?.addEventListener('message', handleSWMessage);
+    
+    // Service worker listeners (with guard)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker?.addEventListener('message', handleSWMessage);
+      
+      // Check if already installable
+      setCanInstall(pwaManager.isInstallable());
 
-    // Check if already installable
-    setCanInstall(pwaManager.isInstallable());
-
-    // Request SW version
-    if (navigator.serviceWorker?.controller) {
-      navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' });
+      // Request SW version
+      if (navigator.serviceWorker?.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' });
+      }
     }
 
     return () => {
@@ -107,7 +117,10 @@ export function PWAProvider({ children, enabled = true }: PWAProviderProps) {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('pwa-update-available', handlePWAUpdate);
-      navigator.serviceWorker?.removeEventListener('message', handleSWMessage);
+      
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker?.removeEventListener('message', handleSWMessage);
+      }
     };
   }, [enabled, swVersion]);
 

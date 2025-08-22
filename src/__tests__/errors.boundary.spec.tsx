@@ -1,6 +1,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render } from '@testing-library/react'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
 import { AppErrorBoundary } from '@/components/errors/AppErrorBoundary'
 import * as auditSafe from '@/utils/auditSafe'
 

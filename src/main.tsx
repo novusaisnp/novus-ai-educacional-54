@@ -14,7 +14,7 @@ tapRuntimeErrors();
 if (typeof window !== 'undefined') {
   ;(window.requestIdleCallback || setTimeout)(() => {
     initPerfVitals({ sampleRate: 0.25 })
-  }, 0)
+  })
 }
 
 // Create a client

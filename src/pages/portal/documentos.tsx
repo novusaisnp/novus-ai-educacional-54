@@ -1,314 +1,164 @@
-import { useState, useCallback, useEffect } from 'react';
+
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { usePortalAuth } from '@/hooks/usePortalAuth';
+import { PortalPageHeader } from '@/components/portal/PortalPageHeader';
+import { PortalSection } from '@/components/portal/PortalSection';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { usePortalData } from '@/hooks/usePortalData';
-import { useOrganization } from '@/hooks/useOrganization';
-import { logAudit } from '@/lib/audit/logAudit';
-import EmptyState from '@/components/EmptyState';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Download, FileText, Search } from 'lucide-react';
+import { logAuditSafe } from '@/utils/auditSafe';
 import { useToast } from '@/hooks/use-toast';
-import PortalPageHeader from '@/components/portal/PortalPageHeader';
-import { 
-  FileText, 
-  Upload, 
-  CheckCircle, 
-  AlertCircle, 
-  Clock,
-  Download,
-  Trash2
-} from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export default function PortalDocumentos() {
-  const { orgId } = useOrganization();
-  const { guardian, documents, loading } = usePortalData();
+  const { guardian } = usePortalAuth();
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [uploading, setUploading] = useState(false);
 
-  useEffect(() => {
-    if (orgId && guardian?.id) {
-      logAudit({
-        organization_id: orgId,
-        action: 'view_documents',
-        table_name: 'portal',
-      });
-    }
-  }, [orgId, guardian?.id]);
+  const { data: documents, isLoading } = useQuery({
+    queryKey: ['portal-documents', guardian?.id],
+    queryFn: async () => {
+      if (!guardian?.id) return [];
 
-  const uploadMutation = useMutation({
-    mutationFn: async (file: File) => {
-      if (!guardian?.id || !orgId) throw new Error('Guardian não encontrado');
+      // Get students of this guardian
+      const { data: students } = await supabase
+        .from('student_guardians')
+        .select('student_id')
+        .eq('guardian_id', guardian.id);
 
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${guardian.id}/${Date.now()}.${fileExt}`;
+      if (!students?.length) return [];
 
-      // Upload to storage
-      const { error: uploadError } = await supabase.storage
-        .from('edu-docs')
-        .upload(fileName, file);
+      const studentIds = students.map(s => s.student_id);
 
-      if (uploadError) throw uploadError;
-
-      // Create document record
-      const { error: dbError } = await supabase
+      // Get documents for these students
+      const { data, error } = await supabase
         .from('documents')
-        .insert({
-          organization_id: orgId,
-          owner_type: 'guardian',
-          owner_id: guardian.id,
-          title: file.name,
-          file_path: `edu-docs/${fileName}`,
-          tags: ['uploaded', 'pending']
-        });
-
-      if (dbError) throw dbError;
-
-      // Log audit
-      await logAudit({
-        organization_id: orgId,
-        action: 'upload_document',
-        table_name: 'portal',
-        diff: { type: file.name }
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['portal-documents'] });
-      toast({
-        title: 'Documento enviado',
-        description: 'Seu documento foi enviado com sucesso.',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        variant: 'destructive',
-        title: 'Erro no upload',
-        description: error.message,
-      });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (document: any) => {
-      // Delete from storage
-      const fileName = document.file_path.replace('edu-docs/', '');
-      await supabase.storage.from('edu-docs').remove([fileName]);
-
-      // Delete from database
-      const { error } = await supabase
-        .from('documents')
-        .delete()
-        .eq('id', document.id);
+        .select(`
+          id,
+          title,
+          file_path,
+          created_at,
+          students!inner(id, name)
+        `)
+        .in('student_id', studentIds)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
+      return data || [];
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['portal-documents'] });
-      toast({
-        title: 'Documento removido',
-        description: 'Documento foi removido com sucesso.',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        variant: 'destructive',
-        title: 'Erro ao remover',
-        description: error.message,
-      });
-    },
+    enabled: !!guardian?.id,
   });
 
-  const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 10 * 1024 * 1024) { // 10MB limit
-      toast({
-        variant: 'destructive',
-        title: 'Arquivo muito grande',
-        description: 'O arquivo deve ter no máximo 10MB.',
-      });
-      return;
-    }
-
-    setUploading(true);
+  const handleDownload = async (doc: any) => {
     try {
-      await uploadMutation.mutateAsync(file);
-    } finally {
-      setUploading(false);
-      event.target.value = ''; // Reset input
-    }
-  }, [uploadMutation, toast]);
-
-  const getStatusIcon = (tags: string[] = []) => {
-    if (tags.includes('approved')) {
-      return <CheckCircle className="h-4 w-4 text-green-600" />;
-    } else if (tags.includes('rejected')) {
-      return <AlertCircle className="h-4 w-4 text-red-600" />;
-    }
-    return <Clock className="h-4 w-4 text-yellow-600" />;
-  };
-
-  const getStatusLabel = (tags: string[] = []) => {
-    if (tags.includes('approved')) return 'Aprovado';
-    if (tags.includes('rejected')) return 'Rejeitado';
-    return 'Pendente';
-  };
-
-  const getStatusVariant = (tags: string[] = []): "default" | "secondary" | "destructive" | "outline" => {
-    if (tags.includes('approved')) return 'default';
-    if (tags.includes('rejected')) return 'destructive';
-    return 'outline';
-  };
-
-  const downloadDocument = async (document: any) => {
-    const fileName = document.file_path.replace('edu-docs/', '');
-    const { data, error } = await supabase.storage
-      .from('edu-docs')
-      .createSignedUrl(fileName, 60);
-
-    if (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro ao baixar',
-        description: 'Não foi possível baixar o documento.',
+      // Log download audit
+      await logAuditSafe('portal_download', {
+        docId: doc.id,
+        studentId: doc.students.id,
+        source: 'portal',
+        pathname: window.location.pathname,
       });
-      return;
-    }
 
-    window.open(data.signedUrl, '_blank');
+      // Get signed URL for download
+      const { data, error } = await supabase.storage
+        .from('docs')
+        .createSignedUrl(doc.file_path, 300); // 5 minutes
+
+      if (error) throw error;
+
+      // Trigger download
+      const link = document.createElement('a');
+      link.href = data.signedUrl;
+      link.download = doc.title;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: 'Download iniciado',
+        description: `Baixando: ${doc.title}`,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Erro no download',
+        description: 'Não foi possível baixar o documento.',
+        variant: 'destructive',
+      });
+    }
   };
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <Skeleton className="h-8 w-48 mb-2" />
-          <Skeleton className="h-4 w-96" />
-        </div>
-        <div className="space-y-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-48" />
-                    <Skeleton className="h-4 w-32" />
-                  </div>
-                  <Skeleton className="h-8 w-24" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  const filteredDocuments = documents?.filter(doc =>
+    doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    doc.students.name.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
   return (
     <div className="space-y-6">
-      <PortalPageHeader
-        title="Documentos"
-        description="Envie e acompanhe seus documentos"
-        icon={<FileText className="h-5 w-5 text-primary" />}
+      <PortalPageHeader 
+        title="Documentos" 
+        description="Acesse e baixe documentos dos seus filhos"
       />
 
-      {/* Upload Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Enviar Documento</CardTitle>
-          <CardDescription>
-            Envie documentos solicitados pela escola (máximo 10MB)
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="grid w-full max-w-sm items-center gap-1.5">
-              <Label htmlFor="document">Arquivo</Label>
-              <Input
-                id="document"
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                onChange={handleFileUpload}
-                disabled={uploading}
-              />
-              <p className="text-xs text-muted-foreground">
-                Formatos aceitos: PDF, DOC, DOCX, JPG, PNG
-              </p>
-            </div>
-            {uploading && (
-              <div className="flex items-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                <span className="text-sm">Enviando...</span>
-              </div>
-            )}
+      <PortalSection>
+        <div className="space-y-4">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar documentos..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Documents List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Meus Documentos</CardTitle>
-          <CardDescription>
-            Documentos enviados e seu status de aprovação
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {documents && documents.length > 0 ? (
-            <div className="space-y-4">
-              {documents.map((document) => (
-                <div key={document.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    {getStatusIcon(document.tags)}
-                    <div>
-                      <p className="font-medium">{document.title}</p>
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                        <span>
-                          Enviado em: {new Date(document.created_at).toLocaleDateString('pt-BR')}
-                        </span>
+          {/* Documents List */}
+          {isLoading ? (
+            <div className="text-center py-8">Carregando documentos...</div>
+          ) : filteredDocuments.length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-center">
+                <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">Nenhum documento encontrado</h3>
+                <p className="text-muted-foreground">
+                  {searchTerm 
+                    ? 'Tente ajustar os termos de busca.' 
+                    : 'Documentos aparecerão aqui quando disponibilizados pela escola.'
+                  }
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {filteredDocuments.map((doc) => (
+                <Card key={doc.id}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-lg">{doc.title}</CardTitle>
+                        <CardDescription>
+                          Aluno: {doc.students.name} • {new Date(doc.created_at).toLocaleDateString('pt-BR')}
+                        </CardDescription>
                       </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <Badge variant={getStatusVariant(document.tags)}>
-                      {getStatusLabel(document.tags)}
-                    </Badge>
-                    <div className="flex space-x-2">
                       <Button
                         size="sm"
-                        variant="outline"
-                        onClick={() => downloadDocument(document)}
+                        onClick={() => handleDownload(doc)}
+                        className="flex items-center gap-2"
                       >
                         <Download className="h-4 w-4" />
+                        Baixar
                       </Button>
-                      {document.tags?.includes('pending') && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => deleteMutation.mutate(document)}
-                          disabled={deleteMutation.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
                     </div>
-                  </div>
-                </div>
+                  </CardHeader>
+                </Card>
               ))}
             </div>
-          ) : (
-            <EmptyState
-              title="Nenhum documento"
-              description="Você ainda não enviou nenhum documento."
-            />
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </PortalSection>
     </div>
   );
 }

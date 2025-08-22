@@ -1,8 +1,10 @@
+
 // Portal dos Responsáveis - Service Worker
 // Apenas cache básico para assets e rotas do portal, sem dados sensíveis
 
-const CACHE_NAME = 'portal-v1';
-const STATIC_CACHE = 'portal-static-v1';
+const VERSION = 'v1.2';
+const CACHE_NAME = `portal-${VERSION}`;
+const STATIC_CACHE = `portal-static-${VERSION}`;
 
 // Assets para cache
 const STATIC_ASSETS = [
@@ -22,30 +24,58 @@ const PORTAL_ROUTES = [
 ];
 
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing...');
+  console.log(`[SW ${VERSION}] Installing...`);
   event.waitUntil(
     caches.open(STATIC_CACHE)
       .then(cache => cache.addAll(STATIC_ASSETS))
-      .then(() => self.skipWaiting())
+      .then(() => {
+        self.skipWaiting();
+        // Notify clients about new version
+        self.clients.matchAll().then(clients => {
+          clients.forEach(client => {
+            client.postMessage({ 
+              type: 'SW_VERSION', 
+              version: VERSION 
+            });
+          });
+        });
+      })
   );
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating...');
+  console.log(`[SW ${VERSION}] Activating...`);
   event.waitUntil(
     caches.keys()
       .then(cacheNames => {
         return Promise.all(
           cacheNames.map(cacheName => {
             if (cacheName !== CACHE_NAME && cacheName !== STATIC_CACHE) {
-              console.log('[SW] Deleting old cache:', cacheName);
+              console.log(`[SW ${VERSION}] Deleting old cache:`, cacheName);
               return caches.delete(cacheName);
             }
           })
         );
       })
-      .then(() => self.clients.claim())
+      .then(() => {
+        self.clients.claim();
+        // Notify clients about activation
+        self.clients.matchAll().then(clients => {
+          clients.forEach(client => {
+            client.postMessage({ 
+              type: 'SW_ACTIVATED', 
+              version: VERSION 
+            });
+          });
+        });
+      })
   );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'GET_VERSION') {
+    event.ports[0]?.postMessage({ version: VERSION });
+  }
 });
 
 self.addEventListener('fetch', (event) => {

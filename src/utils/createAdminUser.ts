@@ -1,10 +1,10 @@
-import { supabase } from '@/integrations/supabase/client';
+import { SUPABASE_URL } from '@/integrations/supabase/client';
 
 export async function createAdminUser() {
   try {
     console.log('Iniciando criação do usuário admin via Edge Function...');
 
-    const response = await fetch(`https://nkcadmwydfnzrnauzeyz.supabase.co/functions/v1/create_admin_user`, {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/create_admin_user`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

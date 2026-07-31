@@ -352,7 +352,7 @@ function AppErrorBoundary({ children }: { children: React.ReactNode }) {
           <div className="text-center">
             <h1 className="text-xl font-semibold mb-4">Algo deu errado</h1>
             <pre className="mt-2 text-sm opacity-70 whitespace-pre-wrap bg-muted p-4 rounded max-w-lg">
-              {String(error?.message || error)}
+              {error instanceof Error ? error.message : String(error)}
             </pre>
             <Button onClick={resetErrorBoundary} className="mt-4">
               Tentar novamente

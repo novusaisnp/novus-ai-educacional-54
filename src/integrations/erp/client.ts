@@ -184,10 +184,3 @@ export const erpClient = {
     return client.testConnection();
   },
 };
-
-// Manter compatibilidade com export anterior
-export const erpEmit = {
-  upsertClient: async (orgId: string, data: ERPClientData): Promise<ERPClientResponse> => {
-    return erpClient.upsertClientByCPF(orgId, data);
-  },
-};

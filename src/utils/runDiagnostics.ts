@@ -1,8 +1,10 @@
 
+import { SUPABASE_URL } from '@/integrations/supabase/client';
+
 // Script temporário para executar diagnósticos
 export async function runDiagnostics() {
   try {
-    const response = await fetch('https://nkcadmwydfnzrnauzeyz.supabase.co/functions/v1/dev_diagnostics', {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/dev_diagnostics`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -110,7 +112,7 @@ export async function runERPDiagnostics(orgId: string) {
     
     // 6. Teste webhook handler (simulado)
     try {
-      const webhookUrl = 'https://nkcadmwydfnzrnauzeyz.supabase.co/functions/v1/edu-erp-webhook';
+      const webhookUrl = `${SUPABASE_URL}/functions/v1/edu-erp-webhook`;
       const webhookPayload = {
         id: 'test-event-' + Date.now(),
         type: 'receivable.paid',

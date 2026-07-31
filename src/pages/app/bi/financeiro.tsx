@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CreditCard, TrendingUp, AlertCircle, DollarSign, Calendar } from 'lucide-react';
+import { IconBadge } from '@/components/IconBadge';
 import { useBIAccess } from '@/hooks/useBIAccess';
 import { useBIFinanceiro } from '@/hooks/useBIData';
 import { BICard } from '@/components/bi/BICard';
@@ -57,9 +58,7 @@ export default function BIFinanceiro() {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-green-100 rounded-lg">
-            <CreditCard className="h-6 w-6 text-green-600" />
-          </div>
+          <IconBadge icon={CreditCard} tone="success" />
           <div>
             <h1 className="text-2xl font-bold">BI Financeiro</h1>
             <p className="text-muted-foreground">
@@ -101,7 +100,7 @@ export default function BIFinanceiro() {
   ];
 
   const paymentsByStatus = [
-    { status: 'Em dia', count: 180, color: '#22c55e' },
+    { status: 'Em dia', count: 180, color: '#10b981' },
     { status: 'Atraso 1-30 dias', count: 25, color: '#f59e0b' },
     { status: 'Atraso 31-60 dias', count: 12, color: '#ef4444' },
     { status: 'Atraso +60 dias', count: 8, color: '#991b1b' },
@@ -112,9 +111,7 @@ export default function BIFinanceiro() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-green-100 rounded-lg">
-            <CreditCard className="h-6 w-6 text-green-600" />
-          </div>
+          <IconBadge icon={CreditCard} tone="success" />
           <div>
             <h1 className="text-2xl font-bold">BI Financeiro</h1>
             <p className="text-muted-foreground">
@@ -225,9 +222,9 @@ export default function BIFinanceiro() {
                 <Line 
                   type="monotone" 
                   dataKey="receita" 
-                  stroke="#22c55e" 
+                  stroke="#10b981" 
                   strokeWidth={2}
-                  dot={{ fill: '#22c55e' }}
+                  dot={{ fill: '#10b981' }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -246,7 +243,7 @@ export default function BIFinanceiro() {
                 <XAxis dataKey="status" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="count" fill="#22c55e" />
+                <Bar dataKey="count" fill="#10b981" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

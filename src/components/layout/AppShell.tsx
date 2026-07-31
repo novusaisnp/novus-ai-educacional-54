@@ -3,7 +3,7 @@ import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
 import {
   LayoutDashboard,
-  Building2,
+  School,
   GraduationCap,
   NotebookPen,
   CalendarDays,
@@ -39,7 +39,7 @@ import DebugBanner from "@/components/DebugBanner";
 const baseMenuItems = [
   { title: 'Dashboard', url: '/app/dashboard', icon: LayoutDashboard, roles: ['admin', 'coordenacao', 'professor', 'secretario'] },
   { title: 'BI', url: '/app/bi', icon: BarChart3, roles: ['admin', 'coordenacao', 'secretario'] },
-  { title: 'Secretaria', url: '/app/secretaria', icon: Building2, roles: ['admin', 'coordenacao', 'secretario'] },
+  { title: 'Secretaria', url: '/app/secretaria', icon: School, roles: ['admin', 'coordenacao', 'secretario'] },
   { title: 'CRM', url: '/app/crm', icon: Users, roles: ['admin', 'coordenacao', 'secretario'], submenu: [
     { title: 'Leads', url: '/app/crm/leads' },
     { title: 'Interações', url: '/app/crm/interacoes' },

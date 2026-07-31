@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { IconBadge } from '@/components/IconBadge';
 import { BarChart3, BookOpen, Trophy, TrendingUp, UserCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -17,9 +18,7 @@ export default function Academico() {
         <Card>
           <CardHeader>
             <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600 border-emerald-200">
-                <UserCheck className="h-6 w-6" />
-              </div>
+              <IconBadge icon={UserCheck} tone="success" />
               <div>
                 <CardTitle className="text-xl">Chamada</CardTitle>
                 <CardDescription>Controle de presença e frequência</CardDescription>
@@ -42,9 +41,7 @@ export default function Academico() {
         <Card>
           <CardHeader>
             <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-blue-50 text-blue-600 border-blue-200">
-                <BarChart3 className="h-6 w-6" />
-              </div>
+              <IconBadge icon={BarChart3} tone="info" />
               <div>
                 <CardTitle className="text-xl">Notas & Avaliações</CardTitle>
                 <CardDescription>Sistema de avaliação e boletins</CardDescription>
@@ -67,9 +64,7 @@ export default function Academico() {
         <Card className="opacity-50">
           <CardHeader>
             <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-green-50 text-green-600 border-green-200">
-                <BookOpen className="h-6 w-6" />
-              </div>
+              <IconBadge icon={BookOpen} tone="success" />
               <div>
                 <CardTitle className="text-xl">Currículo</CardTitle>
                 <CardDescription>Gestão de currículo e conteúdos</CardDescription>
@@ -84,9 +79,7 @@ export default function Academico() {
         <Card className="opacity-50">
           <CardHeader>
             <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-purple-50 text-purple-600 border-purple-200">
-                <Trophy className="h-6 w-6" />
-              </div>
+              <IconBadge icon={Trophy} tone="purple" />
               <div>
                 <CardTitle className="text-xl">Competências</CardTitle>
                 <CardDescription>Acompanhamento de competências</CardDescription>
@@ -101,9 +94,7 @@ export default function Academico() {
         <Card className="opacity-50">
           <CardHeader>
             <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-orange-50 text-orange-600 border-orange-200">
-                <TrendingUp className="h-6 w-6" />
-              </div>
+              <IconBadge icon={TrendingUp} tone="warm" />
               <div>
                 <CardTitle className="text-xl">Relatórios</CardTitle>
                 <CardDescription>Relatórios acadêmicos e estatísticas</CardDescription>

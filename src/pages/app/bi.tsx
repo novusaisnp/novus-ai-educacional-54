@@ -25,21 +25,21 @@ export default function BIHub() {
       description: 'Análise de desempenho acadêmico, frequência e risco de evasão',
       icon: GraduationCap,
       href: '/app/bi/academico',
-      color: 'text-blue-600',
+      color: 'text-sky-600',
     },
     {
       title: 'BI Financeiro',
       description: 'Análise de receitas, inadimplência e eficiência de cobrança',
       icon: CreditCard,
       href: '/app/bi/financeiro',
-      color: 'text-green-600',
+      color: 'text-emerald-600',
     },
     {
       title: 'BI CRM',
       description: 'Análise de leads, conversões e relacionamento com clientes',
       icon: Users,
       href: '/app/bi/crm',
-      color: 'text-purple-600',
+      color: 'text-violet-600',
     },
   ];
 

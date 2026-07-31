@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GraduationCap, Users, TrendingUp, AlertTriangle, Calendar } from 'lucide-react';
+import { IconBadge } from '@/components/IconBadge';
 import { useBIAccess } from '@/hooks/useBIAccess';
 import { useBIAcademico } from '@/hooks/useBIData';
 import { BICard } from '@/components/bi/BICard';
@@ -80,7 +81,7 @@ export default function BIAcademico() {
   }, []) || [];
 
   const riskDistribution = [
-    { name: 'Baixo Risco', value: academicData?.totalStudents - academicData?.studentsAtRisk || 0, color: '#22c55e' },
+    { name: 'Baixo Risco', value: academicData?.totalStudents - academicData?.studentsAtRisk || 0, color: '#10b981' },
     { name: 'Alto Risco', value: academicData?.studentsAtRisk || 0, color: '#ef4444' },
   ];
 
@@ -89,9 +90,7 @@ export default function BIAcademico() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <GraduationCap className="h-6 w-6 text-blue-600" />
-          </div>
+          <IconBadge icon={GraduationCap} tone="primary" />
           <div>
             <h1 className="text-2xl font-bold">BI Acadêmico</h1>
             <p className="text-muted-foreground">
@@ -199,9 +198,9 @@ export default function BIAcademico() {
                   <XAxis dataKey="month" />
                   <YAxis />
                   <Tooltip />
-                  <Bar 
-                    dataKey="presente" 
-                    fill="#22c55e" 
+                  <Bar
+                    dataKey="presente"
+                    fill="#10b981"
                     name="Presenças"
                   />
                 </BarChart>

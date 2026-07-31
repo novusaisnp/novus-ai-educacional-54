@@ -1,9 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { BICard } from '@/components/bi/BICard';
 import { Users, FileText, MessageCircle, AlertCircle } from 'lucide-react';
 import { subDays } from 'date-fns';
 import { useOrganization } from '@/hooks/useOrganization';
@@ -140,73 +139,34 @@ export default function Dashboard() {
 
       {/* Cards de métricas principais */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Leads</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {visitorsLoading ? (
-              <Skeleton className="h-8 w-16" />
-            ) : (
-              <div className="text-2xl font-bold">{visitorsCount || 0}</div>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Total de visitantes registrados
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Demandas</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {requestsLoading ? (
-              <Skeleton className="h-8 w-16" />
-            ) : (
-              <div className="text-2xl font-bold">{requestsCount || 0}</div>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Solicitações em aberto
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Interações (7 dias)</CardTitle>
-            <MessageCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {interactionsLoading ? (
-              <Skeleton className="h-8 w-16" />
-            ) : (
-              <div className="text-2xl font-bold">{interactionsCount || 0}</div>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Interações nos últimos 7 dias
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Documentos</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {documentsLoading ? (
-              <Skeleton className="h-8 w-16" />
-            ) : (
-              <div className="text-2xl font-bold">{documentsCount || 0}</div>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Total de documentos
-            </p>
-          </CardContent>
-        </Card>
+        <BICard
+          title="Leads"
+          value={visitorsCount || 0}
+          subtitle="Total de visitantes registrados"
+          icon={Users}
+          isLoading={visitorsLoading}
+        />
+        <BICard
+          title="Demandas"
+          value={requestsCount || 0}
+          subtitle="Solicitações em aberto"
+          icon={AlertCircle}
+          isLoading={requestsLoading}
+        />
+        <BICard
+          title="Interações (7 dias)"
+          value={interactionsCount || 0}
+          subtitle="Interações nos últimos 7 dias"
+          icon={MessageCircle}
+          isLoading={interactionsLoading}
+        />
+        <BICard
+          title="Documentos"
+          value={documentsCount || 0}
+          subtitle="Total de documentos"
+          icon={FileText}
+          isLoading={documentsLoading}
+        />
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ClipboardList, Plus, Pencil, Trash2, Calendar, Filter } from 'lucide-react';
+import { IconBadge } from '@/components/IconBadge';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -216,9 +217,7 @@ export default function Avaliacoes() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-blue-50 text-blue-600 border-blue-200">
-            <ClipboardList className="h-6 w-6" />
-          </div>
+          <IconBadge icon={ClipboardList} tone="info" />
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Avaliações</h1>
             <p className="text-muted-foreground">Gerencie as avaliações das turmas</p>
@@ -533,7 +532,7 @@ export default function Avaliacoes() {
                                  variant="outline"
                                  onClick={() => handleAiCorrection(assessment)}
                                  disabled={assessmentFeedback.isPending || !canAccess('feedback')}
-                                 className="bg-blue-50 hover:bg-blue-100 border-blue-200"
+                                 className="bg-sky-50 hover:bg-sky-100 border-sky-200"
                                >
                                  <ClipboardList className="h-3 w-3" />
                                </Button>
@@ -588,13 +587,13 @@ export default function Avaliacoes() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">Gramática</label>
-                  <div className="text-2xl font-bold text-blue-600">
+                  <div className="text-2xl font-bold text-sky-600">
                     {feedbackData.grammar_score?.toFixed(1) || 'N/A'}
                   </div>
                 </div>
                 <div>
                   <label className="text-sm font-medium">Coerência</label>
-                  <div className="text-2xl font-bold text-green-600">
+                  <div className="text-2xl font-bold text-emerald-600">
                     {feedbackData.coherence_score?.toFixed(1) || 'N/A'}
                   </div>
                 </div>
@@ -615,7 +614,7 @@ export default function Avaliacoes() {
                   <ul className="text-sm text-muted-foreground mt-1 space-y-1">
                     {feedbackData.suggestions.map((suggestion: string, index: number) => (
                       <li key={index} className="flex items-start gap-2">
-                        <span className="text-blue-500">•</span>
+                        <span className="text-sky-500">•</span>
                         {suggestion}
                       </li>
                     ))}

@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Users, TrendingUp, MessageSquare, Clock, Calendar, UserCheck } from 'lucide-react';
+import { IconBadge } from '@/components/IconBadge';
 import { useBIAccess } from '@/hooks/useBIAccess';
 import { useBICRM } from '@/hooks/useBIData';
 import { BICard } from '@/components/bi/BICard';
@@ -106,11 +107,11 @@ export default function BICRM() {
 
   function getChannelColor(channel: string): string {
     const colors: Record<string, string> = {
-      phone: '#22c55e',
-      email: '#3b82f6',
+      phone: '#0d9488',
+      email: '#0ea5e9',
       whatsapp: '#10b981',
-      presencial: '#f59e0b',
-      sistema: '#6366f1',
+      presencial: '#f97316',
+      sistema: '#8b5cf6',
     };
     return colors[channel] || '#64748b';
   }
@@ -120,9 +121,7 @@ export default function BICRM() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-purple-100 rounded-lg">
-            <Users className="h-6 w-6 text-purple-600" />
-          </div>
+          <IconBadge icon={Users} tone="purple" />
           <div>
             <h1 className="text-2xl font-bold">BI CRM</h1>
             <p className="text-muted-foreground">
@@ -334,10 +333,10 @@ export default function BICRM() {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-2xl font-bold text-emerald-600">
                   {Math.round((crmData?.conversionRate || 0) / 100 * (crmData?.totalLeads || 0))}
                 </p>
-                <Badge variant="outline" className="border-green-600 text-green-600">
+                <Badge variant="outline" className="border-emerald-600 text-emerald-600">
                   {(crmData?.conversionRate || 0).toFixed(1)}%
                 </Badge>
               </div>
@@ -351,10 +350,10 @@ export default function BICRM() {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="text-2xl font-bold text-sky-600">
                   {requestsByStatus.find(r => r.status === 'concluida')?.count || 0}
                 </p>
-                <Badge variant="outline" className="border-blue-600 text-blue-600">
+                <Badge variant="outline" className="border-sky-600 text-sky-600">
                   Concluídas
                 </Badge>
               </div>

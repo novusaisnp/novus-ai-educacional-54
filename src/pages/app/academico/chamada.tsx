@@ -7,6 +7,7 @@ import { format, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { UserCheck, Calendar, Users, BookOpen, Save, Copy, RotateCcw } from 'lucide-react';
 
+import { IconBadge } from '@/components/IconBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -332,10 +333,10 @@ export default function Chamada() {
 
   const getStatusColor = (status: AttendanceStatus) => {
     switch (status) {
-      case 'presente': return 'bg-green-100 text-green-800 border-green-200';
+      case 'presente': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
       case 'ausente': return 'bg-red-100 text-red-800 border-red-200';
-      case 'atraso': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'justificado': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'atraso': return 'bg-amber-100 text-amber-800 border-amber-200';
+      case 'justificado': return 'bg-sky-100 text-sky-800 border-sky-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
@@ -353,9 +354,7 @@ export default function Chamada() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600 border-emerald-200">
-          <UserCheck className="h-6 w-6" />
-        </div>
+        <IconBadge icon={UserCheck} tone="success" />
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Chamada</h1>
           <p className="text-muted-foreground">Controle de presença e frequência dos alunos</p>

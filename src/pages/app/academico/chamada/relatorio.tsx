@@ -8,6 +8,7 @@ import { ptBR } from 'date-fns/locale';
 import { FileText, Download, Printer, Calendar, Users, BookOpen, Filter } from 'lucide-react';
 import { useSearchParams, Link } from 'react-router-dom';
 
+import { IconBadge } from '@/components/IconBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -173,10 +174,10 @@ export default function ChamadaRelatorio() {
 
   const getStatusColor = (status: AttendanceStatus) => {
     switch (status) {
-      case 'presente': return 'bg-green-100 text-green-800 border-green-200';
+      case 'presente': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
       case 'ausente': return 'bg-red-100 text-red-800 border-red-200';
-      case 'atraso': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'justificado': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'atraso': return 'bg-amber-100 text-amber-800 border-amber-200';
+      case 'justificado': return 'bg-sky-100 text-sky-800 border-sky-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
@@ -238,9 +239,7 @@ export default function ChamadaRelatorio() {
 
       <div className="space-y-6">
         <div className="flex items-center gap-3 no-print">
-          <div className="p-2 rounded-lg bg-blue-50 text-blue-600 border-blue-200">
-            <FileText className="h-6 w-6" />
-          </div>
+          <IconBadge icon={FileText} tone="info" />
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Relatório de Chamada</h1>
             <p className="text-muted-foreground">Consulte e exporte dados de presença e frequência</p>
@@ -422,7 +421,7 @@ export default function ChamadaRelatorio() {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-green-600">{summary.presente}</p>
+                  <p className="text-2xl font-bold text-emerald-600">{summary.presente}</p>
                   <p className="text-sm text-muted-foreground">Presentes</p>
                 </div>
                 <div className="text-center">
@@ -434,7 +433,7 @@ export default function ChamadaRelatorio() {
                   <p className="text-sm text-muted-foreground">Atrasos</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-blue-600">{summary.justificado}</p>
+                  <p className="text-2xl font-bold text-sky-600">{summary.justificado}</p>
                   <p className="text-sm text-muted-foreground">Justificados</p>
                 </div>
                 <div className="text-center">

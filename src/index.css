@@ -9,44 +9,50 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* NOVUS.AI Educacional — paleta teal (identidade/confiança) + coral
+       (destaque/energia), substituindo o cinza-ardósia genérico anterior. */
+    --background: 180 20% 98%;
+    --foreground: 200 32% 13%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 200 32% 13%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 200 32% 13%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 174 72% 33%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 180 25% 94%;
+    --secondary-foreground: 174 40% 18%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 180 18% 94%;
+    --muted-foreground: 200 15% 42%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 180 25% 94%;
+    --accent-foreground: 174 40% 18%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Destaque coral — CTAs de maior ênfase, badges, elementos de energia */
+    --accent-warm: 16 91% 63%;
+    --accent-warm-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
 
-    --radius: 0.5rem;
+    --border: 180 15% 88%;
+    --input: 180 15% 88%;
+    --ring: 174 72% 40%;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --radius: 0.75rem;
+
+    --sidebar-background: 180 45% 14%;
+    --sidebar-foreground: 180 20% 92%;
+    --sidebar-primary: 16 91% 63%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 180 35% 22%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 180 30% 20%;
+    --sidebar-ring: 16 91% 63%;
 
     /* Sidebar CSS Variables */
     --sb-w-expanded: 16rem; /* w-64 */

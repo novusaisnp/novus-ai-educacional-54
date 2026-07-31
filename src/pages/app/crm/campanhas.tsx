@@ -107,7 +107,7 @@ export default function CRMCampanhas() {
         <CardContent>
           <div className="space-y-4">
             <div className="flex items-start gap-3">
-              <div className="w-2 h-2 rounded-full bg-green-500 mt-2"></div>
+              <div className="w-2 h-2 rounded-full bg-emerald-500 mt-2"></div>
               <div>
                 <h4 className="font-medium">Gestão de Leads ✓</h4>
                 <p className="text-sm text-muted-foreground">
@@ -117,7 +117,7 @@ export default function CRMCampanhas() {
             </div>
             
             <div className="flex items-start gap-3">
-              <div className="w-2 h-2 rounded-full bg-green-500 mt-2"></div>
+              <div className="w-2 h-2 rounded-full bg-emerald-500 mt-2"></div>
               <div>
                 <h4 className="font-medium">Painel de Demandas ✓</h4>
                 <p className="text-sm text-muted-foreground">
@@ -127,7 +127,7 @@ export default function CRMCampanhas() {
             </div>
             
             <div className="flex items-start gap-3">
-              <div className="w-2 h-2 rounded-full bg-yellow-500 mt-2"></div>
+              <div className="w-2 h-2 rounded-full bg-amber-500 mt-2"></div>
               <div>
                 <h4 className="font-medium">Campanhas Automatizadas</h4>
                 <p className="text-sm text-muted-foreground">
@@ -137,7 +137,7 @@ export default function CRMCampanhas() {
             </div>
             
             <div className="flex items-start gap-3">
-              <div className="w-2 h-2 rounded-full bg-yellow-500 mt-2"></div>
+              <div className="w-2 h-2 rounded-full bg-amber-500 mt-2"></div>
               <div>
                 <h4 className="font-medium">Segmentação Avançada</h4>
                 <p className="text-sm text-muted-foreground">

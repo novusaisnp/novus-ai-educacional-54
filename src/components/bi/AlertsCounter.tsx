@@ -73,7 +73,7 @@ export function AlertsCounter() {
                   <Users className="h-4 w-4" />
                   Risco Evasão
                 </div>
-                <div className="text-2xl font-bold text-orange-600">
+                <div className="text-2xl font-bold text-accent-warm">
                   {alertsData?.alertasRiscoEvasao || 0}
                 </div>
               </div>
@@ -83,7 +83,7 @@ export function AlertsCounter() {
                   <Clock className="h-4 w-4" />
                   SLA Demandas
                 </div>
-                <div className="text-2xl font-bold text-yellow-600">
+                <div className="text-2xl font-bold text-amber-600">
                   {alertsData?.alertasSLA || 0}
                 </div>
               </div>

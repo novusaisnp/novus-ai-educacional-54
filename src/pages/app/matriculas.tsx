@@ -269,9 +269,9 @@ export default function Matriculas() {
 
   const getStatusColor = (status: string) => {
     const colors = {
-      ativa: 'text-green-600 bg-green-50',
-      trancada: 'text-yellow-600 bg-yellow-50',
-      concluida: 'text-blue-600 bg-blue-50',
+      ativa: 'text-emerald-600 bg-emerald-50',
+      trancada: 'text-amber-600 bg-amber-50',
+      concluida: 'text-sky-600 bg-sky-50',
       transferida: 'text-gray-600 bg-gray-50',
     };
     return colors[status as keyof typeof colors] || 'text-gray-600 bg-gray-50';

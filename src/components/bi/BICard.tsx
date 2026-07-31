@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { IconBadge, IconBadgeTone } from '@/components/IconBadge';
 import { LucideIcon } from 'lucide-react';
 
 interface BICardProps {
@@ -12,11 +13,18 @@ interface BICardProps {
   className?: string;
 }
 
-const variantClasses = {
+const variantClasses: Record<NonNullable<BICardProps['variant']>, string> = {
   default: 'text-foreground',
-  success: 'text-green-600',
-  warning: 'text-yellow-600',
+  success: 'text-emerald-600',
+  warning: 'text-accent-warm',
   danger: 'text-red-600',
+};
+
+const variantToTone: Record<NonNullable<BICardProps['variant']>, IconBadgeTone> = {
+  default: 'primary',
+  success: 'success',
+  warning: 'warm',
+  danger: 'danger',
 };
 
 export function BICard({
@@ -33,7 +41,7 @@ export function BICard({
       <Card className={className}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-4 w-4" />
+          <Skeleton className="h-9 w-9 rounded-xl" />
         </CardHeader>
         <CardContent>
           <Skeleton className="h-8 w-16 mb-1" />
@@ -49,7 +57,7 @@ export function BICard({
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
         </CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+        <IconBadge icon={Icon} tone={variantToTone[variant]} size="sm" />
       </CardHeader>
       <CardContent>
         <div className={`text-2xl font-bold ${variantClasses[variant]}`}>

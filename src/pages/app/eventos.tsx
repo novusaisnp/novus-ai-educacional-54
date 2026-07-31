@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { IconBadge } from '@/components/IconBadge';
 import { Calendar, Users, Bell, Camera } from 'lucide-react';
 
 export default function Eventos() {
@@ -15,9 +16,7 @@ export default function Eventos() {
         <Card className="opacity-50">
           <CardHeader>
             <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-blue-50 text-blue-600 border-blue-200">
-                <Calendar className="h-6 w-6" />
-              </div>
+              <IconBadge icon={Calendar} tone="info" />
               <div>
                 <CardTitle className="text-xl">Calendário</CardTitle>
                 <CardDescription>Calendário escolar e eventos</CardDescription>
@@ -32,9 +31,7 @@ export default function Eventos() {
         <Card className="opacity-50">
           <CardHeader>
             <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-green-50 text-green-600 border-green-200">
-                <Users className="h-6 w-6" />
-              </div>
+              <IconBadge icon={Users} tone="success" />
               <div>
                 <CardTitle className="text-xl">Participantes</CardTitle>
                 <CardDescription>Gestão de participantes e inscrições</CardDescription>
@@ -49,9 +46,7 @@ export default function Eventos() {
         <Card className="opacity-50">
           <CardHeader>
             <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-purple-50 text-purple-600 border-purple-200">
-                <Bell className="h-6 w-6" />
-              </div>
+              <IconBadge icon={Bell} tone="purple" />
               <div>
                 <CardTitle className="text-xl">Notificações</CardTitle>
                 <CardDescription>Sistema de notificações de eventos</CardDescription>
@@ -66,9 +61,7 @@ export default function Eventos() {
         <Card className="opacity-50">
           <CardHeader>
             <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-orange-50 text-orange-600 border-orange-200">
-                <Camera className="h-6 w-6" />
-              </div>
+              <IconBadge icon={Camera} tone="warm" />
               <div>
                 <CardTitle className="text-xl">Galeria</CardTitle>
                 <CardDescription>Galeria de fotos e memórias</CardDescription>

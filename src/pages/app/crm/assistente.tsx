@@ -60,8 +60,8 @@ export default function AssistenteIA() {
             Chatbot inteligente para suporte pedagógico e administrativo
           </p>
         </div>
-        <Badge variant="secondary" className="bg-green-100 text-green-800">
-          <div className="w-2 h-2 bg-green-500 rounded-full mr-2" />
+        <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">
+          <div className="w-2 h-2 bg-emerald-500 rounded-full mr-2" />
           Sistema Online
         </Badge>
       </div>
@@ -127,23 +127,23 @@ export default function AssistenteIA() {
             <CardContent>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full" />
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full" />
                   <span>Consulta de notas e frequência</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full" />
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full" />
                   <span>Calendário escolar</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full" />
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full" />
                   <span>Informações administrativas</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full" />
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full" />
                   <span>Suporte pedagógico básico</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                  <div className="w-2 h-2 bg-sky-500 rounded-full" />
                   <span>Fallback para atendimento manual</span>
                 </div>
               </div>

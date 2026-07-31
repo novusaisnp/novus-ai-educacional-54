@@ -619,7 +619,7 @@ export default function CRMDemandas() {
                         <div className="text-sm text-muted-foreground">Score Médio IA</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">0</div>
+                        <div className="text-2xl font-bold text-emerald-600">0</div>
                         <div className="text-sm text-muted-foreground">Recuperados</div>
                       </div>
                     </div>

@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { IconBadge } from '@/components/IconBadge';
 import { Calendar, Users, FileText, Target } from 'lucide-react';
 
 export default function Pedagogico() {
@@ -15,9 +16,7 @@ export default function Pedagogico() {
         <Card className="opacity-50">
           <CardHeader>
             <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-blue-50 text-blue-600 border-blue-200">
-                <Calendar className="h-6 w-6" />
-              </div>
+              <IconBadge icon={Calendar} tone="info" />
               <div>
                 <CardTitle className="text-xl">Planos de Aula</CardTitle>
                 <CardDescription>Planejamento de aulas e atividades</CardDescription>
@@ -32,9 +31,7 @@ export default function Pedagogico() {
         <Card className="opacity-50">
           <CardHeader>
             <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-green-50 text-green-600 border-green-200">
-                <Users className="h-6 w-6" />
-              </div>
+              <IconBadge icon={Users} tone="success" />
               <div>
                 <CardTitle className="text-xl">Acompanhamento</CardTitle>
                 <CardDescription>Acompanhamento individual dos alunos</CardDescription>
@@ -49,9 +46,7 @@ export default function Pedagogico() {
         <Card className="opacity-50">
           <CardHeader>
             <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-purple-50 text-purple-600 border-purple-200">
-                <FileText className="h-6 w-6" />
-              </div>
+              <IconBadge icon={FileText} tone="purple" />
               <div>
                 <CardTitle className="text-xl">Projetos</CardTitle>
                 <CardDescription>Gestão de projetos pedagógicos</CardDescription>
@@ -66,9 +61,7 @@ export default function Pedagogico() {
         <Card className="opacity-50">
           <CardHeader>
             <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-orange-50 text-orange-600 border-orange-200">
-                <Target className="h-6 w-6" />
-              </div>
+              <IconBadge icon={Target} tone="warm" />
               <div>
                 <CardTitle className="text-xl">Objetivos</CardTitle>
                 <CardDescription>Definição e acompanhamento de objetivos</CardDescription>

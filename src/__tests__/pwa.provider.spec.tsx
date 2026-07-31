@@ -5,6 +5,7 @@ import { render } from '@testing-library/react'
 import { screen, fireEvent, waitFor } from '@testing-library/dom'
 import { PWAProvider, usePWA } from '@/components/pwa/PWAProvider'
 import * as auditSafe from '@/utils/auditSafe'
+import { pwaManager } from '@/portal/pwa'
 
 // Mock the auditSafe module
 vi.mock('@/utils/auditSafe', () => ({
@@ -133,8 +134,6 @@ describe('PWAProvider', () => {
   })
 
   it('should not initialize when disabled', () => {
-    const { pwaManager } = require('@/portal/pwa')
-    
     render(
       <PWAProvider enabled={false}>
         <TestComponent />
@@ -146,8 +145,7 @@ describe('PWAProvider', () => {
 
   it('should not initialize outside portal routes', () => {
     window.location.pathname = '/app/dashboard'
-    const { pwaManager } = require('@/portal/pwa')
-    
+
     render(
       <PWAProvider>
         <TestComponent />

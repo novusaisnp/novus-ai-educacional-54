@@ -64,6 +64,7 @@ import SecretariaRematricula from '@/pages/app/secretaria/rematricula';
 import SecretariaRematriculaListPage from '@/pages/app/secretaria/rematricula/ListPage';
 
 import ConfigIntegracoesPage from '@/pages/app/config/integracoes';
+import OnboardingPage from '@/pages/app/onboarding';
 
 import DevDiagnosticsPage from '@/pages/app/dev/diagnostics';
 import CRMHub from '@/pages/app/crm';
@@ -182,6 +183,7 @@ function App() {
                 <Route path="secretaria/rematricula/list" element={<SecretariaRematriculaListPage />} />
                 
                 <Route path="config/integracoes" element={<ConfigIntegracoesPage />} />
+                <Route path="onboarding" element={<OnboardingPage />} />
                 <Route path="dev/diagnostics" element={<DevDiagnosticsPage />} />
               </Route>
             </Route>

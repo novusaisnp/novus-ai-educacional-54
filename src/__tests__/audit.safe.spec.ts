@@ -131,19 +131,14 @@ describe('auditSafe utilities', () => {
       })
     })
 
-    it('should handle missing organization_id', async () => {
+    it('should skip logging when organization_id is missing', async () => {
       const logAuditSpy = vi.mocked(audit.logAudit)
-      
+
       await logAuditSafe('test_action', { action: 'test' })
 
-      expect(logAuditSpy).toHaveBeenCalledWith({
-        table_name: 'ui_events',
-        action: 'test_action',
-        diff: {
-          action: 'test'
-        },
-        organization_id: ''
-      })
+      // organization_id é uma coluna uuid NOT NULL — sem org, não há como
+      // gravar um audit_log válido, então logAudit nunca deve ser chamado.
+      expect(logAuditSpy).not.toHaveBeenCalled()
     })
 
     it('should handle audit failures gracefully', async () => {
@@ -151,7 +146,7 @@ describe('auditSafe utilities', () => {
       logAuditSpy.mockRejectedValue(new Error('Audit failed'))
 
       // Should not throw
-      await expect(logAuditSafe('test_action', {})).resolves.toBeUndefined()
+      await expect(logAuditSafe('test_action', {}, 'org456')).resolves.toBeUndefined()
     })
   })
 })

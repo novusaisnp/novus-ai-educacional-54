@@ -137,7 +137,14 @@ export default function ConfigIntegracoes() {
   };
 
   const testConnection = async () => {
-    if (!orgData?.organization_id) return;
+    if (!orgData?.organization_id) {
+      toast({
+        title: 'Erro',
+        description: 'Organização não identificada',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setIsTestingConnection(true);
     try {
@@ -437,136 +444,6 @@ export default function ConfigIntegracoes() {
             </CardContent>
           </Card>
 
-          {/* Configurações de IA */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Bot className="h-5 w-5" />
-                <span>Recursos de IA</span>
-              </CardTitle>
-              <CardDescription>
-                Configure quais funcionalidades de Inteligência Artificial estão disponíveis para sua organização.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...iaForm}>
-                <form onSubmit={iaForm.handleSubmit(onSubmitIA)} className="space-y-4">
-                  <FormField
-                    control={iaForm.control}
-                    name="enabled"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Habilitar IA</FormLabel>
-                          <FormDescription>
-                            Ativa todos os recursos de Inteligência Artificial
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={iaForm.control}
-                    name="chatbot"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-sm font-medium">Assistente IA (Chatbot)</FormLabel>
-                          <FormDescription className="text-xs">
-                            Chatbot para suporte pedagógico e administrativo
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch 
-                            checked={field.value} 
-                            onCheckedChange={field.onChange}
-                            disabled={!iaForm.watch('enabled')}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={iaForm.control}
-                    name="risco"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-sm font-medium">Análise de Risco de Evasão</FormLabel>
-                          <FormDescription className="text-xs">
-                            Identificação automática de alunos em risco de evasão
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch 
-                            checked={field.value} 
-                            onCheckedChange={field.onChange}
-                            disabled={!iaForm.watch('enabled')}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={iaForm.control}
-                    name="feedback"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-sm font-medium">Correção Automática (Feedback IA)</FormLabel>
-                          <FormDescription className="text-xs">
-                            Correção e feedback automatizado para avaliações
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch 
-                            checked={field.value} 
-                            onCheckedChange={field.onChange}
-                            disabled={!iaForm.watch('enabled')}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={iaForm.control}
-                    name="financeiro"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-sm font-medium">Análise Financeira (IA)</FormLabel>
-                          <FormDescription className="text-xs">
-                            Análise de inadimplência e gestão financeira inteligente
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch 
-                            checked={field.value} 
-                            onCheckedChange={field.onChange}
-                            disabled={!iaForm.watch('enabled')}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="flex justify-end pt-4">
-                    <Button type="submit">
-                      Salvar Configurações de IA
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-
           <Separator />
 
           <div className="flex justify-end">
@@ -576,6 +453,137 @@ export default function ConfigIntegracoes() {
           </div>
         </form>
       </Form>
+
+      {/* Configurações de IA — form independente, fora do <form> de ERP acima
+          (um <form> não pode conter outro <form> descendente em HTML) */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Bot className="h-5 w-5" />
+            <span>Recursos de IA</span>
+          </CardTitle>
+          <CardDescription>
+            Configure quais funcionalidades de Inteligência Artificial estão disponíveis para sua organização.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...iaForm}>
+            <form onSubmit={iaForm.handleSubmit(onSubmitIA)} className="space-y-4">
+              <FormField
+                control={iaForm.control}
+                name="enabled"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Habilitar IA</FormLabel>
+                      <FormDescription>
+                        Ativa todos os recursos de Inteligência Artificial
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={iaForm.control}
+                name="chatbot"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-sm font-medium">Assistente IA (Chatbot)</FormLabel>
+                      <FormDescription className="text-xs">
+                        Chatbot para suporte pedagógico e administrativo
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={!iaForm.watch('enabled')}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={iaForm.control}
+                name="risco"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-sm font-medium">Análise de Risco de Evasão</FormLabel>
+                      <FormDescription className="text-xs">
+                        Identificação automática de alunos em risco de evasão
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={!iaForm.watch('enabled')}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={iaForm.control}
+                name="feedback"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-sm font-medium">Correção Automática (Feedback IA)</FormLabel>
+                      <FormDescription className="text-xs">
+                        Correção e feedback automatizado para avaliações
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={!iaForm.watch('enabled')}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={iaForm.control}
+                name="financeiro"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-sm font-medium">Análise Financeira (IA)</FormLabel>
+                      <FormDescription className="text-xs">
+                        Análise de inadimplência e gestão financeira inteligente
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={!iaForm.watch('enabled')}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex justify-end pt-4">
+                <Button type="submit">
+                  Salvar Configurações de IA
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

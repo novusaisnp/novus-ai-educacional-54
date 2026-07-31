@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { Users, FileText, MessageCircle, AlertCircle } from 'lucide-react';
 import { subDays } from 'date-fns';
 import { useOrganization } from '@/hooks/useOrganization';
@@ -10,6 +12,7 @@ import EmptyState from '@/components/EmptyState';
 
 export default function Dashboard() {
   const { orgId } = useOrganization();
+  const navigate = useNavigate();
 
   // Query para contar visitantes (Leads)
   const { data: visitorsCount, isLoading: visitorsLoading } = useQuery({
@@ -111,9 +114,14 @@ export default function Dashboard() {
           </div>
         </div>
         
-        <EmptyState 
+        <EmptyState
           title="Organização não selecionada"
           description="Selecione ou crie uma organização para visualizar os dados do dashboard"
+          action={
+            <Button onClick={() => navigate('/app/onboarding')}>
+              Criar organização
+            </Button>
+          }
         />
       </div>
     );

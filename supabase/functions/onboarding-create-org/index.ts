@@ -83,10 +83,17 @@ serve(async (req) => {
       )
     }
 
+    const fullName =
+      (userData.user.user_metadata?.full_name as string | undefined) ||
+      (userData.user.user_metadata?.name as string | undefined) ||
+      userData.user.email?.split('@')[0] ||
+      'Usuário'
+
+    // Não há trigger que crie a linha em profiles no signup (só existe para
+    // guardians, no fluxo do portal) — por isso upsert, não update.
     const { error: profileError } = await adminClient
       .from('profiles')
-      .update({ organization_id: org.id, role: 'admin' })
-      .eq('id', userId)
+      .upsert({ id: userId, organization_id: org.id, role: 'admin', full_name: fullName })
 
     if (profileError) {
       console.error('Failed to link profile to organization:', profileError)

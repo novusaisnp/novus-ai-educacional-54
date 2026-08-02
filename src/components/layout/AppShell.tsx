@@ -91,7 +91,7 @@ function AppSidebar() {
   return (
     <TooltipProvider>
       <div 
-        className="sidebar border-r bg-sidebar-background overflow-y-auto flex flex-col h-full"
+        className="sidebar border-r bg-sidebar overflow-y-auto flex flex-col h-full"
         style={{ 
           width: 'var(--sidebar-w)'
         }}

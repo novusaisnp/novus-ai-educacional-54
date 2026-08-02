@@ -14,11 +14,19 @@
 - Visitantes/Reservas/Solicitações: mantida a página funcional original (já usava as tabelas reais), incorporado só o empty-state visual melhor da versão `ListPage.tsx`; apagadas as pastas `ListPage.tsx` mortas e as rotas `/list` correspondentes em `src/App.tsx`.
 - Rematrícula: criada de verdade a tabela `public.re_enrollments` (migration `20260802170000_create_re_enrollments.sql`, aplicada no projeto real via `supabase db query --linked -f ...` — **não** via `db push`, porque o histórico de migrations do CLI não bate com o schema real e um `db push` cego tentaria reaplicar as 13 migrations já existentes) com RLS por organização. `secretaria/rematricula/ListPage.tsx` reescrita para consultar `re_enrollments` (join `students`/`classes` com hint de FK explícito, já que há duas FKs pra `classes`) e implementar de verdade aprovar/finalizar (finalizar cria a `enrollments` de verdade). `SubmodalRematricula.tsx` agora cria uma solicitação pendente em `re_enrollments` em vez de matricular direto. A ferramenta de rematrícula **em lote** (`rematricula.tsx`, sem aprovação, insere direto) foi preservada como fluxo separado em `secretaria/rematricula/lote`, com link cruzado entre as duas páginas.
 - `src/integrations/supabase/types.ts` regenerado do schema real (`supabase gen types typescript --linked`); `db-types.ts` ganhou `ReEnrollmentRow/Insert/Update`.
-- Sidebar (`src/components/ui/sidebar.tsx`): adicionados os links de Reservas de Vaga, Solicitações e Rematrícula no menu Secretaria (antes só "Visitantes" tinha link — as outras 3 páginas só eram acessíveis digitando a URL).
+- **Correção (autocrítica)**: inicialmente tentei adicionar links de Reservas/Solicitações/Rematrícula em `src/components/ui/sidebar.tsx` — só depois descobri que esse arquivo (`Sidebar`/`MobileSidebar`/`sidebarData`) **não é importado em lugar nenhum do app**, é código morto de um scaffold antigo do shadcn. A navegação real vem de `AppSidebar` dentro de `src/components/layout/AppShell.tsx`, com uma lista `baseMenuItems` própria e plana (só "CRM" tem `submenu`, e nem esse é renderizado). Descoberta ao investigar o bug de contraste (ver abaixo). A boa notícia: o Hub da Secretaria (`src/features/secretaria/hub/SecretariaHub.tsx`) já lista cards pras 4 áreas (Visitantes/Reservas/Solicitações/Rematrícula) com botão "Abrir Lista" — ou seja, a descoberta via UI **já funcionava** por esse caminho, meu diagnóstico original de "só acessível digitando a URL" estava incompleto (só valia pro rail lateral colapsado, não pro Hub).
 
 **Verificação**: 47/47 testes, `typecheck` limpo. Tabela `re_enrollments` confirmada no banco real via query direta. Percorrido ao vivo no navegador: Visitantes/Reservas/Solicitações renderizam o empty-state correto sem erro de console; Rematrícula carrega a query com join de FK dupla sem erro (não foi possível testar criar/aprovar/finalizar via UI porque a organização de teste atual não tem nenhum aluno cadastrado).
 
-**Achado à parte (fora do escopo desta Fase, registrado no backlog)**: durante a verificação no navegador, confirmado visualmente o bug de contraste na sidebar reportado pelo usuário — a maioria dos itens do menu (Dashboard, BI, CRM, Acadêmico, Pedagógico, Eventos) aparece em cinza claro quase invisível sobre fundo claro; só o item ativo/hover tem contraste correto (branco sobre teal escuro).
+## ✅ Bug de contraste da sidebar corrigido (2026-08-02)
+
+**Contexto**: usuário reportou que o menu lateral colapsável tinha cores que deixavam os itens quase invisíveis. Confirmado ao vivo no navegador: todos os itens inativos (Dashboard, BI, CRM, Acadêmico, Pedagógico, Eventos) apareciam em cinza claro quase invisível — só o item ativo tinha contraste correto.
+
+**Causa raiz**: `AppShell.tsx:94` (componente `AppSidebar`, o real, não o `ui/sidebar.tsx` morto) usava a classe `bg-sidebar-background` no container. Essa classe **não existe** — `tailwind.config.ts` mapeia a cor como `sidebar.DEFAULT` (não `sidebar.background`), então a classe Tailwind gerada é `bg-sidebar`, não `bg-sidebar-background`. Com a classe inválida, nenhum fundo era aplicado — a sidebar ficava com o branco padrão da página por baixo, e o texto claro (`text-sidebar-foreground`, esse sim uma classe válida) ficava ilegível. O item ativo aparecia certo porque usa `bg-sidebar-accent`, que é uma classe válida.
+
+**O que mudou**: `src/components/layout/AppShell.tsx:94` — `bg-sidebar-background` → `bg-sidebar`. Uma linha.
+
+**Verificação**: 47/47 testes, `typecheck` limpo, confirmado ao vivo no navegador (sidebar expandida e colapsada) que todos os itens do menu ficaram legíveis com bom contraste.
 
 ## ✅ Remoção de tooling de criação de admin da tela de login (2026-08-02)
 
@@ -106,7 +114,7 @@
 - `src/lib/featureFlags.ts` (`getERPConfig`/`setERPConfig`): a config do ERP por-organização (`baseUrl`, `apiKey`, `signingSecret`, `mock`) vive só em `localStorage` do navegador — não é uma tabela Postgres, não é compartilhada entre usuários da mesma org. `src/integrations/erp/emit.ts`/`client.ts` não assina HMAC nas chamadas de saída apesar de ter campo `signingSecret` na UI.
 - `portal/financeiro.tsx`: array de boletos 100% hard-coded (`// Mock ERP response structure for now`), `erpClient` importado mas nunca chamado. `useBIData.ts` (BI Financeiro) também retorna dados mock/zerados.
 - 229 erros de lint pré-existentes (majoritariamente `no-explicit-any` em Edge Functions) — dívida técnica não tratada nesta sessão, CI vai falhar em `bun run lint` até isso ser resolvido.
-- Refactor de UI abandonado em `secretaria/{rematricula,reservas,solicitacoes,visitantes}/ListPage.tsx`: código morto (sem link de menu, só acessível digitando `/list` na URL) que espera tabelas inexistentes (`re_enrollments`, `seat_reservations`, `service_requests`). As páginas antigas (`secretaria/*.tsx`, sem sufixo) são as realmente ativas e já usam as tabelas reais (`visitors`, `waitlist_applications`, `requests`).
+- `src/components/ui/sidebar.tsx` (`Sidebar`/`MobileSidebar`/`sidebarData`) é código morto — não importado em lugar nenhum do app. A sidebar real é `AppSidebar` em `src/components/layout/AppShell.tsx`. Não remover sem checar de novo antes (confirmar via grep que continua sem uso).
 
 ## Backlog
 
@@ -115,7 +123,7 @@
 - Restyle visual do Portal dos Responsáveis.
 - Resolver os 229 erros de lint (ou decidir excluir Edge Functions do lint gate).
 - Limpar organização de teste órfã.
-- **Bug visual reportado pelo usuário (2026-08-02)**: a barra lateral colapsável com os módulos (`src/components/ui/sidebar.tsx`) ficou com cores que deixam o texto/ícones praticamente invisíveis — provavelmente uma combinação de cor de texto vs. fundo que não foi ajustada corretamente no restyle teal/coral de `d53e5b7`. Precisa de refactor de contraste na sidebar. Confirmado visualmente ao testar no navegador: itens inativos (Dashboard, BI, CRM, Acadêmico, Pedagógico, Eventos) em cinza claro quase invisível; só o item ativo tem contraste correto. `docs/novus_edu_mockups.html` (ver abaixo) mostra um padrão de contraste que funciona (texto claro `#B7C7DA` sobre navy escuro, ativo com fundo cyan-translúcido + texto branco) — referência útil pro fix, não necessariamente adotar a paleta inteira.
+- Considerar remover `src/components/ui/sidebar.tsx` (dead code confirmado) numa limpeza futura.
 
 ## 🗺️ Roadmap formalizado (2026-08-02)
 

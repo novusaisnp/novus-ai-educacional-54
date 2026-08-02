@@ -1,10 +1,23 @@
 # STATUS — novus-educacional
 
-**Última atualização: 2026-07-31.** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+**Última atualização: 2026-08-02.** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
 
-## 🔖 Checkpoint de sessão (2026-07-31, leia isto primeiro)
+## 🔖 Checkpoint de sessão (2026-08-02, leia isto primeiro)
 
-- **GitHub**: `novusaisnp/novus-ai-educacional-54`, branch `main`. Autenticado como `novusaisnp` (não `lignumfleet`, que não tem acesso a este repo). Histórico local à frente do remoto por 1 commit (`d53e5b7`, restyle visual) — **ainda não pushado**, aguardando confirmação do usuário.
+- **GitHub**: `novusaisnp/novus-ai-educacional-54`, branch `main`. Autenticado como `novusaisnp` (não `lignumfleet`, que não tem acesso a este repo). Histórico local à frente do remoto por 2 commits (`d53e5b7` restyle visual, `f6fb0c6` remoção de tooling de dev/admin) — **ainda não pushados**, aguardando confirmação do usuário.
+
+## ✅ Remoção de tooling de criação de admin da tela de login (2026-08-02)
+
+**Contexto**: encontrado, ao retomar a sessão, um conjunto de mudanças já feitas na working tree mas nunca commitadas nem documentadas. `DevUserCreator` era um botão renderizado na **página pública de login** (`src/pages/auth/login.tsx`) que chamava `createAdminUser()` pra criar um usuário admin diretamente do client — exatamente o tipo de superfície de risco que a seção de Segurança deste projeto já sinalizava (credenciais de admin expostas no histórico do git, `ADMIN_SEED_TOKEN`).
+
+**O que mudou**:
+- Removidos: `src/components/DevUserCreator.tsx`, `src/utils/createAdminUser.ts`, `src/utils/createDevUser.ts`, `src/utils/runDiagnostics.ts`, `supabase/functions/dev_diagnostics/index.ts`.
+- `src/pages/auth/login.tsx`: removidos os imports e o bloco de UI ("Seção de desenvolvimento") que renderizava o `DevUserCreator` e o botão de diagnóstico.
+- `supabase/config.toml`: `project_id` corrigido de `nkcadmwydfnzrnauzeyz` (projeto morto) pra `ixnpotaccbpcbritxlud` (projeto real) — fecha a mesma inconsistência já documentada na sessão de reconciliação de 2026-07-31.
+
+**Verificação**: `grep` confirmou nenhuma referência remanescente aos arquivos removidos. 47/47 testes, `typecheck` limpo. Commit `f6fb0c6`.
+
+**Gaps conhecidos**: nenhum introduzido por esta mudança. Os itens de backlog relacionados (rotação de credenciais, secrets do projeto novo) continuam em aberto — ver Backlog abaixo.
 - **Supabase**: projeto `ixnpotaccbpcbritxlud` ("Novus Educacional", `sa-east-1`, criado 2026-07-30). CLI linkado neste ambiente. As 25 migrações locais foram confirmadas como aplicadas de verdade no banco (spot-check via REST). **12 Edge Functions deployadas** (as 11 originais + `onboarding-create-org`, nova).
 - **Saúde técnica**: 47/47 testes, `typecheck` e `build` limpos.
 - **Decisões em aberto** (perguntadas ao usuário, sem resposta ainda ou adiadas):

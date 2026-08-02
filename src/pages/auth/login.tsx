@@ -6,14 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/hooks/useSession';
-import { DevUserCreator } from '@/components/DevUserCreator';
-import { runDiagnostics } from '@/utils/runDiagnostics';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showDevCreator, setShowDevCreator] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useSession();
@@ -112,26 +109,6 @@ export default function Login() {
             </CardContent>
           </Card>
 
-          {/* Seção de desenvolvimento */}
-          <div className="text-center">
-          </div>
-
-          {showDevCreator && (
-            <div className="space-y-4">
-              <DevUserCreator />
-              <Button 
-                variant="secondary" 
-                size="sm" 
-                onClick={async () => {
-                  console.log('Executando diagnóstico...');
-                  await runDiagnostics();
-                }} 
-                className="w-full"
-              >
-                🔧 Executar Diagnóstico Completo
-              </Button>
-            </div>
-          )}
         </div>
       </div>
 

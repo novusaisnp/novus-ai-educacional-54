@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useToast } from '@/hooks/use-toast';
@@ -10,8 +10,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RotateCcw, Search, Plus, Edit, Trash2, CheckCircle } from 'lucide-react';
+import { RotateCcw, Search, Plus, Trash2, CheckCircle, Check, Users } from 'lucide-react';
 import { ModalMestre } from '@/features/secretaria/hub/ModalMestre';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
+const STATUS_OPTIONS = [
+  { value: 'pendente', label: 'Pendente', variant: 'secondary' as const },
+  { value: 'em_analise', label: 'Em Análise', variant: 'secondary' as const },
+  { value: 'aprovada', label: 'Aprovada', variant: 'default' as const },
+  { value: 'finalizada', label: 'Finalizada', variant: 'outline' as const },
+  { value: 'cancelada', label: 'Cancelada', variant: 'destructive' as const },
+];
 
 export default function SecretariaRematriculaListPage() {
   const [searchParams] = useSearchParams();
@@ -25,44 +35,101 @@ export default function SecretariaRematriculaListPage() {
   const { data: rematriculas = [], isLoading } = useQuery({
     queryKey: ['re_enrollments', orgData?.organization_id],
     queryFn: async () => {
-      // Placeholder query since re_enrollments table doesn't exist yet
-      return [];
+      const { data, error } = await supabase
+        .from('re_enrollments')
+        .select(`
+          *,
+          students(first_name, last_name),
+          current_class:classes!re_enrollments_current_class_id_fkey(name, grade, year),
+          target_class:classes!re_enrollments_target_class_id_fkey(name, grade, year)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data;
     },
     enabled: !!orgData?.organization_id,
   });
 
   const deleteRematricula = useMutation({
     mutationFn: async (id: string) => {
-      // Placeholder mutation
-      throw new Error('Funcionalidade ainda não implementada');
+      const { error } = await supabase
+        .from('re_enrollments')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['re_enrollments'] });
       toast({ title: 'Rematrícula excluída com sucesso!' });
     },
     onError: (error: any) => {
-      toast({ 
+      toast({
         variant: 'destructive',
         title: 'Erro ao excluir rematrícula',
-        description: error.message 
+        description: error.message,
       });
     },
   });
 
   const approveRematricula = useMutation({
     mutationFn: async (id: string) => {
-      // Placeholder mutation
-      throw new Error('Funcionalidade ainda não implementada');
+      const { error } = await supabase
+        .from('re_enrollments')
+        .update({ status: 'aprovada' })
+        .eq('id', id);
+
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['re_enrollments'] });
       toast({ title: 'Rematrícula aprovada com sucesso!' });
     },
     onError: (error: any) => {
-      toast({ 
+      toast({
         variant: 'destructive',
         title: 'Erro ao aprovar rematrícula',
-        description: error.message 
+        description: error.message,
+      });
+    },
+  });
+
+  const finalizeRematricula = useMutation({
+    mutationFn: async (rematricula: any) => {
+      if (!rematricula.target_class_id) {
+        throw new Error('Esta solicitação não tem turma de destino definida.');
+      }
+
+      const { error: enrollmentError } = await supabase
+        .from('enrollments')
+        .insert({
+          organization_id: orgData?.organization_id,
+          student_id: rematricula.student_id,
+          class_id: rematricula.target_class_id,
+          status: 'ativa',
+          enrollment_date: new Date().toISOString().split('T')[0],
+        });
+
+      if (enrollmentError) throw enrollmentError;
+
+      const { error: updateError } = await supabase
+        .from('re_enrollments')
+        .update({ status: 'finalizada' })
+        .eq('id', rematricula.id);
+
+      if (updateError) throw updateError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['re_enrollments'] });
+      queryClient.invalidateQueries({ queryKey: ['enrollments'] });
+      toast({ title: 'Rematrícula finalizada! Matrícula criada com sucesso.' });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao finalizar rematrícula',
+        description: error.message,
       });
     },
   });
@@ -76,23 +143,22 @@ export default function SecretariaRematriculaListPage() {
     queryClient.invalidateQueries({ queryKey: ['re_enrollments'] });
   };
 
-  const filteredRematriculas = rematriculas.filter(rematricula => {
-    const matchesSearch = rematricula.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredRematriculas = rematriculas.filter((rematricula: any) => {
+    const studentName = `${rematricula.students?.first_name ?? ''} ${rematricula.students?.last_name ?? ''}`.trim();
+    const matchesSearch = studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (rematricula.guardian_name && rematricula.guardian_name.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+
     const matchesStatus = selectedStatus === 'all' || rematricula.status === selectedStatus;
-    
+
     return matchesSearch && matchesStatus;
   });
 
-  const statusOptions = [
-    { value: 'all', label: 'Todos os status' },
-    { value: 'pendente', label: 'Pendente' },
-    { value: 'em_analise', label: 'Em Análise' },
-    { value: 'aprovada', label: 'Aprovada' },
-    { value: 'finalizada', label: 'Finalizada' },
-    { value: 'cancelada', label: 'Cancelada' },
-  ];
+  const getStatusBadge = (status: string) => {
+    const statusOption = STATUS_OPTIONS.find(opt => opt.value === status);
+    return statusOption ? { label: statusOption.label, variant: statusOption.variant } : { label: status, variant: 'secondary' as const };
+  };
+
+  const formatDate = (date: string) => format(new Date(date), 'dd/MM/yyyy', { locale: ptBR });
 
   return (
     <div className="space-y-6">
@@ -101,10 +167,18 @@ export default function SecretariaRematriculaListPage() {
           <RotateCcw className="h-6 w-6" />
           <h1 className="text-2xl font-bold">Rematrícula</h1>
         </div>
-        <Button onClick={handleOpenModal}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nova Rematrícula
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" asChild>
+            <Link to="/app/secretaria/rematricula/lote">
+              <Users className="mr-2 h-4 w-4" />
+              Rematrícula em Lote
+            </Link>
+          </Button>
+          <Button onClick={handleOpenModal}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nova Rematrícula
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -129,7 +203,8 @@ export default function SecretariaRematriculaListPage() {
                 <SelectValue placeholder="Filtrar por status" />
               </SelectTrigger>
               <SelectContent>
-                {statusOptions.map((status) => (
+                <SelectItem value="all">Todos os status</SelectItem>
+                {STATUS_OPTIONS.map((status) => (
                   <SelectItem key={status.value} value={status.value}>
                     {status.label}
                   </SelectItem>
@@ -166,8 +241,8 @@ export default function SecretariaRematriculaListPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome do Aluno</TableHead>
-                  <TableHead>Série Atual</TableHead>
-                  <TableHead>Série Destino</TableHead>
+                  <TableHead>Turma Atual</TableHead>
+                  <TableHead>Turma Destino</TableHead>
                   <TableHead>Responsável</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Status</TableHead>
@@ -175,51 +250,57 @@ export default function SecretariaRematriculaListPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredRematriculas.map((rematricula) => (
-                  <TableRow key={rematricula.id}>
-                    <TableCell className="font-medium">{rematricula.student_name}</TableCell>
-                    <TableCell>{rematricula.current_grade}</TableCell>
-                    <TableCell>{rematricula.target_grade}</TableCell>
-                    <TableCell>{rematricula.guardian_name}</TableCell>
-                    <TableCell>{new Date(rematricula.created_at).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant={
-                          rematricula.status === 'aprovada' ? 'default' :
-                          rematricula.status === 'finalizada' ? 'default' :
-                          rematricula.status === 'em_analise' ? 'secondary' :
-                          rematricula.status === 'cancelada' ? 'destructive' :
-                          'outline'
-                        }
-                      >
-                        {statusOptions.find(s => s.value === rematricula.status)?.label || rematricula.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        {rematricula.status === 'pendente' && (
-                          <Button 
-                            size="sm" 
+                {filteredRematriculas.map((rematricula: any) => {
+                  const statusBadge = getStatusBadge(rematricula.status);
+                  const studentName = `${rematricula.students?.first_name ?? ''} ${rematricula.students?.last_name ?? ''}`.trim();
+                  return (
+                    <TableRow key={rematricula.id}>
+                      <TableCell className="font-medium">{studentName || '-'}</TableCell>
+                      <TableCell>{rematricula.current_class?.name || '-'}</TableCell>
+                      <TableCell>{rematricula.target_class?.name || '-'}</TableCell>
+                      <TableCell>{rematricula.guardian_name || '-'}</TableCell>
+                      <TableCell>{formatDate(rematricula.created_at)}</TableCell>
+                      <TableCell>
+                        <Badge variant={statusBadge.variant}>
+                          {statusBadge.label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          {rematricula.status === 'pendente' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => approveRematricula.mutate(rematricula.id)}
+                              disabled={approveRematricula.isPending}
+                              title="Aprovar"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {rematricula.status === 'aprovada' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => finalizeRematricula.mutate(rematricula)}
+                              disabled={finalizeRematricula.isPending}
+                              title="Finalizar (cria a matrícula)"
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
                             variant="outline"
-                            onClick={() => approveRematricula.mutate(rematricula.id)}
+                            onClick={() => deleteRematricula.mutate(rematricula.id)}
                           >
-                            <CheckCircle className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
-                        )}
-                        <Button size="sm" variant="outline">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => deleteRematricula.mutate(rematricula.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}

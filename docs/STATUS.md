@@ -4,7 +4,21 @@
 
 ## 🔖 Checkpoint de sessão (2026-08-02, leia isto primeiro)
 
-- **GitHub**: `novusaisnp/novus-ai-educacional-54`, branch `main`. Autenticado como `novusaisnp` (não `lignumfleet`, que não tem acesso a este repo). Remoto está em `c614374` (o restyle `d53e5b7` já tinha sido pushado). Histórico local à frente do remoto por 2 commits novos desta sessão (`f6fb0c6` remoção de tooling de dev/admin, `7e062d0` doc) — **ainda não pushados**, aguardando confirmação do usuário.
+- **GitHub**: `novusaisnp/novus-ai-educacional-54`, branch `main`. Autenticado como `novusaisnp` (não `lignumfleet`, que não tem acesso a este repo). Remoto está em `c614374` (o restyle `d53e5b7` já tinha sido pushado). Histórico local à frente do remoto com commits novos desta sessão (remoção de tooling de dev/admin + Fase 0-A da secretaria, ainda não commitada no momento em que este checkpoint foi escrito) — **ainda não pushados**, aguardando confirmação do usuário.
+
+## ✅ Fase 0-A: refactor da secretaria (rematrícula/reservas/solicitações/visitantes) (2026-08-02)
+
+**Contexto**: primeira execução do roadmap formalizado nesta sessão (ver seção de roadmap abaixo). Existia um refactor de UI abandonado — rotas duplicadas `secretaria/{area}` (funcional) e `secretaria/{area}/list` (placeholder, esperando tabelas que nunca existiram: `re_enrollments`, `seat_reservations`, `service_requests`) — e as 3 últimas nem tinham link no menu.
+
+**O que mudou**:
+- Visitantes/Reservas/Solicitações: mantida a página funcional original (já usava as tabelas reais), incorporado só o empty-state visual melhor da versão `ListPage.tsx`; apagadas as pastas `ListPage.tsx` mortas e as rotas `/list` correspondentes em `src/App.tsx`.
+- Rematrícula: criada de verdade a tabela `public.re_enrollments` (migration `20260802170000_create_re_enrollments.sql`, aplicada no projeto real via `supabase db query --linked -f ...` — **não** via `db push`, porque o histórico de migrations do CLI não bate com o schema real e um `db push` cego tentaria reaplicar as 13 migrations já existentes) com RLS por organização. `secretaria/rematricula/ListPage.tsx` reescrita para consultar `re_enrollments` (join `students`/`classes` com hint de FK explícito, já que há duas FKs pra `classes`) e implementar de verdade aprovar/finalizar (finalizar cria a `enrollments` de verdade). `SubmodalRematricula.tsx` agora cria uma solicitação pendente em `re_enrollments` em vez de matricular direto. A ferramenta de rematrícula **em lote** (`rematricula.tsx`, sem aprovação, insere direto) foi preservada como fluxo separado em `secretaria/rematricula/lote`, com link cruzado entre as duas páginas.
+- `src/integrations/supabase/types.ts` regenerado do schema real (`supabase gen types typescript --linked`); `db-types.ts` ganhou `ReEnrollmentRow/Insert/Update`.
+- Sidebar (`src/components/ui/sidebar.tsx`): adicionados os links de Reservas de Vaga, Solicitações e Rematrícula no menu Secretaria (antes só "Visitantes" tinha link — as outras 3 páginas só eram acessíveis digitando a URL).
+
+**Verificação**: 47/47 testes, `typecheck` limpo. Tabela `re_enrollments` confirmada no banco real via query direta. Percorrido ao vivo no navegador: Visitantes/Reservas/Solicitações renderizam o empty-state correto sem erro de console; Rematrícula carrega a query com join de FK dupla sem erro (não foi possível testar criar/aprovar/finalizar via UI porque a organização de teste atual não tem nenhum aluno cadastrado).
+
+**Achado à parte (fora do escopo desta Fase, registrado no backlog)**: durante a verificação no navegador, confirmado visualmente o bug de contraste na sidebar reportado pelo usuário — a maioria dos itens do menu (Dashboard, BI, CRM, Acadêmico, Pedagógico, Eventos) aparece em cinza claro quase invisível sobre fundo claro; só o item ativo/hover tem contraste correto (branco sobre teal escuro).
 
 ## ✅ Remoção de tooling de criação de admin da tela de login (2026-08-02)
 
@@ -88,9 +102,11 @@
 ## Riscos conhecidos (não são bugs — decisões/lacunas conscientes)
 
 - `financial_transactions` (esperada por `supabase/functions/ops-alerts`) não existe ainda — depende da integração real com o ERP.
-- `edu-erp-webhook` só loga e faz dedupe em memória (não persiste em produção) — lógica de negócio real (atualizar registros locais ao receber pagamento) ainda não implementada.
-- `useBIData.ts` (BI Financeiro) retorna dados mock/zerados — "ERP real não implementado ainda", conforme comentário no próprio código.
+- `edu-erp-webhook` valida HMAC e grava o evento cru em `audit_logs` (`table_name: 'erp_webhooks'`), mas não atualiza nenhuma tabela de negócio (não existe tabela local de título/fatura) — dedupe continua só em memória (`Set` do módulo, perdido a cada cold start). Fallback silencioso pro secret `'demo-secret-key'` se `ERP_SIGNING_SECRET` não estiver setado.
+- `src/lib/featureFlags.ts` (`getERPConfig`/`setERPConfig`): a config do ERP por-organização (`baseUrl`, `apiKey`, `signingSecret`, `mock`) vive só em `localStorage` do navegador — não é uma tabela Postgres, não é compartilhada entre usuários da mesma org. `src/integrations/erp/emit.ts`/`client.ts` não assina HMAC nas chamadas de saída apesar de ter campo `signingSecret` na UI.
+- `portal/financeiro.tsx`: array de boletos 100% hard-coded (`// Mock ERP response structure for now`), `erpClient` importado mas nunca chamado. `useBIData.ts` (BI Financeiro) também retorna dados mock/zerados.
 - 229 erros de lint pré-existentes (majoritariamente `no-explicit-any` em Edge Functions) — dívida técnica não tratada nesta sessão, CI vai falhar em `bun run lint` até isso ser resolvido.
+- Refactor de UI abandonado em `secretaria/{rematricula,reservas,solicitacoes,visitantes}/ListPage.tsx`: código morto (sem link de menu, só acessível digitando `/list` na URL) que espera tabelas inexistentes (`re_enrollments`, `seat_reservations`, `service_requests`). As páginas antigas (`secretaria/*.tsx`, sem sufixo) são as realmente ativas e já usam as tabelas reais (`visitors`, `waitlist_applications`, `requests`).
 
 ## Backlog
 
@@ -99,7 +115,23 @@
 - Restyle visual do Portal dos Responsáveis.
 - Resolver os 229 erros de lint (ou decidir excluir Edge Functions do lint gate).
 - Limpar organização de teste órfã.
+- **Bug visual reportado pelo usuário (2026-08-02)**: a barra lateral colapsável com os módulos (`src/components/ui/sidebar.tsx`) ficou com cores que deixam o texto/ícones praticamente invisíveis — provavelmente uma combinação de cor de texto vs. fundo que não foi ajustada corretamente no restyle teal/coral de `d53e5b7`. Precisa de refactor de contraste na sidebar. Confirmado visualmente ao testar no navegador: itens inativos (Dashboard, BI, CRM, Acadêmico, Pedagógico, Eventos) em cinza claro quase invisível; só o item ativo tem contraste correto. `docs/novus_edu_mockups.html` (ver abaixo) mostra um padrão de contraste que funciona (texto claro `#B7C7DA` sobre navy escuro, ativo com fundo cyan-translúcido + texto branco) — referência útil pro fix, não necessariamente adotar a paleta inteira.
 
-## Próxima frente (a decidir)
+## 🗺️ Roadmap formalizado (2026-08-02)
 
-Formalizar em plano como as ideias de `docs/mapa_mental_gestao_novus.pdf` (gestão desktop/backoffice) e `docs/mapa_mental_novus.pdf` (engajamento mobile/família) entram no roadmap — considerando o que o `novusai-erp` já tem pronto (não redesenhar o que já existe) e priorizando ajustes incrementais que não exijam parada técnica pra voltar à produção.
+Baseado em `docs/mapa_mental_gestao_novus.pdf` (backoffice), `docs/mapa_mental_novus.pdf` (engajamento), `docs/MVP de ideias.MD` (raio-x de mercado vs. concorrentes tipo TOTVS Educacional/Sponte) e `docs/novus_edu_mockups.html` (referência de UI navegável — 5 telas: Visão Geral, Acadêmico, Secretaria, Portal Família mobile, Integração ERP). Princípio de fronteira (reafirmado após ler `novusai-erp/docs/CONTRATOS_CANONICOS_ERP.md`): o satélite não recria financeiro/fiscal/RH — só consome as 3 portas do ERP (Título, Liquidação, Autorização) e o módulo `Contrato` recorrente que já existe lá.
+
+**Nota sobre `docs/novus_edu_mockups.html`**: é referência de ideias de layout/UX, não uma direção fechada de redesign — usuário pediu explicitamente pra aproveitar só o que fizer sentido, não adotar tudo. Padrões concretos úteis que vale reaproveitar quando cada Fase for implementada: stepper de matrícula em etapas (dados → documentos → responsáveis → financeiro → confirmação) pra Fase 1; dots de frequência (presente/falta/justificada) e inputs de nota inline na grade do diário de classe pra Fase 1/4; tags de habilidades BNCC por aula pra Fase 4; card de "conselho de classe" com atas/pareceres pendentes e card de "PEI ativos" pra Fase 1.5; ring chart de frequência e tela de "justificar falta" com anexo + chat da coordenação no mobile pra Fase 5; diagrama de arquitetura satélite↔ERP core com status de webhooks/APIs e painel multi-unidade pra Fase 0-B/Transversal.
+
+- **Fase 0 — Fundação** (em andamento): (A) terminar o refactor abandonado da secretaria — portar o layout das `ListPage.tsx` pras tabelas reais (`visitors`/`waitlist_applications`/`requests`) e aposentar as páginas antigas duplicadas; (B) tirar a integração ERP do modo mock (config sai do `localStorage`, HMAC real nas chamadas de saída, tabela local pra títulos/pagamentos); (C) rotação de credenciais + secrets do Supabase (depende de ação do usuário); (D) dívida de lint. Ordem de execução: A primeiro (plano já aprovado, ver seção de commits futura), B/C/D depois.
+- **Fase 1 — Secretaria Digital**: funil de admissão/rematrícula ponta a ponta, assinatura eletrônica de contrato com gatilho real pra Porta 1 do ERP, GED do aluno (`documents`) com validação por IA. **Somar do MVP novo**: recuperação/progressão parcial/dependência no modelo de avaliação, ata de conselho de classe digital, **calendário letivo (dias letivos/feriados/reposição) — vira pré-requisito de dados pra Fase 3**, transferência escolar (declaração/guia).
+- **Fase 1.5 — Educação Inclusiva** (novo, do MVP): PEI, laudos e adaptações — compliance LBI, sem cobertura hoje. Tratar como tema próprio, não sub-item.
+- **Fase 2 — Conformidade Regulatória**: Censo Escolar/Inep + Painel do Diretor. **Somar do MVP**: exportação SAEB e sistemas estaduais/municipais.
+- **Fase 3 — Turmas & Horários**: enturmação inteligente, grade horária automatizada (depende do calendário letivo da Fase 1).
+- **Fase 4 — Copiloto do Professor**: planejador BNCC, banco de questões, correção por OCR/visão computacional (estende `ai-assessment-feedback` já existente).
+- **Fase 5 — Portal da Família**: feed estilo rede social, push (reaproveita `notify-dispatch`), relatórios sintéticos por IA. **Somar do MVP**: justificativa de falta online, pesquisas de satisfação/NPS.
+- **Fase 6 — Engajamento & Interop**: trilha adaptativa, gamificação, tutor virtual 24/7. **Somar do MVP**: integração com LMS externos (Google Classroom/Teams).
+- **Fase 7 — Logística física** (novo, do MVP, baixa prioridade/diferenciação): controle de acesso físico (portaria/biometria — dado sensível LGPD, tratar com cuidado extra), cardápio escolar, rastreamento de transporte/ônibus.
+- **Transversal**: SSO/federação de identidade com o ERP (relevante pra redes de ensino) — entra junto do trabalho de tirar o ERP do modo mock (Fase 0-B).
+
+Confirmado como já coberto (não é gap): consentimento LGPD de menores (`consents`/`contact_consents`), chatbot de atendimento (`ai-chatbot`), multi-unidade (`units`). RH/folha/e-Social ficam explicitamente fora — é módulo `rh` do `novusai-erp`, não do satélite.

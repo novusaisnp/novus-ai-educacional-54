@@ -13,6 +13,10 @@ export type ClassUpdate = Database['public']['Tables']['classes']['Update'];
 export type EnrollmentInsert = Database['public']['Tables']['enrollments']['Insert'];
 export type EnrollmentUpdate = Database['public']['Tables']['enrollments']['Update'];
 
+export type ReEnrollmentRow = Database['public']['Tables']['re_enrollments']['Row'];
+export type ReEnrollmentInsert = Database['public']['Tables']['re_enrollments']['Insert'];
+export type ReEnrollmentUpdate = Database['public']['Tables']['re_enrollments']['Update'];
+
 // Notification system types
 export type NotificationQueueInsert = Database['public']['Tables']['notification_queue']['Insert'];
 export type NotificationQueueUpdate = Database['public']['Tables']['notification_queue']['Update'];

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useToast } from '@/hooks/use-toast';
@@ -9,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { RotateCcw, Users, Check } from 'lucide-react';
+import { RotateCcw, Users, Check, ClipboardList } from 'lucide-react';
 
 export default function SecretariaRematricula() {
   const { data: orgData } = useOrganization();
@@ -199,8 +200,14 @@ export default function SecretariaRematricula() {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <RotateCcw className="h-6 w-6" />
-          <h1 className="text-2xl font-bold">Rematrícula</h1>
+          <h1 className="text-2xl font-bold">Rematrícula em Lote</h1>
         </div>
+        <Button variant="outline" asChild>
+          <Link to="/app/secretaria/rematricula">
+            <ClipboardList className="mr-2 h-4 w-4" />
+            Ver Solicitações de Rematrícula
+          </Link>
+        </Button>
       </div>
 
       <Card>

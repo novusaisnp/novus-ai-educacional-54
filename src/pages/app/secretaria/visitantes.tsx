@@ -118,6 +118,18 @@ export default function SecretariaVisitantes() {
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
+          ) : filteredVisitors.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <UserMinus className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Nenhum visitante encontrado</h3>
+              <p className="text-muted-foreground mb-4">
+                {searchTerm ? 'Nenhum visitante corresponde aos critérios de busca.' : 'Ainda não há visitantes cadastrados.'}
+              </p>
+              <Button onClick={handleOpenModal}>
+                <Plus className="mr-2 h-4 w-4" />
+                Cadastrar Primeiro Visitante
+              </Button>
+            </div>
           ) : (
             <Table>
               <TableHeader>

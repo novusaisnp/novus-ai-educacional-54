@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Novus.AI — Módulo Educacional | Referência de UI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#062E5C;
+    --navy-2:#0A3D73;
+    --navy-3:#0E4E93;
+    --cyan:#03BCDF;
+    --cyan-dark:#0296B3;
+    --cyan-tint:#E4F8FC;
+    --cyan-tint-2:#CFF3FA;
+    --ink:#0B1B2B;
+    --gray:#8C8E92;
+    --gray-2:#B7BAC0;
+    --line:#E5E8EC;
+    --bg:#F5F7FA;
+    --white:#FFFFFF;
+    --success:#1F9D6B;
+    --success-tint:#E4F7EE;
+    --warning:#DB9A2C;
+    --warning-tint:#FBF1DE;
+    --danger:#E15656;
+    --danger-tint:#FCE9E9;
+    --radius:14px;
+    --shadow: 0 1px 2px rgba(6,46,92,0.06), 0 8px 24px rgba(6,46,92,0.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    font-family:'Inter',sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4{font-family:'Space Grotesk',sans-serif;margin:0;color:var(--navy);}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+
+  /* ---------- top switcher (outside app frame) ---------- */
+  .picker-wrap{
+    background:var(--navy);
+    background-image:radial-gradient(circle at 18px 18px, rgba(3,188,223,0.16) 1.5px, transparent 1.5px);
+    background-size:26px 26px;
+    padding:22px 28px 18px;
+  }
+  .picker-top{
+    display:flex;align-items:center;justify-content:space-between;
+    max-width:1320px;margin:0 auto 16px;flex-wrap:wrap;gap:12px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand svg{display:block;}
+  .brand-text{color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px;letter-spacing:.2px;}
+  .brand-text span{color:var(--cyan);}
+  .brand-sub{color:#9FB3C8;font-size:11.5px;margin-top:1px;letter-spacing:.3px;}
+  .picker-label{color:#9FB3C8;font-size:12px;letter-spacing:.4px;text-transform:uppercase;}
+
+  .tabs{
+    display:flex;gap:8px;max-width:1320px;margin:0 auto;flex-wrap:wrap;
+  }
+  .tab-btn{
+    appearance:none;border:1px solid rgba(255,255,255,0.14);
+    background:rgba(255,255,255,0.04);
+    color:#CBD8E6;padding:10px 16px;border-radius:999px;
+    font-family:'Inter',sans-serif;font-size:13.5px;font-weight:600;
+    cursor:pointer;transition:all .15s ease;display:flex;align-items:center;gap:8px;
+  }
+  .tab-btn:hover{background:rgba(255,255,255,0.09);color:#fff;}
+  .tab-btn.active{background:var(--cyan);border-color:var(--cyan);color:var(--navy);}
+  .tab-btn .dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.6;}
+
+  /* ---------- app shell ---------- */
+  .stage{max-width:1320px;margin:22px auto 60px;padding:0 28px;}
+  .app-frame{
+    display:flex;background:var(--white);border-radius:18px;overflow:hidden;
+    box-shadow:var(--shadow); border:1px solid var(--line); min-height:760px;
+  }
+  .sidebar{
+    width:222px;background:var(--navy);flex-shrink:0;
+    display:flex;flex-direction:column;padding:20px 14px;
+  }
+  .side-logo{display:flex;align-items:center;gap:9px;padding:4px 8px 22px;}
+  .side-logo-text{color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;}
+  .side-logo-text span{color:var(--cyan);}
+  .side-crumb{color:#8CA3BC;font-size:10.5px;padding:0 8px 16px;letter-spacing:.3px;}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;
+    color:#B7C7DA;font-size:13.5px;font-weight:500;margin-bottom:2px;cursor:default;
+  }
+  .nav-item svg{opacity:.85;flex-shrink:0;}
+  .nav-item.current{background:rgba(3,188,223,0.14);color:#fff;}
+  .nav-item.current svg{stroke:var(--cyan);opacity:1;}
+  .side-foot{margin-top:auto;padding:14px 10px 4px;border-top:1px solid rgba(255,255,255,0.08);}
+  .side-user{display:flex;align-items:center;gap:9px;}
+  .avatar{
+    width:30px;height:30px;border-radius:50%;background:var(--cyan);
+    color:var(--navy);font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;
+    font-family:'Space Grotesk',sans-serif;flex-shrink:0;
+  }
+  .side-user-name{color:#fff;font-size:12.5px;font-weight:600;}
+  .side-user-role{color:#8CA3BC;font-size:10.5px;}
+
+  .main{flex:1;display:flex;flex-direction:column;min-width:0;}
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 26px;border-bottom:1px solid var(--line);gap:16px;flex-wrap:wrap;
+  }
+  .topbar h1{font-size:19px;}
+  .topbar-sub{color:var(--gray);font-size:12.5px;margin-top:2px;}
+  .search{
+    display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);
+    border-radius:10px;padding:8px 12px;font-size:12.5px;color:var(--gray);min-width:220px;
+  }
+  .topbar-right{display:flex;align-items:center;gap:14px;}
+  .bell{position:relative;color:var(--navy);}
+  .bell::after{content:'';position:absolute;top:-2px;right:-2px;width:7px;height:7px;background:var(--danger);border-radius:50%;border:1.5px solid #fff;}
+  .content{padding:24px 26px 32px;overflow:auto;}
+
+  /* section header w/ signature circuit divider */
+  .sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+  .sec-head h2{font-size:16px;}
+  .circuit-div{display:flex;align-items:center;gap:5px;margin:6px 0 18px;}
+  .circuit-div .node{width:7px;height:7px;border:1.6px solid var(--cyan);border-radius:50%;background:#fff;flex-shrink:0;}
+  .circuit-div .node.on{background:var(--cyan);}
+  .circuit-div .seg{flex:1;height:1.4px;background:var(--line);}
+
+  .grid{display:grid;gap:16px;}
+  .g4{grid-template-columns:repeat(4,1fr);}
+  .g3{grid-template-columns:2fr 1fr;}
+  .g2{grid-template-columns:1fr 1fr;}
+  @media(max-width:980px){.g4{grid-template-columns:repeat(2,1fr);}.g3{grid-template-columns:1fr;}}
+
+  .card{
+    background:var(--white);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px;
+  }
+  .kpi-label{font-size:12px;color:var(--gray);font-weight:600;letter-spacing:.2px;}
+  .kpi-value{font-family:'Space Grotesk',sans-serif;font-size:28px;color:var(--navy);font-weight:700;margin-top:6px;}
+  .kpi-delta{font-size:11.5px;margin-top:6px;font-weight:600;display:inline-flex;align-items:center;gap:4px;}
+  .kpi-delta.up{color:var(--success);}
+  .kpi-delta.down{color:var(--danger);}
+  .kpi-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;}
+
+  .badge{
+    display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;
+    font-size:11px;font-weight:700;letter-spacing:.2px;
+  }
+  .badge.success{background:var(--success-tint);color:var(--success);}
+  .badge.warning{background:var(--warning-tint);color:var(--warning);}
+  .badge.danger{background:var(--danger-tint);color:var(--danger);}
+  .badge.info{background:var(--cyan-tint);color:var(--cyan-dark);}
+  .badge.neutral{background:#EEF0F3;color:var(--gray);}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;color:var(--gray);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.3px;padding:0 10px 10px;border-bottom:1px solid var(--line);}
+  td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  .stu{display:flex;align-items:center;gap:9px;}
+  .stu-av{width:28px;height:28px;border-radius:50%;background:var(--navy-2);color:#fff;font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;flex-shrink:0;}
+  .stu-name{font-weight:600;font-size:12.8px;}
+  .stu-id{color:var(--gray);font-size:11px;}
+  .grade-input{
+    width:44px;text-align:center;border:1px solid var(--line);border-radius:7px;padding:6px 4px;
+    font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:500;color:var(--navy);background:var(--bg);
+  }
+  .grade-input.low{border-color:var(--danger);color:var(--danger);background:var(--danger-tint);}
+  .freq-dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+  .freq-dot.p{background:var(--success);}
+  .freq-dot.f{background:var(--danger);}
+  .freq-dot.j{background:var(--warning);}
+
+  .tag{display:inline-block;background:var(--cyan-tint);color:var(--navy-2);font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:7px;margin:0 5px 5px 0;}
+
+  .btn{
+    appearance:none;border:none;border-radius:9px;padding:9px 16px;font-family:'Inter';font-size:12.8px;font-weight:600;cursor:default;display:inline-flex;align-items:center;gap:7px;
+  }
+  .btn.primary{background:var(--navy);color:#fff;}
+  .btn.accent{background:var(--cyan);color:var(--navy);}
+  .btn.ghost{background:var(--white);color:var(--navy);border:1px solid var(--line);}
+
+  .subtabs{display:flex;gap:4px;background:var(--bg);padding:4px;border-radius:10px;width:fit-content;margin-bottom:16px;}
+  .subtab{padding:7px 14px;border-radius:7px;font-size:12.5px;font-weight:600;color:var(--gray);}
+  .subtab.on{background:#fff;color:var(--navy);box-shadow:0 1px 2px rgba(6,46,92,.1);}
+
+  /* bar chart */
+  .bars{display:flex;align-items:flex-end;gap:10px;height:150px;padding-top:10px;}
+  .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:8px;}
+  .bar{width:100%;border-radius:6px 6px 3px 3px;background:linear-gradient(180deg,var(--cyan),var(--navy-3));}
+  .bar-label{font-size:10.5px;color:var(--gray);font-weight:600;}
+
+  /* stepper */
+  .stepper{display:flex;align-items:center;margin-bottom:22px;}
+  .step{display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;flex:1;}
+  .step-circle{width:30px;height:30px;border-radius:50%;border:2px solid var(--gray-2);background:#fff;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk';font-weight:700;font-size:12.5px;color:var(--gray);z-index:2;}
+  .step.done .step-circle{border-color:var(--cyan);background:var(--cyan);color:var(--navy);}
+  .step.active .step-circle{border-color:var(--navy);color:var(--navy);box-shadow:0 0 0 4px var(--cyan-tint);}
+  .step-label{font-size:11px;font-weight:600;color:var(--gray);text-align:center;}
+  .step.done .step-label,.step.active .step-label{color:var(--navy);}
+  .step-line{position:absolute;top:15px;left:-50%;width:100%;height:2px;background:var(--gray-2);z-index:1;}
+  .step.done .step-line{background:var(--cyan);}
+  .step:first-child .step-line{display:none;}
+
+  .list-row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--line);gap:12px;}
+  .list-row:last-child{border-bottom:none;}
+  .list-left{display:flex;align-items:center;gap:11px;}
+  .file-ic{width:32px;height:32px;border-radius:8px;background:var(--cyan-tint);color:var(--cyan-dark);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .list-title{font-size:13px;font-weight:600;}
+  .list-sub{font-size:11.5px;color:var(--gray);margin-top:2px;}
+
+  /* phone mockup */
+  .phone-wrap{display:flex;gap:22px;flex-wrap:wrap;}
+  .phone{
+    width:300px;background:var(--navy);border-radius:34px;padding:10px;box-shadow:var(--shadow);flex-shrink:0;
+  }
+  .phone-screen{background:var(--bg);border-radius:26px;overflow:hidden;height:600px;display:flex;flex-direction:column;}
+  .phone-status{display:flex;justify-content:space-between;padding:12px 18px 4px;font-size:10.5px;color:var(--navy);font-weight:600;}
+  .phone-head{background:var(--navy);color:#fff;padding:14px 18px 20px;border-radius:0 0 20px 20px;}
+  .phone-head .hi{font-size:11px;color:#9FB3C8;}
+  .phone-head .name{font-family:'Space Grotesk';font-weight:700;font-size:16px;margin-top:2px;}
+  .phone-body{padding:14px;flex:1;overflow:auto;}
+  .phone-card{background:#fff;border-radius:14px;padding:13px;margin-bottom:10px;border:1px solid var(--line);}
+  .phone-nav{display:flex;justify-content:space-around;padding:12px 6px;border-top:1px solid var(--line);background:#fff;}
+  .phone-nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--gray-2);font-size:9px;font-weight:600;}
+  .phone-nav-item.on{color:var(--cyan-dark);}
+
+  .ring{width:56px;height:56px;border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .ring svg{position:absolute;top:0;left:0;transform:rotate(-90deg);}
+  .ring-val{font-family:'Space Grotesk';font-weight:700;font-size:13px;color:var(--navy);}
+
+  /* architecture diagram */
+  .arch{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap;padding:30px 10px;}
+  .arch-node{
+    background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:16px 18px;width:168px;text-align:center;box-shadow:var(--shadow);
+  }
+  .arch-node.core{border-color:var(--navy);background:var(--navy);color:#fff;}
+  .arch-node.core .arch-ic{background:rgba(3,188,223,0.18);}
+  .arch-node .arch-ic{width:36px;height:36px;border-radius:10px;background:var(--cyan-tint);color:var(--cyan-dark);display:flex;align-items:center;justify-content:center;margin:0 auto 9px;}
+  .arch-node.core .arch-ic svg{stroke:var(--cyan);}
+  .arch-title{font-family:'Space Grotesk';font-weight:700;font-size:12.5px;}
+  .arch-node.core .arch-title{color:#fff;}
+  .arch-sub{font-size:10px;color:var(--gray);margin-top:3px;}
+  .arch-node.core .arch-sub{color:#9FB3C8;}
+  .arch-col{display:flex;flex-direction:column;gap:16px;}
+  .arch-connector{width:64px;height:2px;background:repeating-linear-gradient(90deg,var(--cyan) 0 6px,transparent 6px 10px);position:relative;flex-shrink:0;}
+  .arch-connector::after,.arch-connector::before{content:'';position:absolute;top:50%;width:6px;height:6px;border-radius:50%;background:var(--cyan);transform:translateY(-50%);}
+  .arch-connector::before{left:-3px;}
+  .arch-connector::after{right:-3px;}
+
+  .foot-note{max-width:1320px;margin:0 auto;padding:0 28px 40px;color:var(--gray);font-size:12px;text-align:center;}
+</style>
+</head>
+<body>
+
+<div class="picker-wrap">
+  <div class="picker-top">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 100 100" fill="none">
+        <circle cx="76" cy="10" r="6" stroke="#03BCDF" stroke-width="5"/>
+        <circle cx="18" cy="46" r="6" stroke="#03BCDF" stroke-width="5"/>
+        <circle cx="76" cy="90" r="6" stroke="#03BCDF" stroke-width="5"/>
+        <path d="M76 16 V38 L38 16 V60 L18 52 M76 84 V62 L38 84 V44" stroke="#03BCDF" stroke-width="5" fill="none" stroke-linejoin="round"/>
+      </svg>
+      <div>
+        <div class="brand-text">NOVUS<span>.AI</span></div>
+        <div class="brand-sub">Referência de UI — Módulo Educacional</div>
+      </div>
+    </div>
+    <div class="picker-label">Selecione um módulo para visualizar →</div>
+  </div>
+  <div class="tabs" id="tabs">
+    <button class="tab-btn active" data-tab="overview"><span class="dot"></span>Visão Geral (ERP)</button>
+    <button class="tab-btn" data-tab="academico"><span class="dot"></span>Acadêmico</button>
+    <button class="tab-btn" data-tab="secretaria"><span class="dot"></span>Secretaria</button>
+    <button class="tab-btn" data-tab="familia"><span class="dot"></span>Portal Família</button>
+    <button class="tab-btn" data-tab="integracao"><span class="dot"></span>Integração ERP</button>
+  </div>
+</div>
+
+<div class="stage">
+<div class="app-frame">
+
+  <!-- SIDEBAR (shared) -->
+  <div class="sidebar">
+    <div class="side-logo">
+      <svg width="20" height="20" viewBox="0 0 100 100" fill="none"><circle cx="76" cy="10" r="7" stroke="#03BCDF" stroke-width="6"/><circle cx="18" cy="46" r="7" stroke="#03BCDF" stroke-width="6"/><circle cx="76" cy="90" r="7" stroke="#03BCDF" stroke-width="6"/><path d="M76 16 V38 L38 16 V60 L18 52 M76 84 V62 L38 84 V44" stroke="#03BCDF" stroke-width="6" fill="none" stroke-linejoin="round"/></svg>
+      <div class="side-logo-text">NOVUS<span>.AI</span></div>
+    </div>
+    <div class="side-crumb" id="crumb">ERP · Educacional · Visão Geral</div>
+
+    <div class="nav-item current" id="nav-overview"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Visão geral</div>
+    <div class="nav-item" id="nav-academico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5v13Z"/><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/></svg>Acadêmico</div>
+    <div class="nav-item" id="nav-secretaria"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="M9 13h6M9 17h6"/></svg>Secretaria</div>
+    <div class="nav-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10h18M7 15h1M12 15h1"/><rect x="3" y="5" width="18" height="16" rx="2"/></svg>Financeiro</div>
+    <div class="nav-item" id="nav-familia"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg>Portal Família</div>
+    <div class="nav-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>Relatórios / BI</div>
+    <div class="nav-item" id="nav-integracao"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8 7l3 9M16 7l-3 9"/></svg>Integração ERP</div>
+
+    <div class="side-foot">
+      <div class="side-user">
+        <div class="avatar">MC</div>
+        <div>
+          <div class="side-user-name">Max Costa</div>
+          <div class="side-user-role">Administrador · Novus.AI</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="top-title">Visão geral do módulo educacional</h1>
+        <div class="topbar-sub" id="top-sub">Colégio Horizonte · Ano letivo 2026</div>
+      </div>
+      <div class="topbar-right">
+        <div class="search">🔎 Buscar aluno, turma, documento…</div>
+        <div class="bell">🔔</div>
+        <div class="avatar">MC</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ===================== TAB 1: VISÃO GERAL ===================== -->
+      <div class="tab-pane" id="pane-overview">
+        <div class="grid g4" style="margin-bottom:18px;">
+          <div class="card">
+            <div class="kpi-icon" style="background:var(--cyan-tint);color:var(--cyan-dark);">🎓</div>
+            <div class="kpi-label">Alunos ativos</div>
+            <div class="kpi-value">2.318</div>
+            <div class="kpi-delta up">↑ 4,2% vs. mês anterior</div>
+          </div>
+          <div class="card">
+            <div class="kpi-icon" style="background:var(--success-tint);color:var(--success);">✓</div>
+            <div class="kpi-label">Frequência média</div>
+            <div class="kpi-value">94,6%</div>
+            <div class="kpi-delta up">↑ 0,8 p.p.</div>
+          </div>
+          <div class="card">
+            <div class="kpi-icon" style="background:var(--warning-tint);color:var(--warning);">⚠</div>
+            <div class="kpi-label">Risco de evasão (IA)</div>
+            <div class="kpi-value">37</div>
+            <div class="kpi-delta down">alunos sinalizados</div>
+          </div>
+          <div class="card">
+            <div class="kpi-icon" style="background:var(--danger-tint);color:var(--danger);">R$</div>
+            <div class="kpi-label">Inadimplência</div>
+            <div class="kpi-value">6,1%</div>
+            <div class="kpi-delta down">↓ 1,1 p.p. vs. mês anterior</div>
+          </div>
+        </div>
+
+        <div class="grid g3">
+          <div class="card">
+            <div class="sec-head"><h2>Matrículas por mês</h2><span class="badge info">2026</span></div>
+            <div class="circuit-div"><div class="node on"></div><div class="seg"></div><div class="node on"></div><div class="seg"></div><div class="node"></div></div>
+            <div class="bars">
+              <div class="bar-col"><div class="bar" style="height:52%"></div><div class="bar-label">Fev</div></div>
+              <div class="bar-col"><div class="bar" style="height:38%"></div><div class="bar-label">Mar</div></div>
+              <div class="bar-col"><div class="bar" style="height:61%"></div><div class="bar-label">Abr</div></div>
+              <div class="bar-col"><div class="bar" style="height:47%"></div><div class="bar-label">Mai</div></div>
+              <div class="bar-col"><div class="bar" style="height:73%"></div><div class="bar-label">Jun</div></div>
+              <div class="bar-col"><div class="bar" style="height:88%"></div><div class="bar-label">Jul</div></div>
+              <div class="bar-col"><div class="bar" style="height:100%"></div><div class="bar-label">Ago</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="sec-head"><h2>Sincronização ERP</h2></div>
+            <div class="circuit-div"><div class="node on"></div><div class="seg"></div><div class="node on"></div><div class="seg"></div><div class="node on"></div></div>
+            <div class="list-row"><div class="list-left"><div class="file-ic">💳</div><div><div class="list-title">Financeiro ERP</div><div class="list-sub">Última sinc.: há 4 min</div></div></div><span class="badge success">Ativo</span></div>
+            <div class="list-row"><div class="list-left"><div class="file-ic">👥</div><div><div class="list-title">RH / Folha</div><div class="list-sub">Última sinc.: há 1h</div></div></div><span class="badge success">Ativo</span></div>
+            <div class="list-row"><div class="list-left"><div class="file-ic">🏛️</div><div><div class="list-title">Censo Escolar / INEP</div><div class="list-sub">Pendente de envio</div></div></div><span class="badge warning">Pendente</span></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px;">
+          <div class="sec-head"><h2>Alertas de risco de evasão — IA preditiva</h2><span class="badge neutral">37 alunos</span></div>
+          <table>
+            <tr><th>Aluno</th><th>Turma</th><th>Frequência</th><th>Fator de risco</th><th>Nível</th><th></th></tr>
+            <tr><td><div class="stu"><div class="stu-av">LR</div><div><div class="stu-name">Lucas Ramires</div><div class="stu-id">#8834</div></div></div></td><td>9º B</td><td>78%</td><td>Queda de notas + faltas</td><td><span class="badge danger">Alto</span></td><td><span class="btn ghost" style="padding:5px 12px;">Ver</span></td></tr>
+            <tr><td><div class="stu"><div class="stu-av">JS</div><div><div class="stu-name">Julia Sales</div><div class="stu-id">#9021</div></div></div></td><td>1ª série EM</td><td>85%</td><td>Faltas recorrentes às segundas</td><td><span class="badge warning">Médio</span></td><td><span class="btn ghost" style="padding:5px 12px;">Ver</span></td></tr>
+            <tr><td><div class="stu"><div class="stu-av">PA</div><div><div class="stu-name">Pedro Andrade</div><div class="stu-id">#7710</div></div></div></td><td>7º A</td><td>90%</td><td>Queda em Matemática</td><td><span class="badge warning">Médio</span></td><td><span class="btn ghost" style="padding:5px 12px;">Ver</span></td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===================== TAB 2: ACADÊMICO ===================== -->
+      <div class="tab-pane" id="pane-academico" style="display:none;">
+        <div class="subtabs">
+          <div class="subtab on">Diário de classe</div>
+          <div class="subtab">Frequência</div>
+          <div class="subtab">Plano de aula</div>
+          <div class="subtab">Boletim</div>
+        </div>
+
+        <div class="grid g3">
+          <div class="card">
+            <div class="sec-head">
+              <h2>9º ano B · Matemática</h2>
+              <span class="badge info">3ª etapa · 2026</span>
+            </div>
+            <div class="circuit-div"><div class="node on"></div><div class="seg"></div><div class="node on"></div><div class="seg"></div><div class="node"></div><div class="seg"></div><div class="node"></div></div>
+            <table>
+              <tr><th>Aluno</th><th>Freq.</th><th>Av. 1</th><th>Av. 2</th><th>Trab.</th><th>Média</th></tr>
+              <tr><td><div class="stu"><div class="stu-av">AC</div><div><div class="stu-name">Ana Clara Souza</div><div class="stu-id">#8801</div></div></div></td><td><span class="freq-dot p"></span></td><td><input class="grade-input" value="8,5"></td><td><input class="grade-input" value="7,8"></td><td><input class="grade-input" value="9,0"></td><td><b>8,4</b></td></tr>
+              <tr><td><div class="stu"><div class="stu-av">LR</div><div><div class="stu-name">Lucas Ramires</div><div class="stu-id">#8834</div></div></div></td><td><span class="freq-dot f"></span></td><td><input class="grade-input low" value="4,2"></td><td><input class="grade-input low" value="5,0"></td><td><input class="grade-input" value="6,5"></td><td><b style="color:var(--danger)">5,2</b></td></tr>
+              <tr><td><div class="stu"><div class="stu-av">BM</div><div><div class="stu-name">Bruno Martins</div><div class="stu-id">#8850</div></div></div></td><td><span class="freq-dot j"></span></td><td><input class="grade-input" value="7,0"></td><td><input class="grade-input" value="7,5"></td><td><input class="grade-input" value="8,0"></td><td><b>7,5</b></td></tr>
+              <tr><td><div class="stu"><div class="stu-av">CF</div><div><div class="stu-name">Carla Ferreira</div><div class="stu-id">#8862</div></div></div></td><td><span class="freq-dot p"></span></td><td><input class="grade-input" value="9,5"></td><td><input class="grade-input" value="9,0"></td><td><input class="grade-input" value="10,0"></td><td><b>9,5</b></td></tr>
+            </table>
+            <div style="display:flex;gap:10px;margin-top:16px;">
+              <span class="btn primary">Salvar lançamentos</span>
+              <span class="btn ghost">Exportar boletim</span>
+            </div>
+          </div>
+
+          <div>
+            <div class="card" style="margin-bottom:16px;">
+              <h2 style="font-size:14px;margin-bottom:10px;">Habilidades BNCC — aula de hoje</h2>
+              <div class="tag">EF09MA09</div><div class="tag">EF09MA11</div><div class="tag">Funções quadráticas</div><div class="tag">Resolução de problemas</div>
+            </div>
+            <div class="card" style="margin-bottom:16px;">
+              <h2 style="font-size:14px;margin-bottom:10px;">Conselho de classe</h2>
+              <div class="list-row"><div class="list-title">Ata da 3ª etapa</div><span class="badge success">Concluída</span></div>
+              <div class="list-row"><div class="list-title">Pareceres pendentes</div><span class="badge warning">6</span></div>
+            </div>
+            <div class="card">
+              <h2 style="font-size:14px;margin-bottom:10px;">Educação inclusiva</h2>
+              <div class="list-row"><div class="list-title">PEI ativos na turma</div><span class="badge info">3 alunos</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== TAB 3: SECRETARIA ===================== -->
+      <div class="tab-pane" id="pane-secretaria" style="display:none;">
+        <div class="card" style="margin-bottom:16px;">
+          <div class="sec-head"><h2>Nova matrícula</h2><span class="badge info">Ano letivo 2027</span></div>
+          <div class="stepper">
+            <div class="step done"><div class="step-line"></div><div class="step-circle">✓</div><div class="step-label">Dados do<br>aluno</div></div>
+            <div class="step done"><div class="step-line"></div><div class="step-circle">✓</div><div class="step-label">Documentos</div></div>
+            <div class="step active"><div class="step-line"></div><div class="step-circle">3</div><div class="step-label">Responsáveis</div></div>
+            <div class="step"><div class="step-line"></div><div class="step-circle">4</div><div class="step-label">Financeiro</div></div>
+            <div class="step"><div class="step-line"></div><div class="step-circle">5</div><div class="step-label">Confirmação</div></div>
+          </div>
+          <div class="grid g2">
+            <div class="card" style="background:var(--bg);border-style:dashed;">
+              <div class="list-sub" style="margin-bottom:6px;">Responsável financeiro</div>
+              <div class="list-title" style="font-size:14px;">Renata Souza — CPF ●●●.●●●.●●●-00</div>
+            </div>
+            <div class="card" style="background:var(--bg);border-style:dashed;">
+              <div class="list-sub" style="margin-bottom:6px;">Responsável pedagógico</div>
+              <div class="list-title" style="font-size:14px;">Marcos Souza — vínculo: pai</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
+            <span class="btn ghost">Voltar</span>
+            <span class="btn accent">Avançar →</span>
+          </div>
+        </div>
+
+        <div class="grid g3">
+          <div class="card">
+            <div class="sec-head"><h2>Solicitações de documentos</h2></div>
+            <div class="list-row"><div class="list-left"><div class="file-ic">📄</div><div><div class="list-title">Histórico escolar — Ana Clara Souza</div><div class="list-sub">Solicitado em 28/07</div></div></div><span class="badge success">Pronto</span></div>
+            <div class="list-row"><div class="list-left"><div class="file-ic">📄</div><div><div class="list-title">Declaração de matrícula — Bruno Martins</div><div class="list-sub">Solicitado em 30/07</div></div></div><span class="badge warning">Em análise</span></div>
+            <div class="list-row"><div class="list-left"><div class="file-ic">📄</div><div><div class="list-title">Guia de transferência — Pedro Andrade</div><div class="list-sub">Solicitado em 01/08</div></div></div><span class="badge neutral">Aguardando assinatura</span></div>
+          </div>
+          <div class="card">
+            <h2 style="font-size:14px;margin-bottom:10px;">Calendário letivo</h2>
+            <div class="list-row"><div class="list-title">Dias letivos cumpridos</div><b>134 / 200</b></div>
+            <div class="list-row"><div class="list-title">Próximo recesso</div><b>15/09</b></div>
+            <div class="list-row"><div class="list-title">Reposições pendentes</div><span class="badge warning">2 turmas</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== TAB 4: PORTAL FAMÍLIA ===================== -->
+      <div class="tab-pane" id="pane-familia" style="display:none;">
+        <div class="sec-head"><h2>Portal Família &amp; Aluno — visualização mobile</h2></div>
+        <div class="circuit-div"><div class="node on"></div><div class="seg"></div><div class="node on"></div><div class="seg"></div><div class="node on"></div><div class="seg"></div><div class="node"></div></div>
+        <div class="phone-wrap">
+
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="phone-status"><span>9:41</span><span>📶 🔋</span></div>
+              <div class="phone-head">
+                <div class="hi">Olá,</div>
+                <div class="name">Renata Souza</div>
+              </div>
+              <div class="phone-body">
+                <div class="phone-card" style="display:flex;align-items:center;gap:12px;">
+                  <div class="ring">
+                    <svg width="56" height="56"><circle cx="28" cy="28" r="24" stroke="#E5E8EC" stroke-width="5" fill="none"/><circle cx="28" cy="28" r="24" stroke="#03BCDF" stroke-width="5" fill="none" stroke-dasharray="151" stroke-dashoffset="14" stroke-linecap="round"/></svg>
+                    <div class="ring-val">91%</div>
+                  </div>
+                  <div><div class="list-title">Frequência — Ana Clara</div><div class="list-sub">9º ano B · 3ª etapa</div></div>
+                </div>
+                <div class="phone-card">
+                  <div class="list-title" style="margin-bottom:8px;">Boletim recente</div>
+                  <div class="list-row" style="padding:6px 0;"><div class="list-sub">Matemática</div><b class="mono">8,4</b></div>
+                  <div class="list-row" style="padding:6px 0;"><div class="list-sub">Português</div><b class="mono">9,1</b></div>
+                  <div class="list-row" style="padding:6px 0;"><div class="list-sub">Ciências</div><b class="mono">8,8</b></div>
+                </div>
+                <div class="phone-card">
+                  <div class="list-title" style="margin-bottom:6px;">Agenda de hoje</div>
+                  <div class="list-sub">14h · Reunião de pais — 3ª etapa</div>
+                  <div class="list-sub" style="margin-top:5px;">Amanhã · Passeio ao museu — autorizar</div>
+                </div>
+                <div class="phone-card" style="background:var(--cyan-tint);border-color:var(--cyan-tint-2);">
+                  <div class="list-title" style="margin-bottom:4px;">2ª via disponível</div>
+                  <div class="list-sub">Mensalidade de agosto · vence em 10/08</div>
+                  <div class="btn accent" style="margin-top:10px;width:100%;justify-content:center;">Pagar com Pix</div>
+                </div>
+              </div>
+              <div class="phone-nav">
+                <div class="phone-nav-item on">🏠<span>Início</span></div>
+                <div class="phone-nav-item">📚<span>Notas</span></div>
+                <div class="phone-nav-item">📅<span>Agenda</span></div>
+                <div class="phone-nav-item">💬<span>Mensagens</span></div>
+                <div class="phone-nav-item">👤<span>Perfil</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="phone-status"><span>9:41</span><span>📶 🔋</span></div>
+              <div class="phone-head" style="padding-bottom:14px;">
+                <div class="hi">Justificar falta</div>
+                <div class="name" style="font-size:14px;">Ana Clara Souza · 9º B</div>
+              </div>
+              <div class="phone-body">
+                <div class="phone-card">
+                  <div class="list-sub" style="margin-bottom:5px;">Data da falta</div>
+                  <div class="list-title">31 de julho de 2026</div>
+                </div>
+                <div class="phone-card">
+                  <div class="list-sub" style="margin-bottom:5px;">Motivo</div>
+                  <div class="tag" style="background:var(--navy);color:#fff;">Atestado médico</div>
+                  <div class="tag">Compromisso familiar</div>
+                  <div class="tag">Outro</div>
+                </div>
+                <div class="phone-card">
+                  <div class="list-sub" style="margin-bottom:5px;">Anexo</div>
+                  <div class="list-row" style="padding:8px 0;"><div class="list-left"><div class="file-ic">📎</div><div class="list-title" style="font-size:12px;">atestado_31jul.pdf</div></div><span class="badge success">Enviado</span></div>
+                </div>
+                <div class="btn primary" style="width:100%;justify-content:center;margin-top:6px;">Enviar justificativa</div>
+                <div class="phone-card" style="margin-top:14px;">
+                  <div class="list-title" style="margin-bottom:8px;">Conversa com a coordenação</div>
+                  <div class="list-sub">Coord. Marina — "Recebido, obrigada! Vou registrar no sistema."</div>
+                </div>
+              </div>
+              <div class="phone-nav">
+                <div class="phone-nav-item">🏠<span>Início</span></div>
+                <div class="phone-nav-item">📚<span>Notas</span></div>
+                <div class="phone-nav-item">📅<span>Agenda</span></div>
+                <div class="phone-nav-item on">💬<span>Mensagens</span></div>
+                <div class="phone-nav-item">👤<span>Perfil</span></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ===================== TAB 5: INTEGRAÇÃO ERP ===================== -->
+      <div class="tab-pane" id="pane-integracao" style="display:none;">
+        <div class="sec-head"><h2>Arquitetura — módulo satélite do ERP Novus</h2></div>
+        <div class="circuit-div"><div class="node on"></div><div class="seg"></div><div class="node on"></div><div class="seg"></div><div class="node on"></div><div class="seg"></div><div class="node on"></div></div>
+
+        <div class="card">
+          <div class="arch">
+            <div class="arch-col">
+              <div class="arch-node"><div class="arch-ic">🎓</div><div class="arch-title">Acadêmico</div><div class="arch-sub">Notas · frequência</div></div>
+              <div class="arch-node"><div class="arch-ic">🗂️</div><div class="arch-title">Secretaria</div><div class="arch-sub">Matrícula · docs</div></div>
+            </div>
+            <div class="arch-connector"></div>
+            <div class="arch-node core">
+              <div class="arch-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#03BCDF" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg></div>
+              <div class="arch-title">ERP Novus.AI<br>Core</div>
+              <div class="arch-sub">Orquestração central · API Gateway</div>
+            </div>
+            <div class="arch-connector"></div>
+            <div class="arch-col">
+              <div class="arch-node"><div class="arch-ic">💳</div><div class="arch-title">Financeiro</div><div class="arch-sub">Cobrança · Pix</div></div>
+              <div class="arch-node"><div class="arch-ic">👥</div><div class="arch-title">RH / Folha</div><div class="arch-sub">Professores · e-Social</div></div>
+              <div class="arch-node"><div class="arch-ic">📊</div><div class="arch-title">BI / Dashboards</div><div class="arch-sub">Indicadores multi-unidade</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid g2" style="margin-top:16px;">
+          <div class="card">
+            <div class="sec-head"><h2>Status de APIs &amp; webhooks</h2></div>
+            <div class="list-row"><div class="list-left"><div class="file-ic mono" style="font-size:10px;">POST</div><div><div class="list-title">/v1/matriculas</div><div class="list-sub">148ms · última chamada há 2 min</div></div></div><span class="badge success">Online</span></div>
+            <div class="list-row"><div class="list-left"><div class="file-ic mono" style="font-size:10px;">GET</div><div><div class="list-title">/v1/boletins/:aluno_id</div><div class="list-sub">92ms · última chamada há 1 min</div></div></div><span class="badge success">Online</span></div>
+            <div class="list-row"><div class="list-left"><div class="file-ic mono" style="font-size:10px;">WH</div><div><div class="list-title">webhook · pagamento.confirmado</div><div class="list-sub">Financeiro ERP → Educacional</div></div></div><span class="badge success">Online</span></div>
+            <div class="list-row"><div class="list-left"><div class="file-ic mono" style="font-size:10px;">SSO</div><div><div class="list-title">Federação de identidade</div><div class="list-sub">Login único — ecossistema Novus</div></div></div><span class="badge info">Configurado</span></div>
+          </div>
+          <div class="card">
+            <div class="sec-head"><h2>Multi-unidade</h2></div>
+            <table>
+              <tr><th>Unidade</th><th>Alunos</th><th>Sinc.</th></tr>
+              <tr><td>Colégio Horizonte — Sede</td><td>2.318</td><td><span class="badge success">Ok</span></td></tr>
+              <tr><td>Colégio Horizonte — Norte</td><td>1.104</td><td><span class="badge success">Ok</span></td></tr>
+              <tr><td>Colégio Horizonte — Sul</td><td>876</td><td><span class="badge warning">Sincronizando</span></td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="foot-note">Mockup de referência — Novus.AI · conteúdo fictício para fins de design. Cores extraídas da identidade visual da marca.</div>
+
+<script>
+  const tabs = document.querySelectorAll('.tab-btn');
+  const panes = { overview:'pane-overview', academico:'pane-academico', secretaria:'pane-secretaria', familia:'pane-familia', integracao:'pane-integracao' };
+  const navs = { overview:'nav-overview', academico:'nav-academico', secretaria:'nav-secretaria', familia:'nav-familia', integracao:'nav-integracao' };
+  const titles = {
+    overview:['Visão geral do módulo educacional','Colégio Horizonte · Ano letivo 2026'],
+    academico:['Módulo Acadêmico','Diário de classe · 9º ano B · Matemática'],
+    secretaria:['Secretaria','Matrículas, documentos e prontuários'],
+    familia:['Portal Família & Aluno','Experiência mobile-first para responsáveis'],
+    integracao:['Integração ERP','Módulo educacional como satélite do Novus ERP']
+  };
+  const crumbs = {
+    overview:'ERP · Educacional · Visão Geral', academico:'ERP · Educacional · Acadêmico',
+    secretaria:'ERP · Educacional · Secretaria', familia:'ERP · Educacional · Portal Família',
+    integracao:'ERP · Educacional · Integração'
+  };
+  tabs.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      tabs.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      Object.values(panes).forEach(id=>document.getElementById(id).style.display='none');
+      Object.values(navs).forEach(id=>document.getElementById(id).classList.remove('current'));
+      const key = btn.dataset.tab;
+      document.getElementById(panes[key]).style.display='block';
+      if(navs[key]) document.getElementById(navs[key]).classList.add('current');
+      document.getElementById('top-title').innerText = titles[key][0];
+      document.getElementById('top-sub').innerText = titles[key][1];
+      document.getElementById('crumb').innerText = crumbs[key];
+    });
+  });
+</script>
+
+</body>
+</html>

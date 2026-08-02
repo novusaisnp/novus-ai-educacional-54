@@ -431,6 +431,18 @@ export const sidebarData = {
           url: "/app/secretaria/visitantes",
         },
         {
+          title: "Reservas de Vaga",
+          url: "/app/secretaria/reservas",
+        },
+        {
+          title: "Solicitações",
+          url: "/app/secretaria/solicitacoes",
+        },
+        {
+          title: "Rematrícula",
+          url: "/app/secretaria/rematricula",
+        },
+        {
           title: "Responsáveis",
           url: "/app/secretaria/responsaveis",
         },

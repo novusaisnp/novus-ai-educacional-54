@@ -9,14 +9,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { EnrollmentInsert, EnrollmentUpdate } from '@/integrations/supabase/db-types';
+import { ReEnrollmentInsert } from '@/integrations/supabase/db-types';
 import { SecretariaModalContext } from '../types';
 
 const reenrollmentSchema = z.object({
   student_id: z.string().uuid('Selecione um aluno'),
   new_class_id: z.string().uuid('Selecione uma nova turma'),
-  enrollment_date: z.string().min(1, 'Data de matrícula obrigatória'),
-  previous_class: z.string().optional(),
+  guardian_name: z.string().optional(),
+  guardian_phone: z.string().optional(),
   observations: z.string().optional(),
 });
 
@@ -37,8 +37,8 @@ export function SubmodalRematricula({ context, editingReenrollment, onEditingCha
     defaultValues: {
       student_id: '',
       new_class_id: '',
-      enrollment_date: new Date().toISOString().split('T')[0],
-      previous_class: '',
+      guardian_name: '',
+      guardian_phone: '',
       observations: '',
     },
   });
@@ -52,7 +52,7 @@ export function SubmodalRematricula({ context, editingReenrollment, onEditingCha
         .select('id, first_name, last_name')
         .eq('status', 'ativo')
         .order('first_name');
-      
+
       if (error) throw error;
       return data;
     },
@@ -68,40 +68,48 @@ export function SubmodalRematricula({ context, editingReenrollment, onEditingCha
         .select('id, name, year, grade')
         .order('year', { ascending: false })
         .order('name');
-      
+
       if (error) throw error;
       return data;
     },
     enabled: !!context.orgId,
   });
 
-  // Mutation para processar rematrícula
+  // Mutation: cria uma SOLICITAÇÃO de rematrícula (pendente de aprovação), não a matrícula direto
   const reenrollmentMutation = useMutation({
     mutationFn: async (data: ReenrollmentFormData) => {
-      // Criar nova matrícula
-      const payload: EnrollmentInsert = {
+      const { data: activeEnrollment } = await supabase
+        .from('enrollments')
+        .select('class_id')
+        .eq('student_id', data.student_id)
+        .eq('status', 'ativa')
+        .maybeSingle();
+
+      const payload: ReEnrollmentInsert = {
         organization_id: context.orgId,
         student_id: data.student_id,
-        class_id: data.new_class_id,
-        enrollment_date: data.enrollment_date,
-        status: 'ativa',
+        current_class_id: activeEnrollment?.class_id ?? null,
+        target_class_id: data.new_class_id,
+        guardian_name: data.guardian_name || null,
+        guardian_phone: data.guardian_phone || null,
+        notes: data.observations || null,
+        status: 'pendente',
       };
 
       const { data: created, error } = await supabase
-        .from('enrollments')
+        .from('re_enrollments')
         .insert([payload])
         .select()
         .single();
-      
+
       if (error) throw error;
       return created;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['enrollments'] });
-      queryClient.invalidateQueries({ queryKey: ['students'] });
+      queryClient.invalidateQueries({ queryKey: ['re_enrollments'] });
       toast({
-        title: 'Rematrícula processada',
-        description: 'Rematrícula processada com sucesso.',
+        title: 'Solicitação de rematrícula criada',
+        description: 'A solicitação foi registrada como pendente de aprovação.',
       });
       context.onSaved();
       form.reset();
@@ -110,7 +118,7 @@ export function SubmodalRematricula({ context, editingReenrollment, onEditingCha
     onError: (error: any) => {
       toast({
         variant: 'destructive',
-        title: 'Erro ao processar rematrícula',
+        title: 'Erro ao criar solicitação de rematrícula',
         description: error.message,
       });
     },
@@ -125,17 +133,17 @@ export function SubmodalRematricula({ context, editingReenrollment, onEditingCha
     if (editingReenrollment) {
       form.reset({
         student_id: editingReenrollment.student_id || '',
-        new_class_id: editingReenrollment.class_id || '',
-        enrollment_date: editingReenrollment.enrollment_date || new Date().toISOString().split('T')[0],
-        previous_class: editingReenrollment.previous_class || '',
-        observations: editingReenrollment.observations || '',
+        new_class_id: editingReenrollment.target_class_id || '',
+        guardian_name: editingReenrollment.guardian_name || '',
+        guardian_phone: editingReenrollment.guardian_phone || '',
+        observations: editingReenrollment.notes || '',
       });
     } else {
       form.reset({
         student_id: '',
         new_class_id: '',
-        enrollment_date: new Date().toISOString().split('T')[0],
-        previous_class: '',
+        guardian_name: '',
+        guardian_phone: '',
         observations: '',
       });
     }
@@ -174,7 +182,7 @@ export function SubmodalRematricula({ context, editingReenrollment, onEditingCha
           name="new_class_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nova Turma</FormLabel>
+              <FormLabel>Turma de Destino</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
@@ -196,12 +204,12 @@ export function SubmodalRematricula({ context, editingReenrollment, onEditingCha
 
         <FormField
           control={form.control}
-          name="enrollment_date"
+          name="guardian_name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Data da Rematrícula</FormLabel>
+              <FormLabel>Nome do Responsável</FormLabel>
               <FormControl>
-                <Input type="date" {...field} />
+                <Input {...field} placeholder="Nome do responsável" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -210,12 +218,12 @@ export function SubmodalRematricula({ context, editingReenrollment, onEditingCha
 
         <FormField
           control={form.control}
-          name="previous_class"
+          name="guardian_phone"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Turma Anterior</FormLabel>
+              <FormLabel>Telefone do Responsável</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="Ex: 2º Ano A - 2023" />
+                <Input {...field} placeholder="(11) 99999-9999" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -241,7 +249,7 @@ export function SubmodalRematricula({ context, editingReenrollment, onEditingCha
             Cancelar
           </Button>
           <Button type="submit" disabled={reenrollmentMutation.isPending}>
-            {reenrollmentMutation.isPending ? 'Processando...' : 'Processar Rematrícula'}
+            {reenrollmentMutation.isPending ? 'Enviando...' : 'Solicitar Rematrícula'}
           </Button>
         </div>
       </form>

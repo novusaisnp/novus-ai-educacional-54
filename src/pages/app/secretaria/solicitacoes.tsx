@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { HelpCircle, Search, Plus, Edit, Trash2, Eye, Paperclip } from 'lucide-react';
+import { HelpCircle, Search, Plus, Edit, Trash2, Eye, Paperclip, Download } from 'lucide-react';
 import { ModalMestre } from '@/features/secretaria/hub/ModalMestre';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -175,6 +175,18 @@ export default function SecretariaSolicitacoes() {
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
+          ) : filteredRequests.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <HelpCircle className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Nenhuma solicitação encontrada</h3>
+              <p className="text-muted-foreground mb-4">
+                {searchTerm ? 'Nenhuma solicitação corresponde aos critérios de busca.' : 'Ainda não há solicitações cadastradas.'}
+              </p>
+              <Button onClick={handleOpenModal}>
+                <Plus className="mr-2 h-4 w-4" />
+                Cadastrar Primeira Solicitação
+              </Button>
+            </div>
           ) : (
             <Table>
               <TableHeader>
@@ -203,6 +215,11 @@ export default function SecretariaSolicitacoes() {
                       </TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
+                          {(request.payload as { document_path?: string } | null)?.document_path && (
+                            <Button size="sm" variant="outline">
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button size="sm" variant="outline">
                             <Eye className="h-4 w-4" />
                           </Button>

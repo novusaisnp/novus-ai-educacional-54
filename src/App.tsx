@@ -44,7 +44,6 @@ import SecretariaTurmasPage from '@/pages/app/secretaria/turmas';
 import SecretariaDisciplinasPage from '@/pages/app/secretaria/disciplinas';
 import SecretariaMatriculasPage from '@/pages/app/secretaria/matriculas';
 import SecretariaVisitantesPage from '@/pages/app/secretaria/visitantes';
-import SecretariaVisitantesListPage from '@/pages/app/secretaria/visitantes/ListPage';
 import SecretariaResponsaveisPage from '@/pages/app/secretaria/responsaveis';
 import SecretariaResponsaveisListPage from '@/pages/app/secretaria/responsaveis/ListPage';
 import SecretariaDocumentosPage from '@/pages/app/secretaria/documentos';
@@ -57,11 +56,9 @@ import SecretariaUnitsListPage from '@/pages/app/secretaria/unidades/ListPage';
 import SecretariaExAlunos from '@/pages/app/secretaria/ex-alunos';
 import SecretariaExAlunosListPage from '@/pages/app/secretaria/ex-alunos/ListPage';
 import SecretariaReservas from '@/pages/app/secretaria/reservas';
-import SecretariaReservasListPage from '@/pages/app/secretaria/reservas/ListPage';
 import SecretariaSolicitacoes from '@/pages/app/secretaria/solicitacoes';
-import SecretariaSolicitacoesListPage from '@/pages/app/secretaria/solicitacoes/ListPage';
-import SecretariaRematricula from '@/pages/app/secretaria/rematricula';
-import SecretariaRematriculaListPage from '@/pages/app/secretaria/rematricula/ListPage';
+import SecretariaRematriculaLote from '@/pages/app/secretaria/rematricula';
+import SecretariaRematricula from '@/pages/app/secretaria/rematricula/ListPage';
 
 import ConfigIntegracoesPage from '@/pages/app/config/integracoes';
 import OnboardingPage from '@/pages/app/onboarding';
@@ -163,7 +160,6 @@ function App() {
                 <Route path="secretaria/disciplinas" element={<SecretariaDisciplinasPage />} />
                 <Route path="secretaria/matriculas" element={<SecretariaMatriculasPage />} />
                 <Route path="secretaria/visitantes" element={<SecretariaVisitantesPage />} />
-                <Route path="secretaria/visitantes/list" element={<SecretariaVisitantesListPage />} />
                 <Route path="secretaria/responsaveis" element={<SecretariaResponsaveisPage />} />
                 <Route path="secretaria/responsaveis/list" element={<SecretariaResponsaveisListPage />} />
                 <Route path="secretaria/documentos" element={<SecretariaDocumentosPage />} />
@@ -176,12 +172,10 @@ function App() {
                 <Route path="secretaria/ex-alunos" element={<SecretariaExAlunos />} />
                 <Route path="secretaria/ex-alunos/list" element={<SecretariaExAlunosListPage />} />
                 <Route path="secretaria/reservas" element={<SecretariaReservas />} />
-                <Route path="secretaria/reservas/list" element={<SecretariaReservasListPage />} />
                 <Route path="secretaria/solicitacoes" element={<SecretariaSolicitacoes />} />
-                <Route path="secretaria/solicitacoes/list" element={<SecretariaSolicitacoesListPage />} />
                 <Route path="secretaria/rematricula" element={<SecretariaRematricula />} />
-                <Route path="secretaria/rematricula/list" element={<SecretariaRematriculaListPage />} />
-                
+                <Route path="secretaria/rematricula/lote" element={<SecretariaRematriculaLote />} />
+
                 <Route path="config/integracoes" element={<ConfigIntegracoesPage />} />
                 <Route path="onboarding" element={<OnboardingPage />} />
                 <Route path="dev/diagnostics" element={<DevDiagnosticsPage />} />

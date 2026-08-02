@@ -4,7 +4,7 @@
 
 ## 🔖 Checkpoint de sessão (2026-08-02, leia isto primeiro)
 
-- **GitHub**: `novusaisnp/novus-ai-educacional-54`, branch `main`. Autenticado como `novusaisnp` (não `lignumfleet`, que não tem acesso a este repo). Histórico local à frente do remoto por 2 commits (`d53e5b7` restyle visual, `f6fb0c6` remoção de tooling de dev/admin) — **ainda não pushados**, aguardando confirmação do usuário.
+- **GitHub**: `novusaisnp/novus-ai-educacional-54`, branch `main`. Autenticado como `novusaisnp` (não `lignumfleet`, que não tem acesso a este repo). Remoto está em `c614374` (o restyle `d53e5b7` já tinha sido pushado). Histórico local à frente do remoto por 2 commits novos desta sessão (`f6fb0c6` remoção de tooling de dev/admin, `7e062d0` doc) — **ainda não pushados**, aguardando confirmação do usuário.
 
 ## ✅ Remoção de tooling de criação de admin da tela de login (2026-08-02)
 

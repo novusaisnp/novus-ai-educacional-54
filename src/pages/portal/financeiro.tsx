@@ -1,24 +1,21 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useOrganization } from '@/hooks/useOrganization';
 import { usePortalData } from '@/hooks/usePortalData';
 import { logAudit } from '@/lib/audit/logAudit';
 import { getERPConfig } from '@/lib/featureFlags';
+import { supabase } from '@/integrations/supabase/client';
 import EmptyState from '@/components/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  CreditCard, 
-  Calendar, 
-  DollarSign, 
-  ExternalLink,
+import {
+  Calendar,
+  DollarSign,
   AlertCircle,
   CheckCircle,
   Clock
 } from 'lucide-react';
-import { erpClient } from '@/integrations/erp/client';
 import { useQuery } from '@tanstack/react-query';
 
 export default function PortalFinanceiro() {
@@ -37,47 +34,48 @@ export default function PortalFinanceiro() {
     }
   }, [orgId, guardian?.id, period]);
 
-  const erpConfig = getERPConfig(orgId || '');
-  const hasERP = erpConfig.enabled && !erpConfig.mock;
+  const { data: erpConfig } = useQuery({
+    queryKey: ['erp-config', orgId],
+    queryFn: () => getERPConfig(orgId || ''),
+    enabled: !!orgId,
+  });
+  const hasERP = !!erpConfig?.enabled && !erpConfig?.mock;
 
-  // Get financial data from ERP
+  const STATUS_MAP: Record<string, string> = {
+    aberto: 'open',
+    parcial: 'open',
+    pago: 'paid',
+    vencido: 'overdue',
+    cancelado: 'canceled',
+  };
+
+  // Títulos/pagamentos recebidos do ERP via edu-erp-webhook (Porta 2 - Liquidação)
   const { data: financialData, isLoading } = useQuery({
-    queryKey: ['portal-financial', orgId, guardian?.cpf, period],
+    queryKey: ['portal-financial', orgId, guardian?.id, period],
     queryFn: async () => {
-      if (!guardian?.cpf || !hasERP) return null;
+      if (!guardian?.id || !orgId) return null;
 
-      // Mock ERP response structure for now
-      // In real implementation, this would call erpClient methods
+      const { data, error } = await supabase
+        .from('financial_transactions')
+        .select('*')
+        .eq('organization_id', orgId)
+        .eq('guardian_id', guardian.id)
+        .order('due_date', { ascending: false });
+
+      if (error) throw error;
+
       return {
-        receivables: [
-          {
-            documentNumber: 'BOL-001-2024',
-            description: 'Mensalidade Janeiro 2024',
-            dueDate: '2024-01-15',
-            amount: 850.00,
-            status: 'paid',
-            paymentDate: '2024-01-10',
-          },
-          {
-            documentNumber: 'BOL-002-2024',
-            description: 'Mensalidade Fevereiro 2024',
-            dueDate: '2024-02-15',
-            amount: 850.00,
-            status: 'open',
-            paymentLink: 'https://example.com/pay/bol-002-2024',
-          },
-          {
-            documentNumber: 'BOL-003-2024',
-            description: 'Mensalidade Março 2024',
-            dueDate: '2024-03-15',
-            amount: 850.00,
-            status: 'overdue',
-            paymentLink: 'https://example.com/pay/bol-003-2024',
-          },
-        ]
+        receivables: (data || []).map((row) => ({
+          documentNumber: row.numero_documento || row.id,
+          description: row.description || 'Mensalidade',
+          dueDate: row.due_date,
+          amount: Number(row.amount ?? 0),
+          status: STATUS_MAP[row.status] || row.status,
+          paymentDate: row.payment_date,
+        })),
       };
     },
-    enabled: !!guardian?.cpf && hasERP && !!orgId,
+    enabled: !!guardian?.id && hasERP && !!orgId,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -271,12 +269,6 @@ export default function PortalFinanceiro() {
                         {getStatusLabel(receivable.status)}
                       </Badge>
                     </div>
-                    {receivable.paymentLink && receivable.status !== 'paid' && (
-                      <Button size="sm" onClick={() => window.open(receivable.paymentLink, '_blank')}>
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        Pagar
-                      </Button>
-                    )}
                   </div>
                 </div>
               ))}

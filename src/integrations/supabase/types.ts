@@ -554,6 +554,108 @@ export type Database = {
           },
         ]
       }
+      erp_integration_config: {
+        Row: {
+          base_url: string | null
+          created_at: string
+          empresa_representada_id: string | null
+          enabled: boolean
+          events: Json
+          mock: boolean
+          organization_id: string
+          signing_secret: string | null
+          updated_at: string
+        }
+        Insert: {
+          base_url?: string | null
+          created_at?: string
+          empresa_representada_id?: string | null
+          enabled?: boolean
+          events?: Json
+          mock?: boolean
+          organization_id: string
+          signing_secret?: string | null
+          updated_at?: string
+        }
+        Update: {
+          base_url?: string | null
+          created_at?: string
+          empresa_representada_id?: string | null
+          enabled?: boolean
+          events?: Json
+          mock?: boolean
+          organization_id?: string
+          signing_secret?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      financial_transactions: {
+        Row: {
+          amount: number | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          external_id: string | null
+          guardian_id: string | null
+          id: string
+          numero_documento: string | null
+          organization_id: string
+          payment_date: string | null
+          payment_method: string | null
+          raw_event: Json | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          external_id?: string | null
+          guardian_id?: string | null
+          id?: string
+          numero_documento?: string | null
+          organization_id: string
+          payment_date?: string | null
+          payment_method?: string | null
+          raw_event?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          external_id?: string | null
+          guardian_id?: string | null
+          id?: string
+          numero_documento?: string | null
+          organization_id?: string
+          payment_date?: string | null
+          payment_method?: string | null
+          raw_event?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_transactions_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "guardians"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "v_guardians_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grades: {
         Row: {
           assessment_id: string

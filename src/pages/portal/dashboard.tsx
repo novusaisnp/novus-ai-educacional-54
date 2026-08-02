@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -22,6 +22,12 @@ export default function PortalDashboard() {
   const navigate = useNavigate();
   const { orgId } = useOrganization();
   const { guardian, interactions, requests, documents, loading } = usePortalData();
+  const [hasERP, setHasERP] = useState(false);
+
+  useEffect(() => {
+    if (!orgId) return;
+    getERPConfig(orgId).then((config) => setHasERP(config.enabled && !config.mock));
+  }, [orgId]);
 
   useEffect(() => {
     if (orgId && guardian?.id) {
@@ -53,9 +59,6 @@ export default function PortalDashboard() {
       </div>
     );
   }
-
-  const erpConfig = getERPConfig(orgId || '');
-  const hasERP = erpConfig.enabled && !erpConfig.mock;
 
   // Count pending documents
   const pendingDocs = documents?.filter(doc => 

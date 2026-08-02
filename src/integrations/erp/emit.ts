@@ -23,8 +23,8 @@ export async function withERP(
   args: any[]
 ): Promise<ERPResult> {
   try {
-    const config = getERPConfig(orgId);
-    
+    const config = await getERPConfig(orgId);
+
     // Se integração não habilitada, pular
     if (!config.enabled) {
       console.log(`[ERP] Integração desabilitada para ${String(fnName)}`);
@@ -73,10 +73,6 @@ export const erpEmit = {
 
   async createReceivable(orgId: string, receivableData: any) {
     return withERP(orgId, 'createReceivable', [receivableData]);
-  },
-
-  async issueInventory(orgId: string, inventoryData: any) {
-    return withERP(orgId, 'inventoryIssue', [inventoryData]);
   },
 
   async testConnection(orgId: string) {

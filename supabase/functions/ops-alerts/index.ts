@@ -132,20 +132,17 @@ async function processInadimplenciaAlerts(
   thresholds: AlertThresholds
 ): Promise<number> {
   try {
-    // Por enquanto, não temos integração ERP real
-    // Retornar 0 alertas até que ERP seja implementado
-    console.log(`Inadimplência: ERP não configurado para org ${orgId}`);
-    return 0;
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - thresholds.inadimplencia_dias);
+    const cutoffIso = cutoffDate.toISOString().split('T')[0];
 
-    // Quando ERP estiver integrado, usar lógica similar a:
-    /*
     const { data: overdue, error } = await supabase
-      .from('financial_transactions') // Tabela que virá do ERP
+      .from('financial_transactions')
       .select('*')
       .eq('organization_id', orgId)
-      .eq('status', 'overdue')
-      .gte('days_overdue', thresholds.inadimplencia_dias)
-      .or(`amount.gte.${thresholds.inadimplencia_valor}`);
+      .not('status', 'in', '(pago,cancelado)')
+      .lte('due_date', cutoffIso)
+      .gte('amount', thresholds.inadimplencia_valor);
 
     if (error) throw error;
 
@@ -157,7 +154,7 @@ async function processInadimplenciaAlerts(
         entity_id: 'system',
         direction: 'system',
         channel: 'sistema',
-        summary: `${overdue.length} alunos com inadimplência crítica`,
+        summary: `${overdue.length} título(s) com inadimplência crítica`,
         payload: {
           category: 'inadimplencia',
           count: overdue.length,
@@ -169,11 +166,10 @@ async function processInadimplenciaAlerts(
 
       return overdue.length;
     }
-    */
   } catch (error: any) {
     console.error(`Erro ao processar inadimplência para org ${orgId}:`, error.message);
   }
-  
+
   return 0;
 }
 

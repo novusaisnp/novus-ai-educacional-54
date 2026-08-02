@@ -21,13 +21,12 @@ const configSchema = z.object({
   enabled: z.boolean(),
   mock: z.boolean(),
   baseUrl: z.string().url('URL inválida').optional().or(z.literal('')),
-  apiKey: z.string().optional(),
   signingSecret: z.string().optional(),
+  empresaRepresentadaId: z.string().optional(),
   events: z.object({
     clientUpsert: z.boolean().optional(),
     receivableCreated: z.boolean().optional(),
     paymentWebhook: z.boolean().optional(),
-    inventoryIssue: z.boolean().optional(),
   }),
 });
 
@@ -54,13 +53,12 @@ export default function ConfigIntegracoes() {
       enabled: false,
       mock: true,
       baseUrl: '',
-      apiKey: '',
       signingSecret: '',
+      empresaRepresentadaId: '',
       events: {
         clientUpsert: true,
         receivableCreated: true,
         paymentWebhook: true,
-        inventoryIssue: true,
       },
     },
   });
@@ -79,10 +77,12 @@ export default function ConfigIntegracoes() {
   // Carregar configuração existente
   useEffect(() => {
     if (orgData?.organization_id) {
-      const config = getERPConfig(orgData.organization_id);
       const iaConfig = getIAConfig(orgData.organization_id);
-      form.reset(config);
       iaForm.reset(iaConfig);
+
+      getERPConfig(orgData.organization_id).then((config) => {
+        form.reset(config);
+      });
     }
   }, [orgData?.organization_id, form, iaForm]);
 
@@ -97,7 +97,7 @@ export default function ConfigIntegracoes() {
     }
 
     try {
-      setERPConfig(orgData.organization_id, data);
+      await setERPConfig(orgData.organization_id, data);
       toast({
         title: 'Configuração salva',
         description: 'As configurações de integração ERP foram salvas com sucesso.',
@@ -150,16 +150,16 @@ export default function ConfigIntegracoes() {
     try {
       // Salvar configuração atual primeiro
       const formData = form.getValues();
-      setERPConfig(orgData.organization_id, formData);
+      await setERPConfig(orgData.organization_id, formData);
 
       const result = await erpEmit.testConnection(orgData.organization_id);
-      
+
       if (result.ok) {
         toast({
-          title: result.mock ? 'Teste em modo simulado' : 'Conexão estabelecida',
-          description: result.mock 
+          title: result.mock ? 'Teste em modo simulado' : 'Endpoint alcançável',
+          description: result.mock
             ? 'Integração configurada em modo de teste.'
-            : 'Conexão com ERP estabelecida com sucesso.',
+            : 'O endpoint do ERP respondeu. Isso confirma só que ele está no ar — não valida a assinatura/credenciais.',
         });
       } else {
         toast({
@@ -266,10 +266,31 @@ export default function ConfigIntegracoes() {
                     disabled={isTestingConnection || !form.watch('enabled')}
                     className="whitespace-nowrap"
                   >
-                    {isTestingConnection ? 'Testando...' : 'Testar Conexão'}
+                    {isTestingConnection ? 'Testando...' : 'Testar Conectividade'}
                   </Button>
                 </div>
               </div>
+
+              <FormField
+                control={form.control}
+                name="empresaRepresentadaId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID da Empresa no ERP</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="UUID da empresa_representada no Novus ERP"
+                        {...field}
+                        disabled={form.watch('mock')}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Identificador do tenant correspondente no ERP. Sem isso, o envio de dados (contas a receber, clientes) não tem como ser autenticado do lado do ERP.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </CardContent>
           </Card>
 
@@ -297,27 +318,6 @@ export default function ConfigIntegracoes() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="apiKey"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>API Key</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type={showSecrets ? 'text' : 'password'}
-                          placeholder="sk_live_..." 
-                          value={showSecrets ? field.value : maskSecret(field.value || '')}
-                          onChange={showSecrets ? field.onChange : undefined}
-                          onFocus={() => setShowSecrets(true)}
-                          disabled={form.watch('mock')}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 <FormField
                   control={form.control}
                   name="signingSecret"
@@ -408,23 +408,6 @@ export default function ConfigIntegracoes() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="events.inventoryIssue"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-sm font-medium">Movimentação de Estoque</FormLabel>
-                      <FormDescription className="text-xs">
-                        Sincronizar vendas de produtos (uniformes, materiais) com estoque
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
             </CardContent>
           </Card>
 

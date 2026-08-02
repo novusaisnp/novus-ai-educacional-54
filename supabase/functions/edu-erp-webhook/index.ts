@@ -7,25 +7,37 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-erp-signature',
 }
 
-interface WebhookEvent {
-  id: string;
+// Payload segue o schema canônico de Liquidação do contrato ERP
+// (novusai-erp/docs/CONTRATOS_CANONICOS_ERP.md, Porta 2), envelopado com
+// o tipo de evento e a idempotency_key no formato
+// "novus-educacional:<organization_id>:<numero_documento>".
+interface LiquidacaoEvent {
   type: 'receivable.paid' | 'receivable.partially_paid' | 'receivable.canceled';
   data: {
-    receivableId: string;
-    contractId: string;
-    amount: number;
-    paidAmount?: number;
-    paidAt?: string;
-    metadata?: {
-      orgId?: string;
-      localContractId?: string;
-    };
+    titulo_id: string;
+    tipo_titulo?: string;
+    valor_pago: number;
+    data_pagamento: string;
+    forma_pagamento?: string;
+    observacoes?: string;
   };
-  timestamp: string;
+  origem_sistema?: string;
+  idempotency_key?: string;
+  timestamp?: string;
 }
 
-// Simples deduplicação em memória (para produção usar Redis/DB)
-const processedEvents = new Set<string>();
+const EVENT_STATUS: Record<LiquidacaoEvent['type'], string> = {
+  'receivable.paid': 'pago',
+  'receivable.partially_paid': 'parcial',
+  'receivable.canceled': 'cancelado',
+};
+
+function parseIdempotencyKey(key: string | undefined): { organizationId: string; numeroDocumento: string } | null {
+  if (!key) return null;
+  const parts = key.split(':');
+  if (parts.length < 3 || parts[0] !== 'novus-educacional') return null;
+  return { organizationId: parts[1], numeroDocumento: parts.slice(2).join(':') };
+}
 
 async function verifySignature(
   payload: string,
@@ -36,7 +48,7 @@ async function verifySignature(
     const encoder = new TextEncoder();
     const keyData = encoder.encode(secret);
     const payloadData = encoder.encode(payload);
-    
+
     const cryptoKey = await crypto.subtle.importKey(
       'raw',
       keyData,
@@ -44,13 +56,13 @@ async function verifySignature(
       false,
       ['verify']
     );
-    
+
     // Assumindo formato: sha256=<hash>
     const expectedSignature = signature.replace('sha256=', '');
     const signatureBuffer = new Uint8Array(
       expectedSignature.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []
     );
-    
+
     return await crypto.subtle.verify(
       'HMAC',
       cryptoKey,
@@ -72,8 +84,20 @@ serve(async (req) => {
   if (req.method !== 'POST') {
     return new Response(
       JSON.stringify({ error: 'Method not allowed' }),
-      { 
-        status: 405, 
+      {
+        status: 405,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
+  }
+
+  const signingSecret = Deno.env.get('ERP_SIGNING_SECRET');
+  if (!signingSecret) {
+    console.error('[Webhook] ERP_SIGNING_SECRET não configurado — recusando requisição');
+    return new Response(
+      JSON.stringify({ error: 'Webhook not configured' }),
+      {
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
@@ -82,127 +106,128 @@ serve(async (req) => {
   try {
     const payload = await req.text();
     const signature = req.headers.get('x-erp-signature');
-    
+
     if (!signature) {
       console.warn('[Webhook] Assinatura ausente');
       return new Response(
         JSON.stringify({ error: 'Missing signature' }),
-        { 
-          status: 401, 
+        {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    const isValidSignature = await verifySignature(payload, signature, signingSecret);
+    if (!isValidSignature) {
+      console.warn('[Webhook] Assinatura inválida');
+      return new Response(
+        JSON.stringify({ error: 'Invalid signature' }),
+        {
+          status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
 
     // Parse do evento
-    let event: WebhookEvent;
+    let event: LiquidacaoEvent;
     try {
       event = JSON.parse(payload);
     } catch (parseError) {
       console.error('[Webhook] Payload inválido:', parseError);
       return new Response(
         JSON.stringify({ error: 'Invalid JSON payload' }),
-        { 
-          status: 400, 
+        {
+          status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
 
-    // Deduplicação simples
-    if (processedEvents.has(event.id)) {
-      console.log(`[Webhook] Evento ${event.id} já processado`);
-      return new Response(
-        JSON.stringify({ status: 'already_processed' }),
-        { 
-          status: 200, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
-    // Para fins de demonstração, assumir que temos o signingSecret
-    // Em produção, isso deveria vir da configuração da organização
-    const DEMO_SIGNING_SECRET = Deno.env.get('ERP_SIGNING_SECRET') || 'demo-secret-key';
-    
-    // Verificar assinatura
-    const isValidSignature = await verifySignature(payload, signature, DEMO_SIGNING_SECRET);
-    if (!isValidSignature) {
-      console.warn('[Webhook] Assinatura inválida');
-      return new Response(
-        JSON.stringify({ error: 'Invalid signature' }),
-        { 
-          status: 401, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
-    // Validar tipo de evento
-    const validEvents = ['receivable.paid', 'receivable.partially_paid', 'receivable.canceled'];
+    const validEvents = Object.keys(EVENT_STATUS);
     if (!validEvents.includes(event.type)) {
       console.warn(`[Webhook] Tipo de evento não suportado: ${event.type}`);
       return new Response(
         JSON.stringify({ error: 'Unsupported event type' }),
-        { 
-          status: 400, 
+        {
+          status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
 
-    // Marcar como processado
-    processedEvents.add(event.id);
+    const correlation = parseIdempotencyKey(event.idempotency_key);
+    if (!correlation) {
+      console.warn('[Webhook] idempotency_key ausente ou em formato inesperado:', event.idempotency_key);
+      return new Response(
+        JSON.stringify({ error: 'Missing or invalid idempotency_key' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
-    // Log do evento para auditoria
-    console.log(`[Webhook] Processando ${event.type} para contrato ${event.data.contractId}`);
-    
-    // Conectar ao Supabase para registrar audit log
+    console.log(`[Webhook] Processando ${event.type} para título ${event.data.titulo_id} (org ${correlation.organizationId})`);
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Registrar evento em audit_logs se temos orgId
-    if (event.data.metadata?.orgId) {
-      try {
-        await supabase
-          .from('audit_logs')
-          .insert({
-            organization_id: event.data.metadata.orgId,
-            table_name: 'erp_webhooks',
-            action: 'webhook_received',
-            diff: {
-              event_type: event.type,
-              receivable_id: event.data.receivableId,
-              contract_id: event.data.contractId,
-              amount: event.data.amount,
-              paid_amount: event.data.paidAmount,
-              paid_at: event.data.paidAt,
-            },
-            actor: null, // Sistema
-          });
-        
-        console.log(`[Webhook] Evento registrado em audit para org ${event.data.metadata.orgId}`);
-      } catch (auditError) {
-        console.error('[Webhook] Erro ao registrar audit:', auditError);
-        // Não falhar o webhook por causa do audit log
-      }
+    const status = EVENT_STATUS[event.type];
+    const { data: existing } = await supabase
+      .from('financial_transactions')
+      .select('id')
+      .eq('organization_id', correlation.organizationId)
+      .eq('external_id', event.data.titulo_id)
+      .maybeSingle();
+
+    const row = {
+      organization_id: correlation.organizationId,
+      external_id: event.data.titulo_id,
+      numero_documento: correlation.numeroDocumento,
+      amount: event.data.valor_pago,
+      payment_date: event.data.data_pagamento,
+      payment_method: event.data.forma_pagamento || null,
+      status,
+      raw_event: event,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (existing) {
+      await supabase.from('financial_transactions').update(row).eq('id', existing.id);
+    } else {
+      await supabase.from('financial_transactions').insert(row);
     }
 
-    // Em uma implementação futura, aqui poderíamos:
-    // 1. Atualizar status de pagamento na tabela de matrículas/mensalidades
-    // 2. Disparar notificações realtime
-    // 3. Executar outras ações baseadas no evento
+    // Log do evento para auditoria
+    await supabase
+      .from('audit_logs')
+      .insert({
+        organization_id: correlation.organizationId,
+        table_name: 'erp_webhooks',
+        action: 'webhook_received',
+        diff: {
+          event_type: event.type,
+          titulo_id: event.data.titulo_id,
+          valor_pago: event.data.valor_pago,
+          data_pagamento: event.data.data_pagamento,
+        },
+        actor: null, // Sistema
+      })
+      .then(({ error }) => {
+        if (error) console.error('[Webhook] Erro ao registrar audit:', error);
+      });
 
-    // Por ora, apenas logamos e retornamos sucesso
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         status: 'processed',
-        event_id: event.id,
-        event_type: event.type 
+        event_type: event.type,
+        titulo_id: event.data.titulo_id,
       }),
-      { 
-        status: 200, 
+      {
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
@@ -211,8 +236,8 @@ serve(async (req) => {
     console.error('[Webhook] Erro no processamento:', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
-      { 
-        status: 500, 
+      {
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );

@@ -4,7 +4,33 @@
 
 ## 🔖 Checkpoint de sessão (2026-08-02, leia isto primeiro)
 
-- **GitHub**: `novusaisnp/novus-ai-educacional-54`, branch `main`. Autenticado como `novusaisnp` (não `lignumfleet`, que não tem acesso a este repo). Remoto está em `c614374` (o restyle `d53e5b7` já tinha sido pushado). Histórico local à frente do remoto com commits novos desta sessão (remoção de tooling de dev/admin + Fase 0-A da secretaria, ainda não commitada no momento em que este checkpoint foi escrito) — **ainda não pushados**, aguardando confirmação do usuário.
+- **GitHub**: `novusaisnp/novus-ai-educacional-54`, branch `main`. Autenticado como `novusaisnp` (não `lignumfleet`, que não tem acesso a este repo). Já pushado até o fix de contraste da sidebar (`877d619`) nesta sessão — a Fase 0-B (abaixo) ainda não foi commitada no momento em que este checkpoint foi escrito.
+- **Bloqueio conhecido**: a conta do Supabase CLI usada neste ambiente não tem acesso ao projeto do ERP (`lrkebsznehpuascgqbri`, "Novus ERP 2026") — não aparece em `supabase projects list`, dá 403 ao tentar consultar. Isso bloqueia qualquer teste real da integração de **saída** (educacional → ERP). Ver Fase 0-B.
+
+## ✅ Fase 0-B: tirar a integração ERP do modo mock — lado educacional (2026-08-02)
+
+**Contexto**: a integração financeira com o ERP era simulada de ponta a ponta — config só em `localStorage`, cliente de saída falando com endpoints inventados (`/clients`, `/receivables`, `/health`), webhook de entrada com fallback inseguro pro secret, `portal/financeiro.tsx` com array 100% hard-coded, `ops-alerts` com bloco de inadimplência comentado esperando uma tabela que não existia.
+
+Investigando o contrato real do ERP (`novusai-erp/docs/CONTRATOS_CANONICOS_ERP.md` + código-fonte de `supabase/functions/sync-webhook/index.ts`), achei uma divergência real entre doc e código: o endpoint de fato implementado usa um envelope genérico `{event, table, data, timestamp, source_system}` com HMAC (v1/v2), **não** o `contaReceberCanonicalSchema` que a documentação descreve — é o formato do código que segui, não o da doc.
+
+**Bloqueio descoberto**: a conta CLI usada aqui não enxerga o projeto do ERP (`lrkebsznehpuascgqbri`) — `supabase projects list` só mostra `Novusai-fiscal` e `Novus Educacional`. Por decisão do usuário, esta fase constrói os dois lados certos no código do lado educacional, mas **não tenta a chamada de saída real contra o ERP** (falta cadastrar uma linha em `webhook_configs` lá, que exige acesso que não temos).
+
+**O que mudou**:
+- Migration `20260802180000_create_erp_integration.sql`: duas tabelas novas — `erp_integration_config` (config por org, substitui o `localStorage`) e `financial_transactions` (títulos/pagamentos recebidos do ERP, preenche o gap que `ops-alerts` já esperava).
+- `src/lib/featureFlags.ts`: `getERPConfig`/`setERPConfig` viram `async`, lendo/gravando em `erp_integration_config`. Removido `apiKey` (não existe no mecanismo real, que é HMAC) e `events.inventoryIssue`.
+- `src/integrations/erp/client.ts` + `emit.ts`: reescritos pra falar o protocolo real — endpoint único `POST {baseUrl}/functions/v1/sync-webhook`, assinatura HMAC-SHA256 sobre o corpo bruto. `upsertClientByCPF` (call site real em `SubmodalResponsaveis.tsx`) e `createReceivable` (ainda sem call site — depende do fluxo de contrato da Fase 1) migrados; `testConnection` virou checagem de alcançabilidade via `OPTIONS` (não existe endpoint de health real). **Removido** `inventoryIssue`/`issueInventory` por completo — não tinha call site em lugar nenhum, não corresponde a nenhuma feature real do app, e o dispatcher do `sync-webhook` nem tem case pra isso.
+- `src/pages/app/config/integracoes.tsx`: load/save assíncronos, campo "API Key" removido, toggle "Movimentação de Estoque" removido, campo novo `empresaRepresentadaId` (mapeamento manual pro tenant do ERP), botão renomeado pra "Testar Conectividade" com texto honesto sobre o que ele realmente valida.
+- `src/pages/portal/financeiro.tsx`: array hard-coded trocado por query real em `financial_transactions` filtrada por `guardian_id`. Sem título real criado ainda (Fase 1 não existe), mostra o empty-state genuíno em vez de 3 boletos fictícios.
+- `src/components/DebugBanner.tsx`, `DebugChip.tsx`, `src/pages/portal/dashboard.tsx`: ajustados pra ler a config de forma assíncrona (efeito colateral necessário da mudança em `featureFlags.ts`).
+- `supabase/functions/edu-erp-webhook/index.ts`: fallback inseguro (`|| 'demo-secret-key'`) removido — sem `ERP_SIGNING_SECRET` configurado, a function agora recusa (500) em vez de aceitar um secret conhecido. Schema do evento aceito trocado pro canônico de Liquidação (`titulo_id`, `tipo_titulo`, `valor_pago`, `data_pagamento`, `forma_pagamento`). `organization_id` resolvido a partir de `idempotency_key` na convenção `novus-educacional:<organization_id>:<numero_documento>`. Upsert real em `financial_transactions` (antes só gravava em `audit_logs`).
+- `supabase/functions/ops-alerts/index.ts`: bloco de inadimplência ativado de verdade, consultando `financial_transactions` (`status not in (pago,cancelado)` + `due_date` vencido + valor acima do threshold), em vez do placeholder que sempre retornava 0.
+- `supabase/config.toml`: adicionado `[functions.edu-erp-webhook] verify_jwt = false` — sem isso, o endpoint (que é chamado por um sistema externo sem sessão Supabase) rejeitava toda chamada com 401 antes mesmo de chegar na validação HMAC.
+
+**Verificação — lado de entrada (100% testado de ponta a ponta contra o projeto real)**: gerado um `ERP_SIGNING_SECRET` de teste, setado via `supabase secrets set`, `edu-erp-webhook` e `ops-alerts` deployados. Montado um payload de Liquidação assinado (HMAC) manualmente e chamado via `curl` contra a function deployada: confirmado que (1) assinatura inválida é rejeitada com 401, (2) um evento `receivable.paid` cria a linha certa em `financial_transactions` com `organization_id` resolvido corretamente via `idempotency_key`, (3) um evento subsequente `receivable.partially_paid` pro mesmo `titulo_id` **atualiza** a mesma linha (não duplica) — `status` muda de `pago` pra `parcial` corretamente. Dados de teste limpos do banco depois. 47/47 testes locais, `typecheck` limpo.
+
+**Verificação — lado de saída (pendente)**: não testável contra o ERP real por falta de acesso. A assinatura HMAC de saída usa a mesma primitiva já testada na validação de entrada (só assina em vez de verificar), então a implementação é consistente, mas **não foi validada contra o `sync-webhook` real**. Pendências pra desbloquear: (a) acesso da conta CLI ao projeto `lrkebsznehpuascgqbri`, ou (b) o usuário cadastrar manualmente uma linha em `webhook_configs` lá (`nome='novus-educacional'`, `empresa_representada_id` de um tenant real) e passar `empresa_representada_id` + `secret_token` de volta pra configurar aqui.
+
+**Gaps conhecidos aceitos conscientemente**: `erp_integration_config.signing_secret` tem RLS só por organização (mesmo padrão de toda a tabela do app) — não existe RLS por role neste app (diferente do ERP), então não inventei um padrão novo só pra esta tabela. `createReceivable` ainda não tem call site na UI — só existe de verdade quando a Fase 1 (contrato/mensalidade) for implementada.
 
 ## ✅ Fase 0-A: refactor da secretaria (rematrícula/reservas/solicitações/visitantes) (2026-08-02)
 
@@ -109,21 +135,20 @@
 
 ## Riscos conhecidos (não são bugs — decisões/lacunas conscientes)
 
-- `financial_transactions` (esperada por `supabase/functions/ops-alerts`) não existe ainda — depende da integração real com o ERP.
-- `edu-erp-webhook` valida HMAC e grava o evento cru em `audit_logs` (`table_name: 'erp_webhooks'`), mas não atualiza nenhuma tabela de negócio (não existe tabela local de título/fatura) — dedupe continua só em memória (`Set` do módulo, perdido a cada cold start). Fallback silencioso pro secret `'demo-secret-key'` se `ERP_SIGNING_SECRET` não estiver setado.
-- `src/lib/featureFlags.ts` (`getERPConfig`/`setERPConfig`): a config do ERP por-organização (`baseUrl`, `apiKey`, `signingSecret`, `mock`) vive só em `localStorage` do navegador — não é uma tabela Postgres, não é compartilhada entre usuários da mesma org. `src/integrations/erp/emit.ts`/`client.ts` não assina HMAC nas chamadas de saída apesar de ter campo `signingSecret` na UI.
-- `portal/financeiro.tsx`: array de boletos 100% hard-coded (`// Mock ERP response structure for now`), `erpClient` importado mas nunca chamado. `useBIData.ts` (BI Financeiro) também retorna dados mock/zerados.
+- `useBIData.ts` (BI Financeiro) ainda retorna dados mock/zerados — não coberto pela Fase 0-B (é um dashboard, não a integração ERP em si).
 - 229 erros de lint pré-existentes (majoritariamente `no-explicit-any` em Edge Functions) — dívida técnica não tratada nesta sessão, CI vai falhar em `bun run lint` até isso ser resolvido.
 - `src/components/ui/sidebar.tsx` (`Sidebar`/`MobileSidebar`/`sidebarData`) é código morto — não importado em lugar nenhum do app. A sidebar real é `AppSidebar` em `src/components/layout/AppShell.tsx`. Não remover sem checar de novo antes (confirmar via grep que continua sem uso).
+- Integração de saída ERP (educacional → ERP) implementada no código mas não testada contra o `sync-webhook` real — falta acesso ao projeto `lrkebsznehpuascgqbri` ou coordenação manual com o time do ERP (ver Fase 0-B).
 
 ## Backlog
 
 - Rotacionar credenciais expostas (admin/`ADMIN_SEED_TOKEN`).
-- Configurar secrets do projeto Supabase novo.
+- Configurar secrets do projeto Supabase novo (`OPENAI_API_KEY`, `RESEND_API_KEY`, `WHATSAPP_API_*` — `ERP_SIGNING_SECRET` já setado nesta sessão, com valor de teste).
 - Restyle visual do Portal dos Responsáveis.
 - Resolver os 229 erros de lint (ou decidir excluir Edge Functions do lint gate).
 - Limpar organização de teste órfã.
 - Considerar remover `src/components/ui/sidebar.tsx` (dead code confirmado) numa limpeza futura.
+- Destravar a integração de saída ERP: conseguir acesso ao projeto `lrkebsznehpuascgqbri` (ou pedir pro time do ERP cadastrar a linha em `webhook_configs` e passar `empresa_representada_id`/`secret_token`) e então testar `createReceivable`/`upsertClientByCPF` de ponta a ponta.
 
 ## 🗺️ Roadmap formalizado (2026-08-02)
 
@@ -131,7 +156,7 @@ Baseado em `docs/mapa_mental_gestao_novus.pdf` (backoffice), `docs/mapa_mental_n
 
 **Nota sobre `docs/novus_edu_mockups.html`**: é referência de ideias de layout/UX, não uma direção fechada de redesign — usuário pediu explicitamente pra aproveitar só o que fizer sentido, não adotar tudo. Padrões concretos úteis que vale reaproveitar quando cada Fase for implementada: stepper de matrícula em etapas (dados → documentos → responsáveis → financeiro → confirmação) pra Fase 1; dots de frequência (presente/falta/justificada) e inputs de nota inline na grade do diário de classe pra Fase 1/4; tags de habilidades BNCC por aula pra Fase 4; card de "conselho de classe" com atas/pareceres pendentes e card de "PEI ativos" pra Fase 1.5; ring chart de frequência e tela de "justificar falta" com anexo + chat da coordenação no mobile pra Fase 5; diagrama de arquitetura satélite↔ERP core com status de webhooks/APIs e painel multi-unidade pra Fase 0-B/Transversal.
 
-- **Fase 0 — Fundação** (em andamento): (A) terminar o refactor abandonado da secretaria — portar o layout das `ListPage.tsx` pras tabelas reais (`visitors`/`waitlist_applications`/`requests`) e aposentar as páginas antigas duplicadas; (B) tirar a integração ERP do modo mock (config sai do `localStorage`, HMAC real nas chamadas de saída, tabela local pra títulos/pagamentos); (C) rotação de credenciais + secrets do Supabase (depende de ação do usuário); (D) dívida de lint. Ordem de execução: A primeiro (plano já aprovado, ver seção de commits futura), B/C/D depois.
+- **Fase 0 — Fundação**: (A) ✅ refactor da secretaria concluído (rematrícula/reservas/solicitações/visitantes). (B) ✅ ERP tirado do modo mock do lado educacional (config em Postgres, protocolo real, entrada testada de ponta a ponta) — saída ainda pendente de acesso ao ERP, ver Backlog. (C) rotação de credenciais + secrets do Supabase (depende de ação do usuário) — ainda não feito. (D) dívida de lint — ainda não feito.
 - **Fase 1 — Secretaria Digital**: funil de admissão/rematrícula ponta a ponta, assinatura eletrônica de contrato com gatilho real pra Porta 1 do ERP, GED do aluno (`documents`) com validação por IA. **Somar do MVP novo**: recuperação/progressão parcial/dependência no modelo de avaliação, ata de conselho de classe digital, **calendário letivo (dias letivos/feriados/reposição) — vira pré-requisito de dados pra Fase 3**, transferência escolar (declaração/guia).
 - **Fase 1.5 — Educação Inclusiva** (novo, do MVP): PEI, laudos e adaptações — compliance LBI, sem cobertura hoje. Tratar como tema próprio, não sub-item.
 - **Fase 2 — Conformidade Regulatória**: Censo Escolar/Inep + Painel do Diretor. **Somar do MVP**: exportação SAEB e sistemas estaduais/municipais.

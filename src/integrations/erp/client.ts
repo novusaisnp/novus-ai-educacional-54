@@ -1,6 +1,9 @@
 
 import { getERPConfig, ERPConfig } from '@/lib/featureFlags';
 
+const SOURCE_SYSTEM = 'novus-educacional';
+const SYNC_ENDPOINT = '/functions/v1/sync-webhook';
+
 interface ERPClientData {
   cpf: string;
   name: string;
@@ -9,133 +12,119 @@ interface ERPClientData {
   address?: string;
 }
 
+interface CreateReceivableInput {
+  numeroDocumento: string;
+  valorOriginal: number;
+  dataVencimento: string; // YYYY-MM-DD
+  situacao?: string;
+  observacoes?: string;
+  clienteCpfCnpj?: string;
+}
+
 interface ERPClientResponse {
   ok: boolean;
   skipped?: boolean;
   mock?: boolean;
+  data?: unknown;
   error?: string;
 }
 
+async function signBody(body: string, secret: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const signatureBuffer = await crypto.subtle.sign('HMAC', key, encoder.encode(body));
+  return Array.from(new Uint8Array(signatureBuffer))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
 class ERPClient {
-  private config: ERPConfig;
-  private orgId: string;
+  constructor(private config: ERPConfig) {}
 
-  constructor(orgId: string) {
-    this.orgId = orgId;
-    this.config = getERPConfig(orgId);
-  }
+  private async sendSyncEvent(
+    table: string,
+    data: Record<string, unknown>,
+    event: 'insert' | 'update' | 'sync' = 'sync'
+  ): Promise<ERPClientResponse> {
+    if (!this.config.enabled) {
+      return { ok: true, skipped: true };
+    }
 
-  private async makeRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
-    const url = `${this.config.baseUrl}${endpoint}`;
-    
-    // Implementar timeout usando AbortController
+    if (this.config.mock) {
+      console.log(`[ERP Mock] ${event} ${table}:`, data);
+      return { ok: true, mock: true };
+    }
+
+    if (!this.config.baseUrl || !this.config.signingSecret) {
+      return { ok: false, error: 'Integração ERP não configurada (URL base ou signing secret ausente)' };
+    }
+
+    const body = JSON.stringify({
+      event,
+      table,
+      data,
+      timestamp: new Date().toISOString(),
+      source_system: SOURCE_SYSTEM,
+    });
+    const signature = await signBody(body, this.config.signingSecret);
+
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     try {
-      const response = await fetch(url, {
-        ...options,
+      const response = await fetch(`${this.config.baseUrl}${SYNC_ENDPOINT}`, {
+        method: 'POST',
         signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': this.config.apiKey,
-          ...options.headers,
+          'x-source-system': SOURCE_SYSTEM,
+          'x-webhook-signature': `sha256=${signature}`,
         },
+        body,
       });
-
       clearTimeout(timeoutId);
-      return response;
+
+      if (!response.ok) {
+        const error = await response.text();
+        console.error(`[ERP] Erro ao sincronizar ${table}:`, error);
+        return { ok: false, error: `ERP Error: ${error}` };
+      }
+
+      const responseData = await response.json().catch(() => undefined);
+      return { ok: true, data: responseData };
     } catch (error) {
       clearTimeout(timeoutId);
-      throw error;
+      const message = error instanceof Error ? error.message : 'Erro desconhecido';
+      console.error(`[ERP] Erro ao sincronizar ${table}:`, error);
+      return { ok: false, error: message };
     }
   }
 
   async upsertClientByCPF(data: ERPClientData): Promise<ERPClientResponse> {
-    if (!this.config.enabled || !this.config.events.clientUpsert) {
+    if (!this.config.events.clientUpsert) {
       return { ok: true, skipped: true, mock: this.config.mock };
     }
-
-    if (this.config.mock) {
-      console.log('[ERP Mock] Upserting client:', data);
-      return { ok: true, mock: true };
-    }
-
-    try {
-      const response = await this.makeRequest('/clients', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.text();
-        console.error('[ERP] Error upserting client:', error);
-        return { ok: false, error: `ERP Error: ${error}` };
-      }
-
-      return { ok: true };
-    } catch (error: any) {
-      console.error('[ERP] Error upserting client:', error);
-      return { ok: false, error: error.message };
-    }
+    return this.sendSyncEvent('clientes', { ...data });
   }
 
-  async createReceivable(data: any): Promise<ERPClientResponse> {
-    if (!this.config.enabled || !this.config.events.receivableCreated) {
+  async createReceivable(data: CreateReceivableInput): Promise<ERPClientResponse> {
+    if (!this.config.events.receivableCreated) {
       return { ok: true, skipped: true, mock: this.config.mock };
     }
-
-    if (this.config.mock) {
-      console.log('[ERP Mock] Creating receivable:', data);
-      return { ok: true, mock: true };
-    }
-
-    try {
-      const response = await this.makeRequest('/receivables', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.text();
-        console.error('[ERP] Error creating receivable:', error);
-        return { ok: false, error: `ERP Error: ${error}` };
-      }
-
-      return { ok: true };
-    } catch (error: any) {
-      console.error('[ERP] Error creating receivable:', error);
-      return { ok: false, error: error.message };
-    }
-  }
-
-  async inventoryIssue(data: any): Promise<ERPClientResponse> {
-    if (!this.config.enabled || !this.config.events.inventoryIssue) {
-      return { ok: true, skipped: true, mock: this.config.mock };
-    }
-
-    if (this.config.mock) {
-      console.log('[ERP Mock] Inventory issue:', data);
-      return { ok: true, mock: true };
-    }
-
-    try {
-      const response = await this.makeRequest('/inventory/issue', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.text();
-        console.error('[ERP] Error with inventory issue:', error);
-        return { ok: false, error: `ERP Error: ${error}` };
-      }
-
-      return { ok: true };
-    } catch (error: any) {
-      console.error('[ERP] Error with inventory issue:', error);
-      return { ok: false, error: error.message };
-    }
+    return this.sendSyncEvent('contas_receber', {
+      numero_documento: data.numeroDocumento,
+      valor_original: data.valorOriginal,
+      data_vencimento: data.dataVencimento,
+      situacao: data.situacao || 'ABERTA',
+      observacoes: data.observacoes,
+      cliente_cpf_cnpj: data.clienteCpfCnpj,
+    });
   }
 
   async testConnection(): Promise<ERPClientResponse> {
@@ -144,43 +133,41 @@ class ERPClient {
     }
 
     if (this.config.mock) {
-      console.log('[ERP Mock] Testing connection');
       return { ok: true, mock: true };
     }
 
+    if (!this.config.baseUrl) {
+      return { ok: false, error: 'URL base do ERP não configurada' };
+    }
+
     try {
-      const response = await this.makeRequest('/health');
-
+      // Não existe endpoint de health dedicado no ERP; um OPTIONS no endpoint
+      // real (sync-webhook) só confirma alcançabilidade, não valida a assinatura.
+      const response = await fetch(`${this.config.baseUrl}${SYNC_ENDPOINT}`, { method: 'OPTIONS' });
       if (!response.ok) {
-        const error = await response.text();
-        console.error('[ERP] Connection test failed:', error);
-        return { ok: false, error: `ERP Error: ${error}` };
+        return { ok: false, error: `Endpoint respondeu com status ${response.status}` };
       }
-
       return { ok: true };
-    } catch (error: any) {
-      console.error('[ERP] Connection test failed:', error);
-      return { ok: false, error: error.message };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro desconhecido';
+      return { ok: false, error: message };
     }
   }
 }
 
-// Exportar instância singleton
 export const erpClient = {
   upsertClientByCPF: async (orgId: string, data: ERPClientData): Promise<ERPClientResponse> => {
-    const client = new ERPClient(orgId);
-    return client.upsertClientByCPF(data);
+    const config = await getERPConfig(orgId);
+    return new ERPClient(config).upsertClientByCPF(data);
   },
-  createReceivable: async (orgId: string, data: any): Promise<ERPClientResponse> => {
-    const client = new ERPClient(orgId);
-    return client.createReceivable(data);
-  },
-  inventoryIssue: async (orgId: string, data: any): Promise<ERPClientResponse> => {
-    const client = new ERPClient(orgId);
-    return client.inventoryIssue(data);
+  createReceivable: async (orgId: string, data: CreateReceivableInput): Promise<ERPClientResponse> => {
+    const config = await getERPConfig(orgId);
+    return new ERPClient(config).createReceivable(data);
   },
   testConnection: async (orgId: string): Promise<ERPClientResponse> => {
-    const client = new ERPClient(orgId);
-    return client.testConnection();
+    const config = await getERPConfig(orgId);
+    return new ERPClient(config).testConnection();
   },
 };
+
+export type { ERPClientData, CreateReceivableInput, ERPClientResponse };

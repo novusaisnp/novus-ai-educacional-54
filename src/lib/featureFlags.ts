@@ -1,64 +1,75 @@
 
 import { safeLocalStorage } from './utils/localStorage';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface ERPConfig {
   enabled: boolean;
   baseUrl: string;
-  apiKey: string;
   signingSecret: string;
   mock: boolean;
+  empresaRepresentadaId: string;
   events: {
     clientUpsert?: boolean;
     receivableCreated?: boolean;
     paymentWebhook?: boolean;
-    inventoryIssue?: boolean;
   };
 }
 
 const DEFAULT_ERP_CONFIG: ERPConfig = {
   enabled: false,
   baseUrl: '',
-  apiKey: '',
   signingSecret: '',
   mock: true,
+  empresaRepresentadaId: '',
   events: {
     clientUpsert: false,
     receivableCreated: false,
     paymentWebhook: false,
-    inventoryIssue: false,
   },
 };
 
-const getStorageKey = (orgId: string) => `erp_config_${orgId}`;
+export const getERPConfig = async (orgId: string): Promise<ERPConfig> => {
+  if (!orgId) return DEFAULT_ERP_CONFIG;
 
-export const getERPConfig = (orgId: string): ERPConfig => {
-  try {
-    const stored = safeLocalStorage.getItem(getStorageKey(orgId));
-    if (!stored) return DEFAULT_ERP_CONFIG;
-    
-    const parsed = JSON.parse(stored);
-    return { 
-      ...DEFAULT_ERP_CONFIG, 
-      ...parsed, 
-      events: { ...DEFAULT_ERP_CONFIG.events, ...parsed.events } 
-    };
-  } catch (error) {
-    return DEFAULT_ERP_CONFIG;
-  }
+  const { data, error } = await supabase
+    .from('erp_integration_config')
+    .select('*')
+    .eq('organization_id', orgId)
+    .maybeSingle();
+
+  if (error || !data) return DEFAULT_ERP_CONFIG;
+
+  const events = (data.events as ERPConfig['events']) || {};
+  return {
+    enabled: data.enabled,
+    baseUrl: data.base_url || '',
+    signingSecret: data.signing_secret || '',
+    mock: data.mock,
+    empresaRepresentadaId: data.empresa_representada_id || '',
+    events: { ...DEFAULT_ERP_CONFIG.events, ...events },
+  };
 };
 
-export const setERPConfig = (orgId: string, config: Partial<ERPConfig>): void => {
-  try {
-    const currentConfig = getERPConfig(orgId);
-    const newConfig = { 
-      ...currentConfig, 
-      ...config,
-      events: { ...currentConfig.events, ...config.events }
-    };
-    safeLocalStorage.setItem(getStorageKey(orgId), JSON.stringify(newConfig));
-  } catch (error) {
-    // Erro já logado pelo safeLocalStorage
-  }
+export const setERPConfig = async (orgId: string, config: Partial<ERPConfig>): Promise<void> => {
+  if (!orgId) return;
+
+  const current = await getERPConfig(orgId);
+  const merged: ERPConfig = {
+    ...current,
+    ...config,
+    events: { ...current.events, ...config.events },
+  };
+
+  await supabase.from('erp_integration_config').upsert({
+    organization_id: orgId,
+    enabled: merged.enabled,
+    mock: merged.mock,
+    base_url: merged.baseUrl || null,
+    signing_secret: merged.signingSecret || null,
+    empresa_representada_id: merged.empresaRepresentadaId || null,
+    events: merged.events,
+    updated_at: new Date().toISOString(),
+  });
 };
 
 export const maskSecret = (secret: string): string => {

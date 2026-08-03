@@ -315,6 +315,36 @@ export type Database = {
           },
         ]
       }
+      calendar_exceptions: {
+        Row: {
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          organization_id: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          description?: string | null
+          id?: string
+          organization_id: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          organization_id?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       classes: {
         Row: {
           created_at: string

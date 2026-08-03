@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { UserCheck, Calendar, Users, BookOpen, Save, Copy, RotateCcw } from 'lucide-react';
+import { UserCheck, Calendar, Users, BookOpen, Save, Copy, RotateCcw, AlertTriangle } from 'lucide-react';
 
 import { IconBadge } from '@/components/IconBadge';
 import { Button } from '@/components/ui/button';
@@ -18,10 +18,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/hooks/useOrganization';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
+import { isSchoolDay } from '@/lib/schoolCalendar';
 
 const attendanceSchema = z.object({
   classId: z.string().min(1, 'Selecione uma turma'),
@@ -103,6 +105,40 @@ export default function Chamada() {
     },
     enabled: !!orgData?.organization_id,
   });
+
+  // Query para calendário letivo (períodos + exceções), usada só pro aviso não-bloqueante abaixo
+  const { data: periods = [] } = useQuery({
+    queryKey: ['periods', orgData?.organization_id],
+    queryFn: async () => {
+      if (!orgData?.organization_id) return [];
+      const { data, error } = await supabase
+        .from('periods')
+        .select('date_start, date_end, active')
+        .eq('organization_id', orgData.organization_id);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!orgData?.organization_id,
+  });
+
+  const { data: calendarExceptions = [] } = useQuery({
+    queryKey: ['calendar-exceptions', orgData?.organization_id],
+    queryFn: async () => {
+      if (!orgData?.organization_id) return [];
+      const { data, error } = await supabase
+        .from('calendar_exceptions')
+        .select('date, type')
+        .eq('organization_id', orgData.organization_id);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!orgData?.organization_id,
+  });
+
+  const dateIsSchoolDay = useMemo(() => {
+    if (!date || periods.length === 0) return true;
+    return isSchoolDay(date, periods, calendarExceptions as { date: string; type: 'feriado' | 'recesso' | 'reposicao' }[]);
+  }, [date, periods, calendarExceptions]);
 
   // Query para buscar alunos da turma
   const { data: students = [], isLoading: studentsLoading } = useQuery({
@@ -460,6 +496,17 @@ export default function Chamada() {
           </Form>
         </CardContent>
       </Card>
+
+      {date && !dateIsSchoolDay && (
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Dia não-letivo</AlertTitle>
+          <AlertDescription>
+            Esta data não consta como letiva no calendário cadastrado (feriado, recesso ou fora do
+            período letivo). Você ainda pode registrar a chamada normalmente.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Resumo e ações */}
       {classId && subjectId && date && (

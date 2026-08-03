@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -82,15 +82,17 @@ export function SubmodalPeriodos({ isOpen, onClose, editingId }: SubmodalPeriodo
   });
 
   // Preencher form quando houver dados para edição
-  if (editingPeriod && editingId) {
-    form.reset({
-      name: editingPeriod.name,
-      year: editingPeriod.year,
-      date_start: editingPeriod.date_start,
-      date_end: editingPeriod.date_end,
-      active: editingPeriod.active,
-    });
-  }
+  useEffect(() => {
+    if (editingPeriod && editingId) {
+      form.reset({
+        name: editingPeriod.name,
+        year: editingPeriod.year,
+        date_start: editingPeriod.date_start,
+        date_end: editingPeriod.date_end,
+        active: editingPeriod.active,
+      });
+    }
+  }, [editingPeriod, editingId, form]);
 
   const createMutation = useMutation({
     mutationFn: async (data: PeriodoFormData) => {

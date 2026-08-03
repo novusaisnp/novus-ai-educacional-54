@@ -49,7 +49,7 @@ import SecretariaResponsaveisListPage from '@/pages/app/secretaria/responsaveis/
 import SecretariaDocumentosPage from '@/pages/app/secretaria/documentos';
 import SecretariaDocumentosListPage from '@/pages/app/secretaria/documentos/ListPage';
 import SecretariaPeriodsPage from '@/pages/app/secretaria/periodos';
-import SecretariaPeriodsListPage from '@/pages/app/secretaria/periodos/ListPage';
+import SecretariaPeriodCalendarPage from '@/pages/app/secretaria/periodos/calendario';
 import SecretariaSegmentsListPage from '@/pages/app/secretaria/segmentos/ListPage';
 import SecretariaSeriesListPage from '@/pages/app/secretaria/series/ListPage';
 import SecretariaUnitsListPage from '@/pages/app/secretaria/unidades/ListPage';
@@ -165,7 +165,7 @@ function App() {
                 <Route path="secretaria/documentos" element={<SecretariaDocumentosPage />} />
                 <Route path="secretaria/documentos/list" element={<SecretariaDocumentosListPage />} />
                 <Route path="secretaria/periodos" element={<SecretariaPeriodsPage />} />
-                <Route path="secretaria/periodos/list" element={<SecretariaPeriodsListPage />} />
+                <Route path="secretaria/periodos/:periodId/calendario" element={<SecretariaPeriodCalendarPage />} />
                 <Route path="secretaria/segmentos/list" element={<SecretariaSegmentsListPage />} />
                 <Route path="secretaria/series/list" element={<SecretariaSeriesListPage />} />
                 <Route path="secretaria/unidades/list" element={<SecretariaUnitsListPage />} />

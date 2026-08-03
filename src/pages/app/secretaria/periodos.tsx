@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useToast } from '@/hooks/use-toast';
@@ -10,19 +10,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Search, Plus, Edit, Trash2 } from 'lucide-react';
-import { ModalMestre } from '@/features/secretaria/hub/ModalMestre';
+import { Calendar, Search, Plus, Edit, Trash2, CalendarDays } from 'lucide-react';
+import { SubmodalPeriodos } from '@/features/secretaria/periodos/SubmodalPeriodos';
+import EmptyState from '@/components/EmptyState';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export default function SecretariaPeriodos() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { data: orgData } = useOrganization();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedYear, setSelectedYear] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(searchParams.get('modal') === 'periodos');
+  const [editingId, setEditingId] = useState<string | undefined>(undefined);
 
   const { data: periods = [], isLoading } = useQuery({
     queryKey: ['periods', orgData?.organization_id],
@@ -31,7 +34,7 @@ export default function SecretariaPeriodos() {
         .from('periods')
         .select('*')
         .order('year', { ascending: false });
-      
+
       if (error) throw error;
       return data;
     },
@@ -44,7 +47,7 @@ export default function SecretariaPeriodos() {
         .from('periods')
         .delete()
         .eq('id', id);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
@@ -52,20 +55,27 @@ export default function SecretariaPeriodos() {
       toast({ title: 'Período excluído com sucesso!' });
     },
     onError: (error: any) => {
-      toast({ 
+      toast({
         variant: 'destructive',
         title: 'Erro ao excluir período',
-        description: error.message 
+        description: error.message
       });
     },
   });
 
   const handleOpenModal = () => {
+    setEditingId(undefined);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (id: string) => {
+    setEditingId(id);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    setEditingId(undefined);
     queryClient.invalidateQueries({ queryKey: ['periods'] });
   };
 
@@ -78,7 +88,7 @@ export default function SecretariaPeriodos() {
   });
 
   const formatDate = (date: string) => {
-    return format(new Date(date), 'dd/MM/yyyy', { locale: ptBR });
+    return format(new Date(`${date}T00:00:00`), 'dd/MM/yyyy', { locale: ptBR });
   };
 
   return (
@@ -137,6 +147,17 @@ export default function SecretariaPeriodos() {
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
+          ) : filteredPeriods.length === 0 ? (
+            <EmptyState
+              title="Nenhum período encontrado"
+              description="Cadastre o primeiro período/ano letivo para começar a organizar o calendário escolar."
+              action={
+                <Button onClick={handleOpenModal}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Novo Período
+                </Button>
+              }
+            />
           ) : (
             <Table>
               <TableHeader>
@@ -146,7 +167,7 @@ export default function SecretariaPeriodos() {
                   <TableHead>Data Início</TableHead>
                   <TableHead>Data Fim</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="w-[100px]">Ações</TableHead>
+                  <TableHead className="w-[140px]">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -163,11 +184,19 @@ export default function SecretariaPeriodos() {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button size="sm" variant="outline">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          title="Calendário letivo"
+                          onClick={() => navigate(`/app/secretaria/periodos/${period.id}/calendario`)}
+                        >
+                          <CalendarDays className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(period.id)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => deletePeriod.mutate(period.id)}
                         >
@@ -183,10 +212,10 @@ export default function SecretariaPeriodos() {
         </CardContent>
       </Card>
 
-      <ModalMestre
+      <SubmodalPeriodos
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        defaultTab="periodos"
+        editingId={editingId}
       />
     </div>
   );

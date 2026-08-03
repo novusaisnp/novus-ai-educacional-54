@@ -4,8 +4,24 @@
 
 ## 🔖 Checkpoint de sessão (2026-08-02, leia isto primeiro)
 
-- **GitHub**: `novusaisnp/novus-ai-educacional-54`, branch `main`. Autenticado como `novusaisnp` (não `lignumfleet`, que não tem acesso a este repo). Já pushado até o fix de contraste da sidebar (`877d619`) nesta sessão — a Fase 0-B (abaixo) ainda não foi commitada no momento em que este checkpoint foi escrito.
+- **GitHub**: `novusaisnp/novus-ai-educacional-54`, branch `main`. Autenticado como `novusaisnp` (não `lignumfleet`, que não tem acesso a este repo). Pushado até `163466d` (Fase 0-B) no início desta rodada — a Fase 1/Calendário Letivo (abaixo) ainda não foi commitada no momento em que este checkpoint foi escrito.
 - **Bloqueio conhecido**: a conta do Supabase CLI usada neste ambiente não tem acesso ao projeto do ERP (`lrkebsznehpuascgqbri`, "Novus ERP 2026") — não aparece em `supabase projects list`, dá 403 ao tentar consultar. Isso bloqueia qualquer teste real da integração de **saída** (educacional → ERP). Ver Fase 0-B.
+
+## ✅ Fase 1 — Calendário Letivo (2026-08-02)
+
+**Contexto**: primeira fatia da Fase 1 — Secretaria Digital, escolhida por ser pré-requisito de dados pra Fase 3 (grade horária). Investigando o schema, descobri que o conceito de "ano/período letivo" **já existia** — tabela `public.periods` (`name`, `year`, `date_start`, `date_end`, `active`), com CRUD completo em `src/features/secretaria/periodos/SubmodalPeriodos.tsx`. Faltava só a camada de exceções (feriados/recessos/reposições), que não existia em lugar nenhum do schema.
+
+**O que mudou**:
+- Migration `20260802190000_create_calendar_exceptions.sql`: tabela `calendar_exceptions` (`organization_id`, `date`, `type` CHECK IN `feriado/recesso/reposicao`, `description`), `UNIQUE(organization_id, date)` — **escopada por organização+data, não por período**, pra não duplicar o mesmo feriado em múltiplos períodos que se sobrepõem na mesma data. RLS + índice no padrão já estabelecido.
+- `src/lib/schoolCalendar.ts` (novo): `isSchoolDay(date, periods, exceptions)` — helper puro, sem I/O, reaproveitável pela Fase 3. Lógica: dentro do intervalo de algum período ativo + dia útil, a menos que haja exceção (`reposicao` inverte fim de semana pra letivo; `feriado`/`recesso` invertem dia útil pra não-letivo).
+- **Corrigida a mesma duplicação de refactor abandonado da Fase 0-A, desta vez em `periodos`**: apagada `secretaria/periodos/ListPage.tsx` (rota `/list` morta), `periodos.tsx` ganhou `editingId` real (botão "Edit" que nunca teve `onClick`), `EmptyState`, e um botão "Calendário" por linha.
+- **Bug real encontrado e corrigido em `SubmodalPeriodos.tsx`**: o `form.reset()` de edição rodava direto no corpo do componente (fora de `useEffect`), causando "Too many re-renders" — só nunca tinha sido notado porque o botão Edit estava morto e `editingId` nunca era truthy antes desta sessão. Corrigido com o mesmo padrão já usado em `SubmodalUnidades.tsx` (reset dentro de `useEffect`).
+- Nova página `src/pages/app/secretaria/periodos/calendario.tsx` (rota `secretaria/periodos/:periodId/calendario`): card de resumo (dias letivos cumpridos, próximo feriado/recesso, reposições pendentes — ideia adaptada do card "Calendário letivo" em `docs/novus_edu_mockups.html`), `Calendar` do shadcn com dias coloridos por tipo de exceção, clique-no-dia abre diálogo pra marcar exceção pontual, e **"Marcar período"** — um segundo diálogo (data início/fim + tipo) que marca/limpa um intervalo inteiro de uma vez (essencial pra recesso/férias de semanas — marcar dia a dia seria péssima UX, feedback do usuário durante a sessão). Lista de exceções abaixo **agrupa dias consecutivos do mesmo tipo+descrição numa única linha** (ex.: "13/07/2026 a 31/07/2026 — Recesso"), com exclusão em lote do grupo inteiro — evita listar 19 linhas individuais pra um recesso de um mês.
+- `src/pages/app/academico/chamada.tsx`: aviso não-bloqueante (`Alert`) quando a data selecionada não é letiva segundo o calendário cadastrado — não impede o registro da chamada, só avisa.
+
+**Verificação**: 47/47 testes, `typecheck` limpo. Testado ao vivo no navegador contra o projeto real: criado período de teste, editado via botão Edit (confirmado que o "Too many re-renders" acontecia antes do fix e parou de acontecer depois), marcado feriado pontual (dia a dia) e um recesso de 19 dias via "Marcar período" — confirmado agrupamento em 1 linha, contagem de dias letivos recalculada corretamente (250→235, 15 dias úteis de julho descontados), exclusão em lote do grupo restaurando a contagem original. Testado o aviso em `chamada.tsx` selecionando uma data dentro do recesso. Dados de teste (período + exceções) limpos do banco ao final.
+
+**Gaps conhecidos aceitos conscientemente**: `classes.year` continua um `INTEGER` solto, sem FK pra `periods` — não migrado nesta fase (mudança maior, arriscada, fora de escopo). O aviso em `chamada.tsx` é não-bloqueante de propósito.
 
 ## ✅ Fase 0-B: tirar a integração ERP do modo mock — lado educacional (2026-08-02)
 
@@ -139,6 +155,7 @@ Investigando o contrato real do ERP (`novusai-erp/docs/CONTRATOS_CANONICOS_ERP.m
 - 229 erros de lint pré-existentes (majoritariamente `no-explicit-any` em Edge Functions) — dívida técnica não tratada nesta sessão, CI vai falhar em `bun run lint` até isso ser resolvido.
 - `src/components/ui/sidebar.tsx` (`Sidebar`/`MobileSidebar`/`sidebarData`) é código morto — não importado em lugar nenhum do app. A sidebar real é `AppSidebar` em `src/components/layout/AppShell.tsx`. Não remover sem checar de novo antes (confirmar via grep que continua sem uso).
 - Integração de saída ERP (educacional → ERP) implementada no código mas não testada contra o `sync-webhook` real — falta acesso ao projeto `lrkebsznehpuascgqbri` ou coordenação manual com o time do ERP (ver Fase 0-B).
+- **O mesmo bug do botão "Edit" sem `onClick`** corrigido em `periodos.tsx` (ver Fase 1 — Calendário Letivo) existe também em `series/ListPage.tsx`, `segmentos/ListPage.tsx`, `unidades/ListPage.tsx`, `documentos/ListPage.tsx`, `responsaveis/ListPage.tsx`, `ex-alunos/ListPage.tsx` — não corrigido nesta sessão (fora do escopo da fatia atual). Além disso, `series`, `segmentos` e `unidades` **só têm a rota `/list` registrada em `App.tsx`** — o link do Hub (`getRouteForModule`) aponta pra rota canônica sem `/list`, que não existe pra esses 3 módulos, resultando em 404 ao clicar "Abrir Lista" no Hub da Secretaria.
 
 ## Backlog
 
@@ -149,6 +166,9 @@ Investigando o contrato real do ERP (`novusai-erp/docs/CONTRATOS_CANONICOS_ERP.m
 - Limpar organização de teste órfã.
 - Considerar remover `src/components/ui/sidebar.tsx` (dead code confirmado) numa limpeza futura.
 - Destravar a integração de saída ERP: conseguir acesso ao projeto `lrkebsznehpuascgqbri` (ou pedir pro time do ERP cadastrar a linha em `webhook_configs` e passar `empresa_representada_id`/`secret_token`) e então testar `createReceivable`/`upsertClientByCPF` de ponta a ponta.
+- Corrigir o mesmo bug de botão "Edit" morto em `series/segmentos/unidades/documentos/responsaveis/ex-alunos` (ListPages), igual ao já corrigido em `periodos.tsx`.
+- Registrar as rotas canônicas (sem `/list`) de `series`, `segmentos` e `unidades` em `App.tsx` — hoje só existe `/list`, causando 404 ao clicar "Abrir Lista" no Hub da Secretaria pra esses 3 módulos.
+- Migrar `classes.year` (hoje `INTEGER` solto) pra uma FK real em `periods`, se fizer sentido quando a Fase 3 (grade horária) for desenhada.
 
 ## 🗺️ Roadmap formalizado (2026-08-02)
 
@@ -157,7 +177,7 @@ Baseado em `docs/mapa_mental_gestao_novus.pdf` (backoffice), `docs/mapa_mental_n
 **Nota sobre `docs/novus_edu_mockups.html`**: é referência de ideias de layout/UX, não uma direção fechada de redesign — usuário pediu explicitamente pra aproveitar só o que fizer sentido, não adotar tudo. Padrões concretos úteis que vale reaproveitar quando cada Fase for implementada: stepper de matrícula em etapas (dados → documentos → responsáveis → financeiro → confirmação) pra Fase 1; dots de frequência (presente/falta/justificada) e inputs de nota inline na grade do diário de classe pra Fase 1/4; tags de habilidades BNCC por aula pra Fase 4; card de "conselho de classe" com atas/pareceres pendentes e card de "PEI ativos" pra Fase 1.5; ring chart de frequência e tela de "justificar falta" com anexo + chat da coordenação no mobile pra Fase 5; diagrama de arquitetura satélite↔ERP core com status de webhooks/APIs e painel multi-unidade pra Fase 0-B/Transversal.
 
 - **Fase 0 — Fundação**: (A) ✅ refactor da secretaria concluído (rematrícula/reservas/solicitações/visitantes). (B) ✅ ERP tirado do modo mock do lado educacional (config em Postgres, protocolo real, entrada testada de ponta a ponta) — saída ainda pendente de acesso ao ERP, ver Backlog. (C) rotação de credenciais + secrets do Supabase (depende de ação do usuário) — ainda não feito. (D) dívida de lint — ainda não feito.
-- **Fase 1 — Secretaria Digital**: funil de admissão/rematrícula ponta a ponta, assinatura eletrônica de contrato com gatilho real pra Porta 1 do ERP, GED do aluno (`documents`) com validação por IA. **Somar do MVP novo**: recuperação/progressão parcial/dependência no modelo de avaliação, ata de conselho de classe digital, **calendário letivo (dias letivos/feriados/reposição) — vira pré-requisito de dados pra Fase 3**, transferência escolar (declaração/guia).
+- **Fase 1 — Secretaria Digital**: (Calendário Letivo) ✅ feito — `periods` + `calendar_exceptions`, marcação por dia ou por intervalo, aviso em `chamada.tsx`. Ainda por fazer: funil de admissão/rematrícula ponta a ponta, assinatura eletrônica de contrato com gatilho real pra Porta 1 do ERP, GED do aluno (`documents`) com validação por IA. **Somar do MVP novo**: recuperação/progressão parcial/dependência no modelo de avaliação, ata de conselho de classe digital, transferência escolar (declaração/guia).
 - **Fase 1.5 — Educação Inclusiva** (novo, do MVP): PEI, laudos e adaptações — compliance LBI, sem cobertura hoje. Tratar como tema próprio, não sub-item.
 - **Fase 2 — Conformidade Regulatória**: Censo Escolar/Inep + Painel do Diretor. **Somar do MVP**: exportação SAEB e sistemas estaduais/municipais.
 - **Fase 3 — Turmas & Horários**: enturmação inteligente, grade horária automatizada (depende do calendário letivo da Fase 1).

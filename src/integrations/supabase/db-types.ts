@@ -29,3 +29,11 @@ export type NotificationTemplatesUpdate = Database['public']['Tables']['notifica
 
 export type ContactConsentsInsert = Database['public']['Tables']['contact_consents']['Insert'];
 export type ContactConsentsUpdate = Database['public']['Tables']['contact_consents']['Update'];
+
+export type PeriodRow = Database['public']['Tables']['periods']['Row'];
+export type PeriodInsert = Database['public']['Tables']['periods']['Insert'];
+export type PeriodUpdate = Database['public']['Tables']['periods']['Update'];
+
+export type CalendarExceptionRow = Database['public']['Tables']['calendar_exceptions']['Row'];
+export type CalendarExceptionInsert = Database['public']['Tables']['calendar_exceptions']['Insert'];
+export type CalendarExceptionUpdate = Database['public']['Tables']['calendar_exceptions']['Update'];

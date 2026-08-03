@@ -11,15 +11,17 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Paperclip, 
-  Download, 
-  Trash2, 
-  MoreVertical, 
+import {
+  Paperclip,
+  Download,
+  Trash2,
+  MoreVertical,
   Search,
   Upload,
   FileText,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { DocumentRecord, getSignedUrl, getFileTypeFromPath } from '@/lib/storage';
@@ -29,14 +31,24 @@ interface StudentAttachmentsProps {
   attachments: DocumentRecord[];
   onUpload: (file: File) => void;
   onDelete: (doc: DocumentRecord) => void;
+  onValidate?: (documentId: string) => void;
   isUploading: boolean;
+  validatingDocId?: string | null;
 }
 
-export function StudentAttachments({ 
-  attachments, 
-  onUpload, 
+const STATUS_BADGE: Record<string, { label: string; variant: 'secondary' | 'default' | 'destructive' }> = {
+  pendente: { label: 'Pendente', variant: 'secondary' },
+  validado: { label: 'Validado', variant: 'default' },
+  revisar: { label: 'Revisar', variant: 'destructive' },
+};
+
+export function StudentAttachments({
+  attachments,
+  onUpload,
   onDelete,
-  isUploading 
+  onValidate,
+  isUploading,
+  validatingDocId
 }: StudentAttachmentsProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -194,12 +206,17 @@ export function StudentAttachments({
                 <TableHead className="w-12"></TableHead>
                 <TableHead>Título</TableHead>
                 <TableHead>Tipo</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead className="w-20">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAttachments.map((doc) => (
+              {filteredAttachments.map((doc) => {
+                const isImage = getFileTypeFromPath(doc.file_path) === 'Imagem';
+                const isValidatingThisDoc = validatingDocId === doc.id;
+                const status = STATUS_BADGE[doc.validation_status || 'pendente'] || STATUS_BADGE.pendente;
+                return (
                 <TableRow key={doc.id}>
                   <TableCell>
                     {getFileIcon(doc.file_path)}
@@ -209,7 +226,12 @@ export function StudentAttachments({
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline">
-                      {getFileTypeFromPath(doc.file_path)}
+                      {doc.document_type || getFileTypeFromPath(doc.file_path)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={status.variant} title={doc.ai_notes || undefined}>
+                      {status.label}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -219,15 +241,29 @@ export function StudentAttachments({
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm">
-                          <MoreVertical className="h-4 w-4" />
+                          {isValidatingThisDoc ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <MoreVertical className="h-4 w-4" />
+                          )}
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
+                        {onValidate && (
+                          <DropdownMenuItem
+                            onClick={() => isImage && onValidate(doc.id)}
+                            disabled={!isImage || isValidatingThisDoc}
+                            title={!isImage ? 'Validação por IA disponível só para imagens (jpg/png/webp)' : undefined}
+                          >
+                            <Sparkles className="h-4 w-4 mr-2" />
+                            Validar com IA
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem onClick={() => handleDownload(doc)}>
                           <Download className="h-4 w-4 mr-2" />
                           Baixar
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           onClick={() => setDeleteDoc(doc)}
                           className="text-destructive"
                         >
@@ -238,7 +274,8 @@ export function StudentAttachments({
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         )}

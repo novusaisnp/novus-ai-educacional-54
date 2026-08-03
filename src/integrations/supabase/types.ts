@@ -473,7 +473,9 @@ export type Database = {
       }
       documents: {
         Row: {
+          ai_notes: string | null
           created_at: string
+          document_type: string | null
           file_path: string
           id: string
           organization_id: string
@@ -482,9 +484,13 @@ export type Database = {
           tags: string[] | null
           title: string
           updated_at: string
+          validated_at: string | null
+          validation_status: string
         }
         Insert: {
+          ai_notes?: string | null
           created_at?: string
+          document_type?: string | null
           file_path: string
           id?: string
           organization_id: string
@@ -493,9 +499,13 @@ export type Database = {
           tags?: string[] | null
           title: string
           updated_at?: string
+          validated_at?: string | null
+          validation_status?: string
         }
         Update: {
+          ai_notes?: string | null
           created_at?: string
+          document_type?: string | null
           file_path?: string
           id?: string
           organization_id?: string
@@ -504,6 +514,8 @@ export type Database = {
           tags?: string[] | null
           title?: string
           updated_at?: string
+          validated_at?: string | null
+          validation_status?: string
         }
         Relationships: [
           {

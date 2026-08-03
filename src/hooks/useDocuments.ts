@@ -34,7 +34,7 @@ export const useDocuments = (studentId?: string) => {
 
       const { data, error } = await supabase
         .from('documents')
-        .select('id, title, file_path, created_at, tags')
+        .select('id, title, file_path, created_at, tags, document_type, validation_status, ai_notes')
         .eq('owner_type', 'student')
         .eq('owner_id', studentId)
         .order('created_at', { ascending: false });
@@ -133,6 +133,31 @@ export const useDocuments = (studentId?: string) => {
     },
   });
 
+  // Mutation para validar documento por IA (classifica tipo + legibilidade)
+  const validateDocMutation = useMutation({
+    mutationFn: async (documentId: string) => {
+      const { data, error } = await supabase.functions.invoke('ai-document-validation', {
+        body: { document_id: documentId },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['documents.byOwner', userOrg, 'student', studentId] });
+      toast({
+        title: 'Validação concluída',
+        description: 'O documento foi analisado pela IA.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao validar documento',
+        description: error.message,
+      });
+    },
+  });
+
   return {
     documents,
     avatar,
@@ -141,5 +166,6 @@ export const useDocuments = (studentId?: string) => {
     uploadAvatarMutation,
     uploadDocMutation,
     deleteDocMutation,
+    validateDocMutation,
   };
 };

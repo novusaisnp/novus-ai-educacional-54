@@ -94,6 +94,7 @@ export function SubmodalAlunos({ context, editingStudent, onEditingChange }: Sub
     uploadAvatarMutation,
     uploadDocMutation,
     deleteDocMutation,
+    validateDocMutation,
   } = useDocuments(editingStudent?.id);
 
   const form = useForm<StudentFormData>({
@@ -537,6 +538,8 @@ export function SubmodalAlunos({ context, editingStudent, onEditingChange }: Sub
             deleteDocMutation.mutate(doc);
           }
         }}
+        onValidate={(documentId) => validateDocMutation.mutate(documentId)}
+        validatingDocId={validateDocMutation.isPending ? validateDocMutation.variables ?? null : null}
         isUploading={uploadDocMutation.isPending}
       />
     </div>

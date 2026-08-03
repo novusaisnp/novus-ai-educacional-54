@@ -7,6 +7,9 @@ export interface DocumentRecord {
   file_path: string;
   created_at: string;
   tags?: string[];
+  document_type?: string | null;
+  validation_status?: string;
+  ai_notes?: string | null;
 }
 
 export const buildOrgPrefix = (orgId: string): string => {

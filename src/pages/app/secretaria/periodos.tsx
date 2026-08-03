@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar, Search, Plus, Edit, Trash2, CalendarDays } from 'lucide-react';
 import { SubmodalPeriodos } from '@/features/secretaria/periodos/SubmodalPeriodos';
 import EmptyState from '@/components/EmptyState';
+import { IconBadge } from '@/components/IconBadge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -94,8 +95,8 @@ export default function SecretariaPeriodos() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Calendar className="h-6 w-6" />
+        <div className="flex items-center space-x-3">
+          <IconBadge icon={Calendar} tone="primary" />
           <h1 className="text-2xl font-bold">Períodos</h1>
         </div>
         <Button onClick={handleOpenModal}>

@@ -65,6 +65,21 @@ export function SubmodalReservas({
     },
   });
 
+  // Resetar form quando editingReserva muda (ex.: ModalMestre semeando via prop
+  // editingItem depois do mount, não só na inicialização do useForm)
+  React.useEffect(() => {
+    form.reset({
+      student_full_name: editingReserva?.student_full_name || '',
+      birth_date: editingReserva?.birth_date ? new Date(editingReserva.birth_date) : undefined,
+      guardian_name: editingReserva?.guardian_name || '',
+      guardian_phone: editingReserva?.guardian_phone || '',
+      desired_segment_id: editingReserva?.desired_segment_id || '',
+      desired_series_id: editingReserva?.desired_series_id || '',
+      desired_year: editingReserva?.desired_year || new Date().getFullYear(),
+      notes: editingReserva?.notes || '',
+    });
+  }, [editingReserva, form]);
+
   const watchedSegment = form.watch('desired_segment_id');
 
   // Buscar segmentos
@@ -177,45 +192,6 @@ export function SubmodalReservas({
     },
   });
 
-  const convertToEnrollmentMutation = useMutation({
-    mutationFn: async () => {
-      if (!editingReserva?.id) throw new Error('ID da reserva não encontrado');
-
-      // Marcar como convertida
-      const { error } = await supabase
-        .from('waitlist_applications')
-        .update({ status: 'convertida' })
-        .eq('id', editingReserva.id)
-        .eq('organization_id', context.orgId);
-
-      if (error) throw error;
-
-      return editingReserva;
-    },
-    onSuccess: (reserva) => {
-      toast({ title: 'Reserva marcada como convertida!' });
-      queryClient.invalidateQueries({ queryKey: ['waitlist-applications'] });
-      
-      // Aqui você pode abrir o modal de matrícula com os dados pré-preenchidos
-      // Por enquanto, apenas mostramos uma mensagem
-      toast({
-        title: 'Convertendo em matrícula',
-        description: 'Esta funcionalidade será implementada para abrir o modal de matrícula.',
-      });
-      
-      onEditingChange?.(null);
-      context.onSaved();
-    },
-    onError: (error) => {
-      console.error('Erro ao converter reserva:', error);
-      toast({
-        title: 'Erro ao converter reserva',
-        description: 'Tente novamente em alguns instantes.',
-        variant: 'destructive',
-      });
-    },
-  });
-
   const onSubmit = async (data: ReservaFormData) => {
     setIsSubmitting(true);
     try {
@@ -253,17 +229,10 @@ export function SubmodalReservas({
               <Badge variant={editingReserva.status === 'pendente' ? 'default' : 'secondary'}>
                 {editingReserva.status}
               </Badge>
-              {editingReserva.status === 'pendente' && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => convertToEnrollmentMutation.mutate()}
-                  disabled={convertToEnrollmentMutation.isPending}
-                >
-                  <UserCheck className="h-4 w-4 mr-2" />
-                  Converter em Matrícula
-                </Button>
+              {editingReserva.status === 'aprovada' && (
+                <p className="text-sm text-muted-foreground">
+                  Use o botão "Converter em Matrícula" na lista de reservas para matricular o aluno.
+                </p>
               )}
             </div>
           </CardContent>

@@ -10,8 +10,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ClipboardList, Search, Plus, Edit, Trash2, UserCheck } from 'lucide-react';
+import { ClipboardList, Search, Plus, Edit, Trash2, UserCheck, Check, X } from 'lucide-react';
 import { ModalMestre } from '@/features/secretaria/hub/ModalMestre';
+import { ConverterReservaDialog } from '@/features/secretaria/reservas/ConverterReservaDialog';
+import { IconBadge } from '@/components/IconBadge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -30,8 +32,8 @@ export default function SecretariaReservas() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isMatriculaModalOpen, setIsMatriculaModalOpen] = useState(false);
-  const [selectedApplication, setSelectedApplication] = useState<string | null>(null);
+  const [editingApplication, setEditingApplication] = useState<any | null>(null);
+  const [converterApplication, setConverterApplication] = useState<any | null>(null);
 
   // Verificar se deve abrir o modal baseado na URL
   useState(() => {
@@ -80,23 +82,72 @@ export default function SecretariaReservas() {
     },
   });
 
+  const approveApplication = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('waitlist_applications')
+        .update({ status: 'aprovada' })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['waitlist_applications'] });
+      toast({ title: 'Reserva aprovada com sucesso!' });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao aprovar reserva',
+        description: error.message,
+      });
+    },
+  });
+
+  const rejectApplication = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('waitlist_applications')
+        .update({ status: 'rejeitada' })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['waitlist_applications'] });
+      toast({ title: 'Reserva rejeitada.' });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao rejeitar reserva',
+        description: error.message,
+      });
+    },
+  });
+
   const handleOpenModal = () => {
+    setEditingApplication(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (application: any) => {
+    setEditingApplication(application);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    setEditingApplication(null);
     queryClient.invalidateQueries({ queryKey: ['waitlist_applications'] });
   };
 
-  const handleConvertToEnrollment = (applicationId: string) => {
-    setSelectedApplication(applicationId);
-    setIsMatriculaModalOpen(true);
+  const handleConvertToEnrollment = (application: any) => {
+    setConverterApplication(application);
   };
 
-  const handleCloseMatriculaModal = () => {
-    setIsMatriculaModalOpen(false);
-    setSelectedApplication(null);
+  const handleCloseConverter = () => {
+    setConverterApplication(null);
   };
 
   const filteredApplications = applications.filter(app => {
@@ -120,8 +171,8 @@ export default function SecretariaReservas() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <ClipboardList className="h-6 w-6" />
+        <div className="flex items-center space-x-3">
+          <IconBadge icon={ClipboardList} tone="warm" />
           <h1 className="text-2xl font-bold">Reservas de Vaga</h1>
         </div>
         <Button onClick={handleOpenModal}>
@@ -219,21 +270,45 @@ export default function SecretariaReservas() {
                       </TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
+                          {application.status === 'pendente' && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                title="Aprovar"
+                                onClick={() => approveApplication.mutate(application.id)}
+                                disabled={approveApplication.isPending}
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                title="Rejeitar"
+                                onClick={() => rejectApplication.mutate(application.id)}
+                                disabled={rejectApplication.isPending}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
                           {application.status === 'aprovada' && (
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               variant="default"
-                              onClick={() => handleConvertToEnrollment(application.id)}
+                              title="Converter em Matrícula"
+                              onClick={() => handleConvertToEnrollment(application)}
                             >
                               <UserCheck className="h-4 w-4" />
                             </Button>
                           )}
-                          <Button size="sm" variant="outline">
+                          <Button size="sm" variant="outline" title="Editar" onClick={() => handleEdit(application)}>
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant="outline"
+                            title="Excluir"
                             onClick={() => deleteApplication.mutate(application.id)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -253,14 +328,17 @@ export default function SecretariaReservas() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         defaultTab="reservas"
+        editingItem={editingApplication}
       />
 
-      {/* Modal para Converter em Matrícula */}
-      <ModalMestre
-        isOpen={isMatriculaModalOpen}
-        onClose={handleCloseMatriculaModal}
-        defaultTab="matriculas"
-      />
+      {converterApplication && (
+        <ConverterReservaDialog
+          open={!!converterApplication}
+          onClose={handleCloseConverter}
+          application={converterApplication}
+          orgId={orgData?.organization_id || ''}
+        />
+      )}
     </div>
   );
 }

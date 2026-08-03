@@ -1675,6 +1675,7 @@ export type Database = {
       waitlist_applications: {
         Row: {
           birth_date: string | null
+          converted_student_id: string | null
           created_at: string
           desired_segment_id: string | null
           desired_series_id: string | null
@@ -1690,6 +1691,7 @@ export type Database = {
         }
         Insert: {
           birth_date?: string | null
+          converted_student_id?: string | null
           created_at?: string
           desired_segment_id?: string | null
           desired_series_id?: string | null
@@ -1705,6 +1707,7 @@ export type Database = {
         }
         Update: {
           birth_date?: string | null
+          converted_student_id?: string | null
           created_at?: string
           desired_segment_id?: string | null
           desired_series_id?: string | null
@@ -1719,6 +1722,27 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "waitlist_applications_converted_student_id_fkey"
+            columns: ["converted_student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_applications_converted_student_id_fkey"
+            columns: ["converted_student_id"]
+            isOneToOne: false
+            referencedRelation: "v_risco_evasao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_applications_converted_student_id_fkey"
+            columns: ["converted_student_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_safe"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "waitlist_applications_desired_segment_id_fkey"
             columns: ["desired_segment_id"]

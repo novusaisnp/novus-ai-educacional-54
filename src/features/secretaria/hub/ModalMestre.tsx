@@ -58,9 +58,10 @@ interface ModalMestreProps {
   isOpen: boolean;
   onClose: () => void;
   defaultTab?: ModalType;
+  editingItem?: any;
 }
 
-export function ModalMestre({ isOpen, onClose, defaultTab }: ModalMestreProps) {
+export function ModalMestre({ isOpen, onClose, defaultTab, editingItem }: ModalMestreProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<ModalType>(defaultTab || 'alunos');
   const [editingStates, setEditingStates] = useState<Record<ModalType, any>>({
@@ -98,6 +99,15 @@ export function ModalMestre({ isOpen, onClose, defaultTab }: ModalMestreProps) {
       }
     }
   }, [isOpen, searchParams, defaultTab, setSearchParams]);
+
+  // Semear o item em edição quando o modal abre já com um alvo definido
+  // (páginas-lista que usam o ModalMestre genérico, ex.: botão "Editar" de reservas)
+  useEffect(() => {
+    if (isOpen && defaultTab && editingItem) {
+      setEditingStates(prev => ({ ...prev, [defaultTab]: editingItem }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   // Atualizar query params quando tab muda
   const handleTabChange = (tab: ModalType) => {

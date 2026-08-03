@@ -14,6 +14,7 @@ import { StudentAvatar } from '@/components/StudentAvatar';
 import { StudentAttachments } from '@/components/StudentAttachments';
 import { useDocuments } from '@/hooks/useDocuments';
 import { SecretariaModalContext } from '../types';
+import { createGuardianForStudent } from '../lib/createGuardianForStudent';
 
 const studentSchema = z.object({
   first_name: z.string().min(1, 'Nome obrigatório'),
@@ -180,8 +181,21 @@ export function SubmodalAlunos({ context, editingStudent, onEditingChange }: Sub
           .insert([payload])
           .select()
           .single();
-        
+
         if (error) throw error;
+
+        if (isMinor(data.birth_date) && data.responsible_full_name) {
+          await createGuardianForStudent({
+            orgId: context.orgId,
+            studentId: created.id,
+            name: data.responsible_full_name,
+            relationship: data.responsible_relationship,
+            documentId: data.responsible_document_id,
+            email: data.responsible_email,
+            phone: data.responsible_phone,
+          });
+        }
+
         return created;
       }
     },

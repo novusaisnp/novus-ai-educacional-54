@@ -70,9 +70,12 @@ export const useUpsertGrade = () => {
         comments: gradeData.comments,
       };
 
+      // A constraint UNIQUE real em public.grades é (assessment_id, student_id) —
+      // sem organization_id. onConflict com coluna fora de qualquer constraint
+      // única faz o Postgres rejeitar com 400 (42P10).
       const { data, error } = await supabase
         .from('grades')
-        .upsert(payload, { onConflict: 'organization_id,assessment_id,student_id' })
+        .upsert(payload, { onConflict: 'assessment_id,student_id' })
         .select('id, assessment_id, student_id, grade, updated_at')
         .single();
 

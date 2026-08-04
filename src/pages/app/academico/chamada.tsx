@@ -33,7 +33,9 @@ const attendanceSchema = z.object({
 
 type AttendanceFormData = z.infer<typeof attendanceSchema>;
 
-type AttendanceStatus = 'presente' | 'ausente' | 'atraso' | 'justificado';
+// Valores devem bater com o CHECK constraint de public.attendance.status no banco
+// (attendance_status_check: presente/falta/atraso/justificada) — não são livres.
+type AttendanceStatus = 'presente' | 'falta' | 'atraso' | 'justificada';
 
 interface AttendanceRecord {
   student_id: string;
@@ -227,10 +229,15 @@ export default function Chamada() {
         note: record.note || null,
       }));
 
+      // A constraint UNIQUE real em public.attendance é (class_id, subject_id,
+      // student_id, date) — sem organization_id. Um onConflict com coluna que não
+      // faz parte de nenhuma constraint única faz o Postgres rejeitar com 400
+      // (42P10, "no unique or exclusion constraint matching the ON CONFLICT
+      // specification").
       const { error } = await supabase
         .from('attendance')
         .upsert(attendanceRecords, {
-          onConflict: 'organization_id,class_id,subject_id,student_id,date',
+          onConflict: 'class_id,subject_id,student_id,date',
         });
 
       if (error) throw error;
@@ -292,7 +299,7 @@ export default function Chamada() {
   // Funções auxiliares
   const toggleStatus = (studentId: string) => {
     const currentStatus = attendanceData[studentId]?.status || 'presente';
-    const statuses: AttendanceStatus[] = ['presente', 'ausente', 'atraso', 'justificado'];
+    const statuses: AttendanceStatus[] = ['presente', 'falta', 'atraso', 'justificada'];
     const currentIndex = statuses.indexOf(currentStatus);
     const nextStatus = statuses[(currentIndex + 1) % statuses.length];
     
@@ -356,7 +363,7 @@ export default function Chamada() {
 
   // Calculadora de resumo
   const getStatusCounts = () => {
-    const counts = { presente: 0, ausente: 0, atraso: 0, justificado: 0 };
+    const counts = { presente: 0, falta: 0, atraso: 0, justificada: 0 };
     Object.values(attendanceData).forEach(record => {
       counts[record.status] = (counts[record.status] || 0) + 1;
     });
@@ -370,9 +377,9 @@ export default function Chamada() {
   const getStatusColor = (status: AttendanceStatus) => {
     switch (status) {
       case 'presente': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-      case 'ausente': return 'bg-red-100 text-red-800 border-red-200';
+      case 'falta': return 'bg-red-100 text-red-800 border-red-200';
       case 'atraso': return 'bg-amber-100 text-amber-800 border-amber-200';
-      case 'justificado': return 'bg-sky-100 text-sky-800 border-sky-200';
+      case 'justificada': return 'bg-sky-100 text-sky-800 border-sky-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
@@ -380,9 +387,9 @@ export default function Chamada() {
   const getStatusLabel = (status: AttendanceStatus) => {
     switch (status) {
       case 'presente': return 'Presente';
-      case 'ausente': return 'Ausente';
+      case 'falta': return 'Ausente';
       case 'atraso': return 'Atraso';
-      case 'justificado': return 'Justificado';
+      case 'justificada': return 'Justificado';
       default: return 'Presente';
     }
   };
@@ -533,14 +540,14 @@ export default function Chamada() {
                   <Badge className={getStatusColor('presente')}>
                     Presentes: {statusCounts.presente}
                   </Badge>
-                  <Badge className={getStatusColor('ausente')}>
-                    Ausentes: {statusCounts.ausente}
+                  <Badge className={getStatusColor('falta')}>
+                    Ausentes: {statusCounts.falta}
                   </Badge>
                   <Badge className={getStatusColor('atraso')}>
                     Atrasos: {statusCounts.atraso}
                   </Badge>
-                  <Badge className={getStatusColor('justificado')}>
-                    Justificados: {statusCounts.justificado}
+                  <Badge className={getStatusColor('justificada')}>
+                    Justificados: {statusCounts.justificada}
                   </Badge>
                 </div>
               </div>

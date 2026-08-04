@@ -29,7 +29,9 @@ const reportSchema = z.object({
 
 type ReportFormData = z.infer<typeof reportSchema>;
 
-type AttendanceStatus = 'presente' | 'ausente' | 'atraso' | 'justificado';
+// Valores devem bater com o CHECK constraint de public.attendance.status no banco
+// (attendance_status_check: presente/falta/atraso/justificada) — não são livres.
+type AttendanceStatus = 'presente' | 'falta' | 'atraso' | 'justificada';
 
 interface AttendanceRecord {
   id: string;
@@ -163,9 +165,9 @@ export default function ChamadaRelatorio() {
   // Calcular resumo
   const summary: AttendanceSummary = {
     presente: attendanceData.filter(r => r.status === 'presente').length,
-    ausente: attendanceData.filter(r => r.status === 'ausente').length,
+    ausente: attendanceData.filter(r => r.status === 'falta').length,
     atraso: attendanceData.filter(r => r.status === 'atraso').length,
-    justificado: attendanceData.filter(r => r.status === 'justificado').length,
+    justificado: attendanceData.filter(r => r.status === 'justificada').length,
     total: attendanceData.length,
     percentualPresenca: attendanceData.length > 0 
       ? Math.round((attendanceData.filter(r => r.status === 'presente').length / attendanceData.length) * 100)
@@ -175,9 +177,9 @@ export default function ChamadaRelatorio() {
   const getStatusColor = (status: AttendanceStatus) => {
     switch (status) {
       case 'presente': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-      case 'ausente': return 'bg-red-100 text-red-800 border-red-200';
+      case 'falta': return 'bg-red-100 text-red-800 border-red-200';
       case 'atraso': return 'bg-amber-100 text-amber-800 border-amber-200';
-      case 'justificado': return 'bg-sky-100 text-sky-800 border-sky-200';
+      case 'justificada': return 'bg-sky-100 text-sky-800 border-sky-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
@@ -185,9 +187,9 @@ export default function ChamadaRelatorio() {
   const getStatusLabel = (status: AttendanceStatus) => {
     switch (status) {
       case 'presente': return 'Presente';
-      case 'ausente': return 'Ausente';
+      case 'falta': return 'Ausente';
       case 'atraso': return 'Atraso';
-      case 'justificado': return 'Justificado';
+      case 'justificada': return 'Justificado';
       default: return 'Presente';
     }
   };

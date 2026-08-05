@@ -1,0 +1,189 @@
+import { supabase } from '@/integrations/supabase/client';
+import { erpEmit } from '@/integrations/erp/emit';
+import { getEmpresaLogoUrl } from '@/integrations/erp/getEmpresaLogo';
+import {
+  DEFAULT_TEMPLATE_BODY,
+  renderContractText,
+  hashContractText,
+} from './enrollmentContractTemplate';
+import { generateEnrollmentContractPdf } from './generateEnrollmentContractPdf';
+
+// Logo é decoração do PDF, nunca deve travar a assinatura do contrato — se o
+// fetch falhar ou demorar, segue sem logo. Prioridade: logo real do ERP
+// (mesma identidade visual cadastrada no onboarding de empresa representada);
+// se a integração ERP não estiver configurada pra esta organização, cai pro
+// `organizations.logo_url` (definido manualmente, fallback pra quem roda sem
+// integração ERP nenhuma).
+async function fetchLogoBytesSafely(orgId: string, fallbackLogoUrl?: string | null): Promise<Uint8Array | null> {
+  const urlToTry = (await getEmpresaLogoUrl(orgId)) || fallbackLogoUrl || null;
+  if (!urlToTry) return null;
+
+  try {
+    const response = await fetch(urlToTry);
+    if (!response.ok) return null;
+    const buffer = await response.arrayBuffer();
+    return new Uint8Array(buffer);
+  } catch (error) {
+    console.warn('[ERP] Falha ao baixar logo da empresa:', error);
+    return null;
+  }
+}
+
+interface SignEnrollmentContractInput {
+  orgId: string;
+  organizationName: string;
+  enrollmentId: string;
+  studentId: string;
+  studentName: string;
+  studentBirthDate?: string;
+  guardianId?: string;
+  guardianName?: string;
+  guardianCpf?: string | null;
+  className: string;
+  monthlyFeeAmount: number;
+  dueDay: number;
+  enrollmentDate: string;
+  signerName: string;
+  activeTemplate?: { id: string; body: string } | null;
+  fallbackLogoUrl?: string | null;
+}
+
+// Vencimento: dia `dueDay` do mês corrente, ou do mês seguinte se esse dia já
+// passou (regra simples pra 1ª mensalidade/taxa avulsa gerada no ato da matrícula).
+function computeNextDueDate(dueDay: number): string {
+  const now = new Date();
+  const candidate = new Date(now.getFullYear(), now.getMonth(), dueDay);
+  if (candidate < now) {
+    candidate.setMonth(candidate.getMonth() + 1);
+  }
+  return candidate.toISOString().split('T')[0];
+}
+
+/**
+ * Assina eletronicamente o contrato de matrícula (nome digitado + aceite +
+ * hash do texto + timestamp do servidor), gera e anexa o PDF, e dispara um
+ * título avulso no ERP (1ª mensalidade). A gravação do contrato (passos 1-4)
+ * precisa funcionar pra matrícula ser considerada concluída; a chamada ao ERP
+ * (passo 5) nunca quebra o fluxo principal, mesmo padrão de
+ * createGuardianForStudent.ts.
+ */
+export async function signEnrollmentContract(input: SignEnrollmentContractInput) {
+  const templateBody = input.activeTemplate?.body || DEFAULT_TEMPLATE_BODY;
+  const contractText = renderContractText(templateBody, {
+    organizationName: input.organizationName,
+    studentName: input.studentName,
+    studentBirthDate: input.studentBirthDate,
+    guardianName: input.guardianName,
+    guardianCpf: input.guardianCpf || undefined,
+    className: input.className,
+    monthlyFeeAmount: input.monthlyFeeAmount,
+    dueDay: input.dueDay,
+    enrollmentDate: input.enrollmentDate,
+  });
+  const contractHash = await hashContractText(contractText);
+
+  // 1) Insere o contrato primeiro (sem document_id ainda) — signed_at vem do
+  // DEFAULT now() do Postgres, não do relógio do navegador.
+  const { data: contract, error: contractError } = await supabase
+    .from('enrollment_contracts')
+    .insert({
+      organization_id: input.orgId,
+      enrollment_id: input.enrollmentId,
+      student_id: input.studentId,
+      guardian_id: input.guardianId || null,
+      template_id: input.activeTemplate?.id || null,
+      contract_text: contractText,
+      contract_hash: contractHash,
+      monthly_fee_amount: input.monthlyFeeAmount,
+      due_day: input.dueDay,
+      signer_name: input.signerName,
+      signer_accepted_terms: true,
+    })
+    .select()
+    .single();
+  if (contractError) throw contractError;
+
+  // 2) Gera o PDF usando o signed_at autoritativo retornado pelo insert
+  const logoBytes = await fetchLogoBytesSafely(input.orgId, input.fallbackLogoUrl);
+  const pdfBytes = await generateEnrollmentContractPdf({
+    contractText,
+    signerName: input.signerName,
+    signedAt: contract.signed_at,
+    contractHash,
+    organizationName: input.organizationName,
+    logoBytes,
+  });
+
+  // 3) Upload + registro em `documents` (mesmo padrão de src/lib/storage.ts)
+  const path = `${input.orgId}/students/${input.studentId}/contrato-matricula-${input.enrollmentId}.pdf`;
+  const { error: uploadError } = await supabase.storage
+    .from('docs')
+    .upload(path, pdfBytes, { contentType: 'application/pdf', upsert: true });
+  if (uploadError) throw uploadError;
+
+  const { data: document, error: docError } = await supabase
+    .from('documents')
+    .insert({
+      organization_id: input.orgId,
+      owner_type: 'student',
+      owner_id: input.studentId,
+      title: 'Contrato de Matrícula',
+      file_path: `docs/${path}`,
+      tags: ['contrato_matricula'],
+      document_type: 'Contrato de Matrícula',
+    })
+    .select()
+    .single();
+  if (docError) throw docError;
+
+  // 4) Vincula o document_id ao contrato
+  const { error: linkError } = await supabase
+    .from('enrollment_contracts')
+    .update({ document_id: document.id })
+    .eq('id', contract.id);
+  if (linkError) throw linkError;
+
+  // 5) Dispara título avulso no ERP — fora do fluxo crítico: se falhar, a
+  // matrícula e o contrato já gravados continuam válidos, só o resultado da
+  // sincronização é registrado pra auditoria/retry manual futuro.
+  const dueDate = computeNextDueDate(input.dueDay);
+  const numeroDocumento = `MAT-${input.enrollmentId.slice(0, 8).toUpperCase()}`;
+
+  try {
+    const erpResult = await erpEmit.createReceivable(input.orgId, {
+      numeroDocumento,
+      valorOriginal: input.monthlyFeeAmount,
+      dataVencimento: dueDate,
+      situacao: 'ABERTA',
+      observacoes: `1ª mensalidade - Matrícula ${input.studentName} - Turma ${input.className}`,
+      clienteCpfCnpj: input.guardianCpf || undefined,
+      recorrente: true,
+      periodicidade: 'MENSAL',
+    });
+
+    await supabase
+      .from('enrollment_contracts')
+      .update({
+        erp_receivable_status: erpResult.skipped ? 'skipped' : erpResult.mock ? 'mock' : erpResult.ok ? 'ok' : 'error',
+        erp_receivable_error: erpResult.error || null,
+        erp_receivable_synced_at: new Date().toISOString(),
+      })
+      .eq('id', contract.id);
+
+    if (!erpResult.ok) {
+      console.warn('[ERP] Falha ao criar título avulso da matrícula:', erpResult.error);
+    }
+  } catch (erpError) {
+    console.error('[ERP] Erro na integração ao criar título avulso:', erpError);
+    await supabase
+      .from('enrollment_contracts')
+      .update({
+        erp_receivable_status: 'error',
+        erp_receivable_error: erpError instanceof Error ? erpError.message : 'Erro desconhecido',
+        erp_receivable_synced_at: new Date().toISOString(),
+      })
+      .eq('id', contract.id);
+  }
+
+  return contract;
+}

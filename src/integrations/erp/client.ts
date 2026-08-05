@@ -19,6 +19,13 @@ interface CreateReceivableInput {
   situacao?: string;
   observacoes?: string;
   clienteCpfCnpj?: string;
+  // Campos de forward-compatibility: o `syncFinanceiro` do novusai-erp ainda não
+  // mapeia `recorrente`/`periodicidade` no insert de `contas_receber` (bug
+  // conhecido, ver docs/STATUS.md) — enviar esses campos hoje é inofensivo
+  // (chave extra de JSON ignorada) e evita qualquer mudança de código deste lado
+  // quando o bug for corrigido do lado do ERP.
+  recorrente?: boolean;
+  periodicidade?: string;
 }
 
 interface ERPClientResponse {
@@ -124,6 +131,8 @@ class ERPClient {
       situacao: data.situacao || 'ABERTA',
       observacoes: data.observacoes,
       cliente_cpf_cnpj: data.clienteCpfCnpj,
+      recorrente: data.recorrente,
+      periodicidade: data.periodicidade,
     });
   }
 

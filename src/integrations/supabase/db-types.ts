@@ -37,3 +37,11 @@ export type PeriodUpdate = Database['public']['Tables']['periods']['Update'];
 export type CalendarExceptionRow = Database['public']['Tables']['calendar_exceptions']['Row'];
 export type CalendarExceptionInsert = Database['public']['Tables']['calendar_exceptions']['Insert'];
 export type CalendarExceptionUpdate = Database['public']['Tables']['calendar_exceptions']['Update'];
+
+export type EnrollmentContractRow = Database['public']['Tables']['enrollment_contracts']['Row'];
+export type EnrollmentContractInsert = Database['public']['Tables']['enrollment_contracts']['Insert'];
+export type EnrollmentContractUpdate = Database['public']['Tables']['enrollment_contracts']['Update'];
+
+export type ContractTemplateRow = Database['public']['Tables']['contract_templates']['Row'];
+export type ContractTemplateInsert = Database['public']['Tables']['contract_templates']['Insert'];
+export type ContractTemplateUpdate = Database['public']['Tables']['contract_templates']['Update'];

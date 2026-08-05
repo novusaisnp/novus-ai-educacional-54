@@ -25,6 +25,8 @@ export async function createGuardianForStudent({
   email,
   phone,
 }: CreateGuardianForStudentInput) {
+  const normalizedCpf = documentId?.replace(/\D/g, '') || null;
+
   const { data: guardian, error: guardianError } = await supabase
     .from('guardians')
     .insert({
@@ -32,6 +34,7 @@ export async function createGuardianForStudent({
       email: email || null,
       phone: phone || null,
       relationship: relationship || null,
+      cpf: normalizedCpf,
       organization_id: orgId,
     })
     .select()
@@ -52,7 +55,7 @@ export async function createGuardianForStudent({
   if (linkError) throw linkError;
 
   try {
-    const cpf = documentId?.replace(/\D/g, '') || phone?.replace(/\D/g, '').padStart(11, '0') || '00000000000';
+    const cpf = normalizedCpf || phone?.replace(/\D/g, '').padStart(11, '0') || '00000000000';
     const erpResult = await erpEmit.upsertClient(orgId, {
       cpf,
       name,

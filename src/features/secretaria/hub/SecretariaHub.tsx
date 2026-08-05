@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, GraduationCap, BookOpen, UserCheck, ExternalLink, Building, Layers, Grid3X3, Calendar, UserPlus, FileText, UserMinus, ClipboardList, HelpCircle, UserX, RotateCcw } from 'lucide-react';
+import { Users, GraduationCap, BookOpen, UserCheck, ExternalLink, Building, Layers, Grid3X3, Calendar, UserPlus, FileText, UserMinus, ClipboardList, HelpCircle, UserX, RotateCcw, FileSignature } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ModalType } from '../types';
 
@@ -20,8 +20,13 @@ export function SecretariaHub({ onOpenModal }: SecretariaHubProps) {
     if (canonicalModules.includes(moduleId)) {
       return `/app/${moduleId}`;
     }
-    
-    // Módulos exclusivos da secretaria  
+
+    // Página de configuração única (não é lista de itens) — rota própria
+    if (moduleId === 'contratos') {
+      return '/app/secretaria/contratos/modelo';
+    }
+
+    // Módulos exclusivos da secretaria
     return `/app/secretaria/${moduleId}`;
   };
 
@@ -55,6 +60,7 @@ export function SecretariaHub({ onOpenModal }: SecretariaHubProps) {
     { id: 'solicitacoes' as const, title: 'Solicitações', description: 'Pedidos à secretaria', icon: HelpCircle, color: 'bg-violet-50 text-violet-600 border-violet-200' },
     { id: 'ex-alunos' as const, title: 'Ex-Alunos', description: 'Alunos inativos/transferidos', icon: UserX, color: 'bg-slate-50 text-slate-600 border-slate-200' },
     { id: 'rematricula' as const, title: 'Rematrícula', description: 'Processo de rematrícula', icon: RotateCcw, color: 'bg-amber-50 text-amber-600 border-amber-200' },
+    { id: 'contratos' as const, title: 'Modelo de Contrato', description: 'Texto do contrato de matrícula com assinatura eletrônica', icon: FileSignature, color: 'bg-rose-50 text-rose-600 border-rose-200', singlePage: true },
   ];
 
   return (
@@ -84,21 +90,23 @@ export function SecretariaHub({ onOpenModal }: SecretariaHubProps) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <Button 
+                  <Button
                     onClick={() => navigate(getRouteForModule(module.id))}
                     className="w-full"
                     variant="default"
                   >
                     <ExternalLink className="mr-2 h-4 w-4" />
-                    Abrir Lista
+                    {'singlePage' in module && module.singlePage ? 'Abrir' : 'Abrir Lista'}
                   </Button>
-                  <Button 
-                    onClick={() => navigate(getQuickAddRoute(module.id))}
-                    className="w-full"
-                    variant="outline"
-                  >
-                    Cadastro Rápido
-                  </Button>
+                  {!('singlePage' in module && module.singlePage) && (
+                    <Button
+                      onClick={() => navigate(getQuickAddRoute(module.id))}
+                      className="w-full"
+                      variant="outline"
+                    >
+                      Cadastro Rápido
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>

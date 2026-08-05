@@ -471,6 +471,44 @@ export type Database = {
           },
         ]
       }
+      contract_templates: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          is_active: boolean
+          organization_id: string
+          updated_at: string
+          version_label: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          organization_id: string
+          updated_at?: string
+          version_label: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          updated_at?: string
+          version_label?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           ai_notes: string | null
@@ -523,6 +561,151 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enrollment_contracts: {
+        Row: {
+          contract_hash: string
+          contract_text: string
+          contract_version: string
+          created_at: string
+          document_id: string | null
+          due_day: number
+          enrollment_id: string
+          erp_contract_id: string | null
+          erp_receivable_error: string | null
+          erp_receivable_status: string
+          erp_receivable_synced_at: string | null
+          guardian_id: string | null
+          id: string
+          is_recurring: boolean
+          monthly_fee_amount: number
+          organization_id: string
+          recurrence_period: string
+          signed_at: string
+          signer_accepted_terms: boolean
+          signer_name: string
+          status: string
+          student_id: string
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          contract_hash: string
+          contract_text: string
+          contract_version?: string
+          created_at?: string
+          document_id?: string | null
+          due_day: number
+          enrollment_id: string
+          erp_contract_id?: string | null
+          erp_receivable_error?: string | null
+          erp_receivable_status?: string
+          erp_receivable_synced_at?: string | null
+          guardian_id?: string | null
+          id?: string
+          is_recurring?: boolean
+          monthly_fee_amount: number
+          organization_id: string
+          recurrence_period?: string
+          signed_at?: string
+          signer_accepted_terms?: boolean
+          signer_name: string
+          status?: string
+          student_id: string
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contract_hash?: string
+          contract_text?: string
+          contract_version?: string
+          created_at?: string
+          document_id?: string | null
+          due_day?: number
+          enrollment_id?: string
+          erp_contract_id?: string | null
+          erp_receivable_error?: string | null
+          erp_receivable_status?: string
+          erp_receivable_synced_at?: string | null
+          guardian_id?: string | null
+          id?: string
+          is_recurring?: boolean
+          monthly_fee_amount?: number
+          organization_id?: string
+          recurrence_period?: string
+          signed_at?: string
+          signer_accepted_terms?: boolean
+          signer_name?: string
+          status?: string
+          student_id?: string
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrollment_contracts_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollment_contracts_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: true
+            referencedRelation: "enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollment_contracts_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "guardians"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollment_contracts_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "v_guardians_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollment_contracts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollment_contracts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollment_contracts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_risco_evasao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollment_contracts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollment_contracts_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "contract_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -1043,18 +1226,21 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          logo_url: string | null
           name: string
           updated_at: string
         }
         Insert: {
           created_at?: string
           id?: string
+          logo_url?: string | null
           name: string
           updated_at?: string
         }
         Update: {
           created_at?: string
           id?: string
+          logo_url?: string | null
           name?: string
           updated_at?: string
         }

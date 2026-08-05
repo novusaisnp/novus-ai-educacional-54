@@ -37,7 +37,8 @@ export default function PortalDocumentos() {
           file_path,
           created_at,
           students (
-            name
+            first_name,
+            last_name
           )
         `)
         .order('created_at', { ascending: false });
@@ -49,8 +50,8 @@ export default function PortalDocumentos() {
 
       return (data || []).map(doc => ({
         ...doc,
-        student: Array.isArray(doc.students) && doc.students.length > 0 
-          ? { name: doc.students[0].name } 
+        student: Array.isArray(doc.students) && doc.students.length > 0
+          ? { name: `${doc.students[0].first_name} ${doc.students[0].last_name}` }
           : undefined
       })) as Document[];
     }

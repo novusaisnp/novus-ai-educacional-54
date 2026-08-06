@@ -451,6 +451,152 @@ export type Database = {
         }
         Relationships: []
       }
+      class_council_opinions: {
+        Row: {
+          class_council_id: string
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision: string | null
+          id: string
+          opinion_text: string | null
+          organization_id: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          class_council_id: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: string | null
+          id?: string
+          opinion_text?: string | null
+          organization_id: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          class_council_id?: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: string | null
+          id?: string
+          opinion_text?: string | null
+          organization_id?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_council_opinions_class_council_id_fkey"
+            columns: ["class_council_id"]
+            isOneToOne: false
+            referencedRelation: "class_councils"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_council_opinions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_council_opinions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_council_opinions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_risco_evasao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_council_opinions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_councils: {
+        Row: {
+          class_id: string
+          created_at: string
+          document_id: string | null
+          finalized_at: string | null
+          finalized_by: string | null
+          id: string
+          organization_id: string
+          signer_name: string | null
+          status: string
+          term_id: string
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          document_id?: string | null
+          finalized_at?: string | null
+          finalized_by?: string | null
+          id?: string
+          organization_id: string
+          signer_name?: string | null
+          status?: string
+          term_id: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          document_id?: string | null
+          finalized_at?: string | null
+          finalized_by?: string | null
+          id?: string
+          organization_id?: string
+          signer_name?: string | null
+          status?: string
+          term_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_councils_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_councils_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_councils_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_councils_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "academic_terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       classes: {
         Row: {
           created_at: string

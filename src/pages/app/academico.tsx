@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { IconBadge } from '@/components/IconBadge';
-import { BarChart3, BookOpen, Trophy, TrendingUp, UserCheck } from 'lucide-react';
+import { BarChart3, BookOpen, Trophy, TrendingUp, UserCheck, Gavel } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Academico() {
@@ -61,6 +61,24 @@ export default function Academico() {
                 <Link to="/app/academico/resultados-periodo">Resultados do Período</Link>
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center space-x-3">
+              <IconBadge icon={Gavel} tone="purple" />
+              <div>
+                <CardTitle className="text-xl">Conselho de Classe</CardTitle>
+                <CardDescription>Ata digital com parecer e decisão por aluno</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">Registre pareceres e decisões do colegiado ao final de cada período</p>
+            <Button asChild>
+              <Link to="/app/academico/conselho-classe">Abrir Conselho de Classe</Link>
+            </Button>
           </CardContent>
         </Card>
 

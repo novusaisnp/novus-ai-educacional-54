@@ -42,6 +42,43 @@ export const useTermResults = (termId?: string, classId?: string, subjectId?: st
   });
 };
 
+export interface TermResultByClassRow {
+  id: string;
+  student_id: string;
+  subject_id: string;
+  original_average: number;
+  recovery_grade: number | null;
+  final_grade: number;
+  status: TermResultStatus;
+  students: { first_name: string; last_name: string } | null;
+  subjects: { name: string } | null;
+}
+
+// Usado pela ata de conselho de classe, que precisa da situação do aluno em
+// TODAS as disciplinas da turma — diferente de useTermResults, que exige
+// subjectId (uma disciplina de cada vez, usado em resultados-periodo.tsx).
+export const useTermResultsByClass = (termId?: string, classId?: string) => {
+  const { data: orgData } = useOrganization();
+
+  return useQuery({
+    queryKey: ['term_results_by_class', orgData?.organization_id, termId ?? null, classId ?? null],
+    queryFn: async (): Promise<TermResultByClassRow[]> => {
+      if (!orgData?.organization_id || !termId || !classId) return [];
+
+      const { data, error } = await supabase
+        .from('term_results')
+        .select('id, student_id, subject_id, original_average, recovery_grade, final_grade, status, students(first_name, last_name), subjects(name)')
+        .eq('organization_id', orgData.organization_id)
+        .eq('term_id', termId)
+        .eq('class_id', classId);
+
+      if (error) throw error;
+      return (data || []) as unknown as TermResultByClassRow[];
+    },
+    enabled: !!orgData?.organization_id && !!termId && !!classId,
+  });
+};
+
 export const useCalculateTermResults = () => {
   const { data: orgData } = useOrganization();
   const queryClient = useQueryClient();

@@ -35,6 +35,7 @@ import RelatorioCallPage from '@/pages/app/academico/chamada/relatorio';
 import AvaliacoesPage from '@/pages/app/academico/avaliacoes';
 import NotasPage from '@/pages/app/academico/notas';
 import ResultadosPeriodoPage from '@/pages/app/academico/resultados-periodo';
+import ConselhoClassePage from '@/pages/app/academico/conselho-classe';
 
 import PedagogicoPage from '@/pages/app/pedagogico';
 import EventosPage from '@/pages/app/eventos';
@@ -153,6 +154,7 @@ function App() {
                 <Route path="academico/avaliacoes" element={<AvaliacoesPage />} />
                 <Route path="academico/notas" element={<NotasPage />} />
                 <Route path="academico/resultados-periodo" element={<ResultadosPeriodoPage />} />
+                <Route path="academico/conselho-classe" element={<ConselhoClassePage />} />
                 <Route path="academico/alunos" element={<AlunosPage />} />
                 
                 <Route path="pedagogico" element={<PedagogicoPage />} />

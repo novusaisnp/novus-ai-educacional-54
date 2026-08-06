@@ -57,3 +57,11 @@ export type AcademicSettingsUpdate = Database['public']['Tables']['academic_sett
 export type TermResultRow = Database['public']['Tables']['term_results']['Row'];
 export type TermResultInsert = Database['public']['Tables']['term_results']['Insert'];
 export type TermResultUpdate = Database['public']['Tables']['term_results']['Update'];
+
+export type ClassCouncilRow = Database['public']['Tables']['class_councils']['Row'];
+export type ClassCouncilInsert = Database['public']['Tables']['class_councils']['Insert'];
+export type ClassCouncilUpdate = Database['public']['Tables']['class_councils']['Update'];
+
+export type ClassCouncilOpinionRow = Database['public']['Tables']['class_council_opinions']['Row'];
+export type ClassCouncilOpinionInsert = Database['public']['Tables']['class_council_opinions']['Insert'];
+export type ClassCouncilOpinionUpdate = Database['public']['Tables']['class_council_opinions']['Update'];

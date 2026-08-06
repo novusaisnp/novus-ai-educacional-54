@@ -7,9 +7,30 @@
 - **Máquina/VSCode anterior foi perdida e o ambiente foi reconstruído do zero** nesta sessão a partir do clone do GitHub — nada de código tinha sido perdido (working tree já estava limpo e sincronizado), só a configuração local (`.env`, Supabase CLI, skills globais `~/.claude/skills/`). Tudo restaurado a partir de um diretório de config antigo (`C:\MaxDev\.claude`) que o usuário ainda tinha em disco. Ver memória do agente (`machine_reset_2026-08`) para o histórico completo dessa reconstrução.
 - **Skills e memória do Claude agora têm backup dentro do próprio repo**: `docs/claude-backup/` (skills `erp-satellite-integration`/`novus-ecosystem-cli` + memória do projeto), commitado e no GitHub — não é a cópia funcional (essa continua só em `~/.claude`, fora do git), é seguro de vida para não repetir a arqueologia desta sessão numa próxima perda de máquina. Ver `docs/claude-backup/README.md` para instruções de restauração. **Não se atualiza sozinho** — precisa ser regenerado manualmente quando skill/memória mudar de verdade.
 - **Duas fatias de "Somar do MVP" da Fase 1 entregues**: Recuperação e Progressão Parcial, e Ata de Conselho de Classe Digital (ver seções abaixo). Transferência escolar continua pendente dentro do mesmo "somar do MVP" — é a última frente dessa lista.
+- **Ajuste de identidade visual (tokens) entregue**: `--success`/`--warning`/`--info` tokenizados, coral (`accent-warm`) volta a ser só cor de marca (não mais dobrando como "warning"), `--radius` maior (0.75rem→1.125rem), sombra em camadas nova em `Card` (`shadow-card`, substitui o `shadow-sm` quase invisível do Tailwind). Ver seção "Ajuste de identidade visual" abaixo — decisão feita a partir de um artifact comparando o dashboard real antes/depois, não de código copiado de outro repo (ver decisão do usuário sobre `hrshadhin/school-management-system`, descartado como referência por ser um AdminLTE datado).
 - **RLS sem política: as 6 tabelas da sessão de 2026-08-04 seguem corrigidas**, e as 5 tabelas novas desta sessão (`academic_terms`, `academic_settings`, `term_results`, `class_councils`, `class_council_opinions`) já nasceram com RLS + política real na própria migration — não repetir o padrão de "RLS habilitado sem política" nelas.
 - **Sem `chromium-cli`/tooling de browser headless nesta máquina** (Windows recém-reconstruída, ver checkpoint acima) — as duas fatias desta sessão foram verificadas ponta a ponta direto contra o banco real (SQL replicando exatamente o que os hooks/mutations fazem), não clicando na UI de verdade. Considerar `/run-skill-generator` numa sessão futura para resolver isso de vez.
 - **`OPENAI_API_KEY` não está configurada** nos secrets do projeto — bloqueia testar de ponta a ponta qualquer function de IA (`ai-document-validation`).
+
+## ✅ Ajuste de identidade visual — tokens semânticos + profundidade de card (2026-08-06)
+
+**Contexto**: usuário seguiu achando o app "simplório e com cara de ERP" mesmo depois do restyle teal/coral de 2026-07-31. Pediu pra estudar `https://github.com/hrshadhin/school-management-system` só por inspiração visual — investigação (com screenshots reais baixados do repo) mostrou que é um AdminLTE/Bootstrap de 2019, exatamente o estereótipo de admin panel genérico que se queria evitar; nada de lá foi aproveitado. Em vez disso, a investigação virou diagnóstico do código real do próprio app, publicado num artifact comparando o dashboard real (dados de `dashboard.tsx`) antes/depois — usuário aprovou a direção proposta ali.
+
+**3 causas concretas identificadas** (não a paleta em si, que já estava certa): `Card` usa `shadow-sm` do Tailwind sobre borda de 1px — quase sem profundidade; o tom `warm` (coral, cor de marca) também era usado como estado semântico "warning" no `BICard`, confundindo marca com estado; sucesso/alerta/info usavam classes Tailwind soltas (`emerald-100`, `sky-100`...) escolhidas tela a tela, sem token.
+
+**O que mudou** (só tokens + os 3 componentes compartilhados — `Card`/`BICard`/`IconBadge` — que já cascateiam pro app inteiro, sem precisar tocar em cada tela):
+- `src/index.css`: novos tokens `--success` (159 83% 34%), `--warning` (35 83% 43%), `--info` (204 74% 43%) — `--accent-warm` (coral) comentado explicitamente como "só marca, não estado". `--radius` de `0.75rem` para `1.125rem` (cascateia pra `rounded-lg`/`md`/`sm` em todo o app via Tailwind).
+- `tailwind.config.ts`: cores `success`/`warning`/`info` registradas; novo `boxShadow.card` (sombra em 2 camadas — contato fino + difusão longa tingida de teal) — **não** redefine `shadow-sm` global de propósito (6 outros arquivos usam `shadow-sm` pra elevação mais discreta, fora de escopo).
+- `src/components/ui/card.tsx`: `shadow-sm` → `shadow-card`.
+- `src/components/bi/BICard.tsx`: variant `warning` usa `--warning` (não mais `accent-warm`); valor do KPI ganhou `font-black`+`tabular-nums` (números não "dançam" de largura ao trocar).
+- `src/components/IconBadge.tsx`: novo tone `warning`; tones `success`/`info`/`danger` tokenizados (`bg-success/10 text-success` etc., antes `bg-emerald-100 text-emerald-600` etc.); `purple` fica sem token de propósito (é variedade categórica, não estado semântico).
+
+**Verificação**: `bun run typecheck`/`test` (47/47) limpos, `bun run build` sem erro — CSS compilado conferido diretamente (`grep` no `dist/assets/*.css`) pra confirmar que `shadow-card`/`text-success`/`bg-warning\/10` etc. foram gerados com a receita esperada. **Sem verificação visual real no navegador** (mesmo gap de tooling desta sessão, ver checkpoint) — a validação foi typecheck+build+inspeção do CSS gerado, não clique na UI.
+
+**Gaps conhecidos aceitos conscientemente**:
+- **13 arquivos ainda usam cores ad hoc** (`emerald-100`/`sky-100`/`violet-100`/`red-100` direto, fora de `BICard`/`IconBadge`) — `avaliacoes.tsx`, `chamada.tsx`, `chamada/relatorio.tsx`, `matriculas.tsx`, `bi.tsx`, `bi/crm.tsx`, `crm/assistente.tsx`, `crm/demandas.tsx`, `secretaria/periodos/calendario.tsx`, `secretaria/contratos/modelo.tsx`, `features/secretaria/hub/SecretariaHub.tsx`. Não sweepados nesta sessão — escopo combinado com o usuário foi só tokens + os 3 componentes compartilhados. Ver Backlog.
+- Dark mode não foi tocado — confirmado que não está de fato conectado no app (`.dark` em `index.css` é resquício do scaffold shadcn, sem toggle real em nenhuma tela).
+- Não houve validação visual real (browser) — só compilação. Risco baixo (mudança é só troca de valor de token + nome de classe, mesma mecânica já usada em todo o app), mas vale conferir ao vivo na próxima sessão com acesso a browser.
 
 ## ✅ Fase 1 — Ata de Conselho de Classe Digital (2026-08-06)
 
@@ -299,6 +320,8 @@ Investigando o contrato real do ERP (`novusai-erp/docs/CONTRATOS_CANONICOS_ERP.m
 
 ## Backlog
 
+- Varrer os 13 arquivos com cores ad hoc (`emerald-100`/`sky-100`/`violet-100`/`red-100` direto) e trocar pelos tokens `--success`/`--warning`/`--info` novos — lista completa na seção "Ajuste de identidade visual" acima.
+- Validar visualmente no navegador o ajuste de identidade visual (tokens/sombra de card) — só foi verificado via compilação nesta sessão, sem tooling de browser disponível.
 - Rotacionar credenciais expostas (admin/`ADMIN_SEED_TOKEN`).
 - Configurar secrets do projeto Supabase novo (`OPENAI_API_KEY`, `RESEND_API_KEY`, `WHATSAPP_API_*` — `ERP_SIGNING_SECRET` já setado nesta sessão, com valor de teste).
 - Restyle visual do Portal dos Responsáveis.

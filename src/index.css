@@ -32,18 +32,29 @@ All colors MUST be HSL.
     --accent: 180 25% 94%;
     --accent-foreground: 174 40% 18%;
 
-    /* Destaque coral — CTAs de maior ênfase, badges, elementos de energia */
+    /* Destaque coral — CTAs de maior ênfase, elementos de energia da marca.
+       Não usar pra estado semântico (ver --warning) — coral é identidade,
+       não "atenção"; os dois papéis se confundiam antes desta separação. */
     --accent-warm: 16 91% 63%;
     --accent-warm-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
+    /* Estados semânticos tokenizados — antes eram classes Tailwind ad hoc
+       (emerald-100, sky-100...) escolhidas tela a tela, sem consistência. */
+    --success: 159 83% 34%;
+    --success-foreground: 0 0% 100%;
+    --warning: 35 83% 43%;
+    --warning-foreground: 0 0% 100%;
+    --info: 204 74% 43%;
+    --info-foreground: 0 0% 100%;
+
     --border: 180 15% 88%;
     --input: 180 15% 88%;
     --ring: 174 72% 40%;
 
-    --radius: 0.75rem;
+    --radius: 1.125rem;
 
     --sidebar-background: 180 45% 14%;
     --sidebar-foreground: 180 20% 92%;

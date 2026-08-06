@@ -48,6 +48,18 @@ export default {
 					DEFAULT: 'hsl(var(--accent-warm))',
 					foreground: 'hsl(var(--accent-warm-foreground))'
 				},
+				success: {
+					DEFAULT: 'hsl(var(--success))',
+					foreground: 'hsl(var(--success-foreground))'
+				},
+				warning: {
+					DEFAULT: 'hsl(var(--warning))',
+					foreground: 'hsl(var(--warning-foreground))'
+				},
+				info: {
+					DEFAULT: 'hsl(var(--info))',
+					foreground: 'hsl(var(--info-foreground))'
+				},
 				popover: {
 					DEFAULT: 'hsl(var(--popover))',
 					foreground: 'hsl(var(--popover-foreground))'
@@ -71,6 +83,13 @@ export default {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
+			},
+			boxShadow: {
+				/* Sombra em duas camadas — contato fino + difusão longa tingida de
+				   teal — em vez do shadow-sm quase invisível do Tailwind. Só usada
+				   em Card por enquanto; não redefine shadow-sm global de propósito
+				   (outros componentes usam shadow-sm pra elevação mais discreta). */
+				card: '0 1px 2px 0 hsl(var(--primary) / 0.04), 0 8px 20px -12px hsl(var(--primary) / 0.22)'
 			},
 			fontFamily: {
 				sans: ['Nunito', 'ui-sans-serif', 'system-ui', 'sans-serif']

@@ -13,17 +13,19 @@ interface BICardProps {
   className?: string;
 }
 
+// warning usava accent-warm (coral, cor de marca) — coral fica só pra
+// energia/CTA, warning tem token semântico próprio agora (ver index.css).
 const variantClasses: Record<NonNullable<BICardProps['variant']>, string> = {
   default: 'text-foreground',
-  success: 'text-emerald-600',
-  warning: 'text-accent-warm',
-  danger: 'text-red-600',
+  success: 'text-success',
+  warning: 'text-warning',
+  danger: 'text-destructive',
 };
 
 const variantToTone: Record<NonNullable<BICardProps['variant']>, IconBadgeTone> = {
   default: 'primary',
   success: 'success',
-  warning: 'warm',
+  warning: 'warning',
   danger: 'danger',
 };
 
@@ -60,7 +62,7 @@ export function BICard({
         <IconBadge icon={Icon} tone={variantToTone[variant]} size="sm" />
       </CardHeader>
       <CardContent>
-        <div className={`text-2xl font-bold ${variantClasses[variant]}`}>
+        <div className={`text-[26px] font-black tabular-nums tracking-tight ${variantClasses[variant]}`}>
           {value}
         </div>
         {subtitle && (

@@ -51,3 +51,5 @@ Cloud-native, multi-tenant, mobile-first — não é módulo "readaptado" de sis
 Assinatura eletrônica com validade jurídica em todos os documentos oficiais
 
 Se estiver avaliando isso como possível vertical de produto pra Novus.AI, o diferencial competitivo real hoje está nos pontos da seção 5 — a maior parte dos concorrentes brasileiros (TOTVS Educacional, Sponte, etc.) ainda é fraca em IA preditiva e experiência mobile-first, que é exatamente onde vocês têm força.
+
+INSPECIONAR REPOSITORIO GITHUB https://github.com/hrshadhin/school-management-system PARA EXTRAIR INSPIRAÇÕES DE VISUAL, APENAS PARA UIX, , ICONES, CORES, CARDS, E DEMAIS ELEMENTOS VISUAIS QUE FOREM POSSIVEIS APROVEITAR.

@@ -8,6 +8,9 @@ interface IconBadgeProps {
   tone?: IconBadgeTone;
   size?: 'sm' | 'md';
   className?: string;
+  /** 'totem' = gradiente radial saturado + ícone branco (ver
+   * novus-satellite-visual-identity), em vez do tint pastel padrão. */
+  variant?: 'flat' | 'totem';
 }
 
 // success/warning/info usam os tokens semânticos de index.css (antes eram
@@ -25,6 +28,19 @@ const toneClasses: Record<IconBadgeTone, string> = {
   neutral: 'bg-muted text-muted-foreground',
 };
 
+// 'purple'/'neutral' não têm totem dedicado (categórico, não cor de marca
+// nem estado) — caem de volta pro tom 'primary'.
+const toneToTotemClass: Record<IconBadgeTone, string> = {
+  primary: 'totem-teal',
+  warm: 'totem-coral',
+  success: 'totem-success',
+  warning: 'totem-gold',
+  info: 'totem-info',
+  purple: 'totem-teal',
+  danger: 'totem-danger',
+  neutral: 'totem-ink',
+};
+
 const sizeClasses: Record<NonNullable<IconBadgeProps['size']>, string> = {
   sm: 'p-1.5',
   md: 'p-2',
@@ -35,7 +51,15 @@ const iconSizeClasses: Record<NonNullable<IconBadgeProps['size']>, string> = {
   md: 'h-6 w-6',
 };
 
-export function IconBadge({ icon: Icon, tone = 'primary', size = 'md', className }: IconBadgeProps) {
+export function IconBadge({ icon: Icon, tone = 'primary', size = 'md', variant = 'flat', className }: IconBadgeProps) {
+  if (variant === 'totem') {
+    return (
+      <div className={cn('rounded-full text-white', toneToTotemClass[tone], sizeClasses[size], className)}>
+        <Icon className={iconSizeClasses[size]} />
+      </div>
+    );
+  }
+
   return (
     <div className={cn('rounded-xl', toneClasses[tone], sizeClasses[size], className)}>
       <Icon className={iconSizeClasses[size]} />

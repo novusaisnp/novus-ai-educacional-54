@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useLocation, useNavigate, NavigateFunction } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
 import {
   LayoutDashboard,
@@ -35,6 +35,26 @@ import { useIAAccess } from '@/hooks/useIAAccess';
 import { useOrganization } from '@/hooks/useOrganization';
 import { logAudit } from '@/lib/audit/logAudit';
 import DebugBanner from "@/components/DebugBanner";
+
+// Compartilhado entre o cartão de usuário da sidebar (desktop) e o dropdown
+// do topbar (mobile, onde a sidebar fica oculta) — mesmo fluxo de logout,
+// um só lugar pra manter.
+async function performLogout(navigate: NavigateFunction) {
+  try {
+    await supabase.auth.signOut();
+    safeToast({ title: 'Logout realizado com sucesso' });
+    navigate('/auth/login');
+  } catch (error) {
+    safeToast({ variant: 'destructive', title: 'Erro ao fazer logout' });
+  }
+}
+
+const roleLabels: Record<string, string> = {
+  admin: 'Administrador',
+  coordenacao: 'Coordenação',
+  professor: 'Professor',
+  secretario: 'Secretaria',
+};
 
 const baseMenuItems = [
   { title: 'Dashboard', url: '/app/dashboard', icon: LayoutDashboard, roles: ['admin', 'coordenacao', 'professor', 'secretario'] },
@@ -90,34 +110,37 @@ function AppSidebar() {
 
   return (
     <TooltipProvider>
-      <div 
-        className="sidebar border-r bg-sidebar overflow-y-auto flex flex-col h-full"
-        style={{ 
+      <div
+        className="sidebar overflow-y-auto flex flex-col h-full"
+        style={{
           width: 'var(--sidebar-w)'
         }}
       >
         {/* Logo/Brand + Pin Button */}
-        <div className="p-4 border-b flex items-center justify-between">
+        <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
           <div className={`${!expanded ? 'text-center' : 'text-left'} transition-all duration-300 flex-1`}>
             {!expanded ? (
               <div className="w-8 h-8 mx-auto">
-                <img 
-                  src="/lovable-uploads/756ae602-1dc7-4970-aa18-8b7d0675b217.png" 
-                  alt="NOVUS.AI" 
+                <img
+                  src="/lovable-uploads/novus-icon-mark.png"
+                  alt="NOVUS.AI Educacional"
                   className="w-full h-full object-contain"
                 />
               </div>
             ) : (
-              <div className="flex items-center space-x-2">
-                <img 
-                  src="/lovable-uploads/756ae602-1dc7-4970-aa18-8b7d0675b217.png" 
-                  alt="NOVUS.AI" 
-                  className="h-8 object-contain"
-                />
-              </div>
+              // Logo oficial (ícone + wordmark), fundo branco original
+              // removido via matte de saturação — o PNG entregue pelo
+              // usuário vinha com um glow quase-branco opaco colado atrás
+              // do texto, que aparecia como uma caixa clara sobre o
+              // gradiente escuro da sidebar.
+              <img
+                src="/lovable-uploads/novus-logo-sidebar.png"
+                alt="NOVUS.AI Educacional"
+                className="h-9 object-contain"
+              />
             )}
           </div>
-          
+
           {/* Pin Button */}
           {expanded && (
             <Tooltip>
@@ -126,7 +149,7 @@ function AppSidebar() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setPinned(!pinned)}
-                  className="h-8 w-8 p-0 flex-shrink-0"
+                  className="h-8 w-8 p-0 flex-shrink-0 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   aria-label={pinned ? 'Desafixar sidebar' : 'Fixar sidebar'}
                 >
                   {pinned ? (
@@ -154,10 +177,10 @@ function AppSidebar() {
                 <NavLink
                   key={item.title}
                   to={item.url}
-                  className={`flex items-center px-3 py-2 rounded-md transition-colors duration-200 ${
+                  className={`flex items-center px-3 py-2 rounded-full transition-colors duration-200 ${
                     active
-                      ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
-                      : 'hover:bg-sidebar-accent/50 text-sidebar-foreground'
+                      ? 'sidebar-nav-active font-semibold'
+                      : 'hover:bg-sidebar-accent/40 text-sidebar-foreground'
                   }`}
                   aria-current={active ? 'page' : undefined}
                   onClick={() => {
@@ -210,21 +233,6 @@ function TopBar() {
     return item?.title || 'Sistema';
   };
 
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      safeToast({
-        title: 'Logout realizado com sucesso',
-      });
-      navigate('/auth/login');
-    } catch (error) {
-      safeToast({
-        variant: 'destructive',
-        title: 'Erro ao fazer logout',
-      });
-    }
-  };
-
   // Usar os mesma lógica de filtros para mobile
   const mobileCrmItem = baseMenuItems.find(item => item.title === 'CRM');
   if (mobileCrmItem && canAccess('chatbot')) {
@@ -235,6 +243,15 @@ function TopBar() {
     if (!userRole) return false;
     return item.roles.includes(userRole);
   });
+
+  const userDisplayName = (user?.user_metadata?.full_name as string | undefined) || user?.email || 'Usuário';
+  const userInitials = (user?.user_metadata?.full_name as string | undefined)
+    ?.split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U';
+  const roleLabel = roleLabels[userRole ?? ''] ?? 'Usuário';
 
   return (
     <header className="flex h-14 items-center justify-between border-b bg-background px-4">
@@ -249,7 +266,7 @@ function TopBar() {
         >
           <Menu className="h-5 w-5" />
         </Button>
-        
+
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -259,28 +276,33 @@ function TopBar() {
         </Breadcrumb>
       </div>
 
+      {/* Conta do usuário — canto superior direito, sempre visível (antes
+          vivia num cartão no rodapé da sidebar, onde o rodapé fixo da
+          página cobria por cima). */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+          <button
+            type="button"
+            className="flex items-center gap-2.5 rounded-full py-1 pl-2.5 pr-1 transition-colors hover:bg-accent"
+          >
+            <span className="hidden sm:block text-right leading-tight">
+              <span className="block text-sm font-semibold truncate max-w-[160px]">{userDisplayName}</span>
+              <span className="block text-xs text-muted-foreground truncate max-w-[160px]">{roleLabel}</span>
+            </span>
             <Avatar className="h-8 w-8">
-              <AvatarFallback>
-                {user?.user_metadata?.full_name?.split(' ').map((n: string) => n[0]).join('') || 
-                 user?.email?.[0]?.toUpperCase() || 'U'}
+              <AvatarFallback className="bg-accent-gold text-accent-gold-foreground text-xs font-bold">
+                {userInitials}
               </AvatarFallback>
             </Avatar>
-          </Button>
+          </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end" forceMount>
           <div className="flex flex-col space-y-1 p-2">
-            <p className="text-sm font-medium leading-none">
-              {user?.user_metadata?.full_name || 'Usuário'}
-            </p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {user?.email}
-            </p>
+            <p className="text-sm font-medium leading-none">{userDisplayName}</p>
+            <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
           </div>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleLogout}>
+          <DropdownMenuItem onClick={() => performLogout(navigate)}>
             <LogOut className="mr-2 h-4 w-4" />
             <span>Sair</span>
           </DropdownMenuItem>
@@ -297,9 +319,9 @@ function TopBar() {
           <div className="fixed left-0 top-0 bottom-0 w-64 bg-background border-r shadow-lg transform transition-transform duration-300 ease-in-out">
             <div className="p-4 border-b">
               <div className="flex items-center justify-between">
-                <img 
-                  src="/lovable-uploads/756ae602-1dc7-4970-aa18-8b7d0675b217.png" 
-                  alt="NOVUS.AI" 
+                <img
+                  src="/lovable-uploads/novus-ai-educacional-logo.png"
+                  alt="NOVUS.AI Educacional"
                   className="h-6 object-contain"
                 />
                 <Button
@@ -400,9 +422,9 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground">
             <span>Uma solução</span>
-            <img 
-              src="/lovable-uploads/756ae602-1dc7-4970-aa18-8b7d0675b217.png" 
-              alt="NOVUS.AI" 
+            <img
+              src="/lovable-uploads/novus-ai-educacional-logo.png"
+              alt="NOVUS.AI Educacional"
               className="h-4 object-contain"
             />
           </div>

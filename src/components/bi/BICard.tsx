@@ -11,6 +11,8 @@ interface BICardProps {
   variant?: 'default' | 'success' | 'warning' | 'danger';
   isLoading?: boolean;
   className?: string;
+  /** Badge em totem (gradiente saturado) em vez do tint pastel padrão. */
+  totem?: boolean;
 }
 
 // warning usava accent-warm (coral, cor de marca) — coral fica só pra
@@ -37,6 +39,7 @@ export function BICard({
   variant = 'default',
   isLoading = false,
   className = '',
+  totem = false,
 }: BICardProps) {
   if (isLoading) {
     return (
@@ -59,10 +62,10 @@ export function BICard({
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
         </CardTitle>
-        <IconBadge icon={Icon} tone={variantToTone[variant]} size="sm" />
+        <IconBadge icon={Icon} tone={variantToTone[variant]} size="sm" variant={totem ? 'totem' : 'flat'} />
       </CardHeader>
       <CardContent>
-        <div className={`text-[26px] font-black tabular-nums tracking-tight ${variantClasses[variant]}`}>
+        <div className={`font-display text-[26px] font-black tabular-nums tracking-tight ${variantClasses[variant]}`}>
           {value}
         </div>
         {subtitle && (

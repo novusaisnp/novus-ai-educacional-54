@@ -48,6 +48,10 @@ export default {
 					DEFAULT: 'hsl(var(--accent-warm))',
 					foreground: 'hsl(var(--accent-warm-foreground))'
 				},
+				'accent-gold': {
+					DEFAULT: 'hsl(var(--accent-gold))',
+					foreground: 'hsl(var(--accent-gold-foreground))'
+				},
 				success: {
 					DEFAULT: 'hsl(var(--success))',
 					foreground: 'hsl(var(--success-foreground))'
@@ -85,14 +89,19 @@ export default {
 				sm: 'calc(var(--radius) - 4px)'
 			},
 			boxShadow: {
-				/* Sombra em duas camadas — contato fino + difusão longa tingida de
-				   teal — em vez do shadow-sm quase invisível do Tailwind. Só usada
-				   em Card por enquanto; não redefine shadow-sm global de propósito
-				   (outros componentes usam shadow-sm pra elevação mais discreta). */
-				card: '0 1px 2px 0 hsl(var(--primary) / 0.04), 0 8px 20px -12px hsl(var(--primary) / 0.22)'
+				/* Sombra em 3 camadas (contato + difusão média + difusão longa
+				   ambiente) tingida de teal + leve realce interno no topo — dá
+				   sensação de "flutuando", substituindo borda de 1px + shadow-sm
+				   quase invisível do Tailwind (o padrão nº1 de "cara de admin
+				   panel"). Ver skill novus-satellite-visual-identity. */
+				card: '0 1px 1px hsl(var(--primary) / 0.05), 0 10px 22px -14px hsl(var(--primary) / 0.32), 0 28px 44px -30px hsl(var(--primary) / 0.28), inset 0 1px 0 hsl(0 0% 100% / 0.7)',
+				/* Variante maior pro card-âncora de um layout bento. */
+				'card-hero': '0 2px 2px hsl(var(--primary) / 0.06), 0 16px 32px -16px hsl(var(--primary) / 0.4), 0 40px 64px -36px hsl(var(--primary) / 0.35)',
+				totem: '0 4px 12px -5px hsl(var(--primary) / 0.4), inset 0 1px 1px hsl(0 0% 100% / 0.4)'
 			},
 			fontFamily: {
-				sans: ['Nunito', 'ui-sans-serif', 'system-ui', 'sans-serif']
+				sans: ['Nunito', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+				display: ['Sora', 'Nunito', 'ui-sans-serif', 'system-ui', 'sans-serif']
 			},
 			keyframes: {
 				'accordion-down': {

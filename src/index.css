@@ -9,34 +9,44 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* NOVUS.AI Educacional — paleta teal (identidade/confiança) + coral
-       (destaque/energia), substituindo o cinza-ardósia genérico anterior. */
-    --background: 180 20% 98%;
-    --foreground: 200 32% 13%;
+    /* NOVUS.AI Educacional — direção "produto, não painel admin" aprovada
+       em 2026-08-06 (ver skill novus-satellite-visual-identity): base
+       marfim quente (não branco/cinza-azulado frio, que é o que mais
+       lembra painel de sistema) + teal (confiança) + coral (energia/CTA)
+       + gold (acento terciário, decorativo — nunca --warning, que é
+       estado semântico). */
+    --background: 40 30% 97%;
+    --foreground: 178 55% 12%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 200 32% 13%;
+    --card: 40 25% 99%;
+    --card-foreground: 178 55% 12%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 200 32% 13%;
+    --popover: 40 25% 99%;
+    --popover-foreground: 178 55% 12%;
 
     --primary: 174 72% 33%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 180 25% 94%;
+    --secondary: 174 25% 94%;
     --secondary-foreground: 174 40% 18%;
 
-    --muted: 180 18% 94%;
-    --muted-foreground: 200 15% 42%;
+    --muted: 40 20% 94%;
+    --muted-foreground: 178 20% 38%;
 
-    --accent: 180 25% 94%;
+    --accent: 174 25% 94%;
     --accent-foreground: 174 40% 18%;
 
     /* Destaque coral — CTAs de maior ênfase, elementos de energia da marca.
        Não usar pra estado semântico (ver --warning) — coral é identidade,
        não "atenção"; os dois papéis se confundiam antes desta separação. */
-    --accent-warm: 16 91% 63%;
+    --accent-warm: 14 88% 58%;
     --accent-warm-foreground: 0 0% 100%;
+
+    /* Acento terciário decorativo (totens, blobs de destaque) — separado
+       de --warning pelo mesmo motivo que separou --accent-warm: cor de
+       marca não deve dobrar como estado semântico. */
+    --accent-gold: 38 78% 55%;
+    --accent-gold-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
@@ -50,20 +60,25 @@ All colors MUST be HSL.
     --info: 204 74% 43%;
     --info-foreground: 0 0% 100%;
 
-    --border: 180 15% 88%;
-    --input: 180 15% 88%;
+    --border: 40 15% 88%;
+    --input: 40 15% 88%;
     --ring: 174 72% 40%;
 
     --radius: 1.125rem;
 
-    --sidebar-background: 180 45% 14%;
-    --sidebar-foreground: 180 20% 92%;
-    --sidebar-primary: 16 91% 63%;
+    --sidebar-background: 178 50% 15%;
+    --sidebar-foreground: 178 20% 88%;
+    --sidebar-primary: 14 88% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 180 35% 22%;
+    --sidebar-accent: 178 40% 24%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 180 30% 20%;
-    --sidebar-ring: 16 91% 63%;
+    --sidebar-border: 178 30% 22%;
+    --sidebar-ring: 14 88% 58%;
+    /* Stops do gradiente da sidebar — ver .sidebar mais abaixo. Separados
+       de --sidebar-background (que continua servindo de fallback sólido
+       pra qualquer lugar que ainda leia só essa variável). */
+    --sidebar-gradient-from: 178 50% 16%;
+    --sidebar-gradient-to: 178 64% 8%;
 
     /* Sidebar CSS Variables */
     --sb-w-expanded: 16rem; /* w-64 */
@@ -117,9 +132,52 @@ All colors MUST be HSL.
 /* Transições suaves e prevenção de scrollbar horizontal */
 .sidebar {
   transition: width 300ms ease-in-out;
+  background: linear-gradient(190deg, hsl(var(--sidebar-gradient-from)), hsl(var(--sidebar-gradient-to)) 75%);
 }
 .app-grid {
   transition: grid-template-columns 300ms ease-in-out;
+}
+
+/* Item de navegação ativo da sidebar — pílula flutuante na cor de energia
+   da marca (coral) em vez de um fundo sólido neutro, ver
+   novus-satellite-visual-identity. */
+.sidebar-nav-active {
+  background: hsl(var(--sidebar-primary));
+  color: hsl(var(--sidebar-primary-foreground));
+  box-shadow: 0 6px 16px -6px hsl(var(--sidebar-primary) / 0.6);
+}
+
+/* Badges "totem" — gradiente radial saturado + ícone branco, luz vindo do
+   canto superior-esquerdo simulando volume, em vez do tint pastel +
+   ícone colorido (padrão nº1 de template admin). Ver
+   novus-satellite-visual-identity pra réplica em outros satélites. */
+.totem-teal {
+  background: radial-gradient(circle at 32% 26%, hsl(174 55% 48% / .98), hsl(174 62% 30% / .92));
+  box-shadow: 0 4px 12px -5px hsl(174 60% 28% / .55), inset 0 1px 1px hsl(0 0% 100% / .4);
+}
+.totem-coral {
+  background: radial-gradient(circle at 32% 26%, hsl(14 85% 66% / .98), hsl(14 80% 50% / .92));
+  box-shadow: 0 4px 12px -5px hsl(14 80% 44% / .55), inset 0 1px 1px hsl(0 0% 100% / .4);
+}
+.totem-gold {
+  background: radial-gradient(circle at 32% 26%, hsl(38 78% 66% / .98), hsl(38 70% 46% / .92));
+  box-shadow: 0 4px 12px -5px hsl(38 70% 38% / .5), inset 0 1px 1px hsl(0 0% 100% / .35);
+}
+.totem-success {
+  background: radial-gradient(circle at 32% 26%, hsl(159 65% 46% / .98), hsl(159 75% 28% / .92));
+  box-shadow: 0 4px 12px -5px hsl(159 70% 24% / .5), inset 0 1px 1px hsl(0 0% 100% / .35);
+}
+.totem-info {
+  background: radial-gradient(circle at 32% 26%, hsl(204 70% 60% / .98), hsl(204 74% 40% / .92));
+  box-shadow: 0 4px 12px -5px hsl(204 70% 34% / .5), inset 0 1px 1px hsl(0 0% 100% / .35);
+}
+.totem-danger {
+  background: radial-gradient(circle at 32% 26%, hsl(0 75% 68% / .98), hsl(0 68% 50% / .92));
+  box-shadow: 0 4px 12px -5px hsl(0 68% 42% / .55), inset 0 1px 1px hsl(0 0% 100% / .4);
+}
+.totem-ink {
+  background: radial-gradient(circle at 32% 26%, hsl(178 22% 48% / .95), hsl(178 32% 27% / .92));
+  box-shadow: 0 4px 12px -5px hsl(178 32% 22% / .5), inset 0 1px 1px hsl(0 0% 100% / .35);
 }
 
 /* Evitar barra de rolagem horizontal global */

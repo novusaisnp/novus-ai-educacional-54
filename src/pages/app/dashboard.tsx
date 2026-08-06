@@ -3,15 +3,28 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { BICard } from '@/components/bi/BICard';
-import { Users, FileText, MessageCircle, AlertCircle } from 'lucide-react';
+import { BIHeroCard } from '@/components/bi/BIHeroCard';
+import { Users, FileText, MessageCircle } from 'lucide-react';
 import { subDays } from 'date-fns';
 import { useOrganization } from '@/hooks/useOrganization';
+import { useSession } from '@/hooks/useSession';
 import { safeQuery } from '@/lib/safeQuery';
 import EmptyState from '@/components/EmptyState';
 
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Bom dia';
+  if (hour < 18) return 'Boa tarde';
+  return 'Boa noite';
+}
+
 export default function Dashboard() {
-  const { orgId } = useOrganization();
+  const { orgId, data: orgData } = useOrganization();
+  const { user } = useSession();
   const navigate = useNavigate();
+
+  const firstName = (user?.user_metadata?.full_name as string | undefined)?.split(' ')[0];
+  const orgName = orgData?.organizations?.name;
 
   // Query para contar visitantes (Leads)
   const { data: visitorsCount, isLoading: visitorsLoading } = useQuery({
@@ -130,28 +143,30 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <h1 className="font-display text-3xl font-extrabold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
             Visão geral do sistema educacional
           </p>
         </div>
       </div>
 
-      {/* Cards de métricas principais */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* Bento: card-âncora (métrica mais acionável) + 3 cards de apoio,
+          em vez de grid uniforme — ver novus-satellite-visual-identity. */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <BIHeroCard
+          className="lg:row-span-2"
+          eyebrow={`${getGreeting()}${firstName ? `, ${firstName}` : ''}${orgName ? ` · ${orgName}` : ''}`}
+          value={requestsCount || 0}
+          label="Demandas em aberto"
+          isLoading={requestsLoading}
+        />
         <BICard
           title="Leads"
           value={visitorsCount || 0}
           subtitle="Total de visitantes registrados"
           icon={Users}
           isLoading={visitorsLoading}
-        />
-        <BICard
-          title="Demandas"
-          value={requestsCount || 0}
-          subtitle="Solicitações em aberto"
-          icon={AlertCircle}
-          isLoading={requestsLoading}
+          totem
         />
         <BICard
           title="Interações (7 dias)"
@@ -159,13 +174,16 @@ export default function Dashboard() {
           subtitle="Interações nos últimos 7 dias"
           icon={MessageCircle}
           isLoading={interactionsLoading}
+          totem
         />
         <BICard
+          className="md:col-span-2 lg:col-span-2"
           title="Documentos"
           value={documentsCount || 0}
           subtitle="Total de documentos"
           icon={FileText}
           isLoading={documentsLoading}
+          totem
         />
       </div>
     </div>

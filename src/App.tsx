@@ -34,6 +34,7 @@ import ChamadaPage from '@/pages/app/academico/chamada';
 import RelatorioCallPage from '@/pages/app/academico/chamada/relatorio';
 import AvaliacoesPage from '@/pages/app/academico/avaliacoes';
 import NotasPage from '@/pages/app/academico/notas';
+import ResultadosPeriodoPage from '@/pages/app/academico/resultados-periodo';
 
 import PedagogicoPage from '@/pages/app/pedagogico';
 import EventosPage from '@/pages/app/eventos';
@@ -50,6 +51,7 @@ import SecretariaDocumentosPage from '@/pages/app/secretaria/documentos';
 import SecretariaDocumentosListPage from '@/pages/app/secretaria/documentos/ListPage';
 import SecretariaPeriodsPage from '@/pages/app/secretaria/periodos';
 import SecretariaPeriodCalendarPage from '@/pages/app/secretaria/periodos/calendario';
+import SecretariaPeriodTermsPage from '@/pages/app/secretaria/periodos/termos';
 import SecretariaSegmentsListPage from '@/pages/app/secretaria/segmentos/ListPage';
 import SecretariaSeriesListPage from '@/pages/app/secretaria/series/ListPage';
 import SecretariaUnitsListPage from '@/pages/app/secretaria/unidades/ListPage';
@@ -150,6 +152,7 @@ function App() {
                 <Route path="academico/chamada/relatorio" element={<RelatorioCallPage />} />
                 <Route path="academico/avaliacoes" element={<AvaliacoesPage />} />
                 <Route path="academico/notas" element={<NotasPage />} />
+                <Route path="academico/resultados-periodo" element={<ResultadosPeriodoPage />} />
                 <Route path="academico/alunos" element={<AlunosPage />} />
                 
                 <Route path="pedagogico" element={<PedagogicoPage />} />
@@ -167,6 +170,7 @@ function App() {
                 <Route path="secretaria/documentos/list" element={<SecretariaDocumentosListPage />} />
                 <Route path="secretaria/periodos" element={<SecretariaPeriodsPage />} />
                 <Route path="secretaria/periodos/:periodId/calendario" element={<SecretariaPeriodCalendarPage />} />
+                <Route path="secretaria/periodos/:periodId/termos" element={<SecretariaPeriodTermsPage />} />
                 <Route path="secretaria/contratos/modelo" element={<SecretariaContratoModelo />} />
                 <Route path="secretaria/segmentos/list" element={<SecretariaSegmentsListPage />} />
                 <Route path="secretaria/series/list" element={<SecretariaSeriesListPage />} />

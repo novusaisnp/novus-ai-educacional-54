@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -39,36 +39,128 @@ export type Database = {
   }
   public: {
     Tables: {
+      academic_settings: {
+        Row: {
+          created_at: string
+          id: string
+          minimum_passing_average: number
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          minimum_passing_average?: number
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          minimum_passing_average?: number
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academic_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academic_terms: {
+        Row: {
+          created_at: string
+          date_end: string
+          date_start: string
+          id: string
+          name: string
+          organization_id: string
+          period_id: string
+          term_number: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date_end: string
+          date_start: string
+          id?: string
+          name: string
+          organization_id: string
+          period_id: string
+          term_number: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date_end?: string
+          date_start?: string
+          id?: string
+          name?: string
+          organization_id?: string
+          period_id?: string
+          term_number?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academic_terms_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academic_terms_period_id_fkey"
+            columns: ["period_id"]
+            isOneToOne: false
+            referencedRelation: "periods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assessments: {
         Row: {
+          assessment_type: string
           class_id: string
           created_at: string
           date: string
           id: string
           organization_id: string
+          recovers_term_id: string | null
           subject_id: string
+          term_id: string | null
           title: string
           updated_at: string
           weight: number | null
         }
         Insert: {
+          assessment_type?: string
           class_id: string
           created_at?: string
           date: string
           id?: string
           organization_id: string
+          recovers_term_id?: string | null
           subject_id: string
+          term_id?: string | null
           title: string
           updated_at?: string
           weight?: number | null
         }
         Update: {
+          assessment_type?: string
           class_id?: string
           created_at?: string
           date?: string
           id?: string
           organization_id?: string
+          recovers_term_id?: string | null
           subject_id?: string
+          term_id?: string | null
           title?: string
           updated_at?: string
           weight?: number | null
@@ -89,10 +181,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "assessments_recovers_term_id_fkey"
+            columns: ["recovers_term_id"]
+            isOneToOne: false
+            referencedRelation: "academic_terms"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "assessments_subject_id_fkey"
             columns: ["subject_id"]
             isOneToOne: false
             referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessments_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "academic_terms"
             referencedColumns: ["id"]
           },
         ]
@@ -1766,6 +1872,104 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      term_results: {
+        Row: {
+          calculated_at: string
+          class_id: string
+          created_at: string
+          final_grade: number
+          id: string
+          organization_id: string
+          original_average: number
+          recovery_grade: number | null
+          status: string
+          student_id: string
+          subject_id: string
+          term_id: string
+          updated_at: string
+        }
+        Insert: {
+          calculated_at?: string
+          class_id: string
+          created_at?: string
+          final_grade: number
+          id?: string
+          organization_id: string
+          original_average: number
+          recovery_grade?: number | null
+          status: string
+          student_id: string
+          subject_id: string
+          term_id: string
+          updated_at?: string
+        }
+        Update: {
+          calculated_at?: string
+          class_id?: string
+          created_at?: string
+          final_grade?: number
+          id?: string
+          organization_id?: string
+          original_average?: number
+          recovery_grade?: number | null
+          status?: string
+          student_id?: string
+          subject_id?: string
+          term_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "term_results_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "term_results_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "term_results_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "term_results_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_risco_evasao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "term_results_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "term_results_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "term_results_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "academic_terms"
             referencedColumns: ["id"]
           },
         ]

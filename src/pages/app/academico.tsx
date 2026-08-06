@@ -50,12 +50,15 @@ export default function Academico() {
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm text-muted-foreground">Crie avaliações e registre notas dos alunos</p>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button asChild>
                 <Link to="/app/academico/notas">Lançar Notas</Link>
               </Button>
               <Button variant="outline" asChild>
                 <Link to="/app/academico/avaliacoes?modal=avaliacao&action=novo">Nova Avaliação</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to="/app/academico/resultados-periodo">Resultados do Período</Link>
               </Button>
             </div>
           </CardContent>

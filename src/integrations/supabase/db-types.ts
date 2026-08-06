@@ -45,3 +45,15 @@ export type EnrollmentContractUpdate = Database['public']['Tables']['enrollment_
 export type ContractTemplateRow = Database['public']['Tables']['contract_templates']['Row'];
 export type ContractTemplateInsert = Database['public']['Tables']['contract_templates']['Insert'];
 export type ContractTemplateUpdate = Database['public']['Tables']['contract_templates']['Update'];
+
+export type AcademicTermRow = Database['public']['Tables']['academic_terms']['Row'];
+export type AcademicTermInsert = Database['public']['Tables']['academic_terms']['Insert'];
+export type AcademicTermUpdate = Database['public']['Tables']['academic_terms']['Update'];
+
+export type AcademicSettingsRow = Database['public']['Tables']['academic_settings']['Row'];
+export type AcademicSettingsInsert = Database['public']['Tables']['academic_settings']['Insert'];
+export type AcademicSettingsUpdate = Database['public']['Tables']['academic_settings']['Update'];
+
+export type TermResultRow = Database['public']['Tables']['term_results']['Row'];
+export type TermResultInsert = Database['public']['Tables']['term_results']['Insert'];
+export type TermResultUpdate = Database['public']['Tables']['term_results']['Update'];

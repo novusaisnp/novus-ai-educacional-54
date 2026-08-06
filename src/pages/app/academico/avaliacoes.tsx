@@ -20,7 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 import { useAssessments, useAssessmentMutations } from '@/hooks/useAssessments';
-import { useClasses, useSubjects } from '@/hooks/useAppQueries';
+import { useClasses, useSubjects, useAcademicTerms } from '@/hooks/useAppQueries';
 import { useAssessmentFeedback } from '@/hooks/useAI';
 import { useOrganization } from '@/hooks/useOrganization';
 import EmptyState from '@/components/EmptyState';
@@ -38,6 +38,17 @@ const assessmentSchema = z.object({
   weight: z.number().min(0.1, 'Peso mínimo é 0.1').max(5, 'Peso máximo é 5'),
   class_id: z.string().min(1, 'Turma é obrigatória'),
   subject_id: z.string().min(1, 'Disciplina é obrigatória'),
+  term_id: z.string().min(1, 'Período de avaliação é obrigatório'),
+  assessment_type: z.enum(['regular', 'recuperacao']),
+  recovers_term_id: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.assessment_type === 'recuperacao' && !data.recovers_term_id) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Selecione o período que esta recuperação resgata',
+      path: ['recovers_term_id'],
+    });
+  }
 });
 
 type AssessmentFormData = z.infer<typeof assessmentSchema>;
@@ -66,6 +77,7 @@ export default function Avaliacoes() {
 
   const { data: classes = [] } = useClasses();
   const { data: subjects = [] } = useSubjects();
+  const { data: academicTerms = [] } = useAcademicTerms();
   const { data: assessments = [], isLoading } = useAssessments(filters);
   const mutations = useAssessmentMutations();
 
@@ -73,14 +85,17 @@ export default function Avaliacoes() {
     resolver: zodResolver(assessmentSchema),
     defaultValues: {
       weight: 1.0,
+      assessment_type: 'regular',
     },
   });
+
+  const assessmentType = form.watch('assessment_type');
 
   useEffect(() => {
     if (openModal && action === 'novo') {
       setIsModalOpen(true);
       setEditingAssessment(null);
-      form.reset({ weight: 1.0 });
+      form.reset({ weight: 1.0, assessment_type: 'regular' });
     }
   }, [openModal, action, form]);
 
@@ -91,6 +106,9 @@ export default function Avaliacoes() {
       weight: data.weight,
       class_id: data.class_id,
       subject_id: data.subject_id,
+      term_id: data.term_id,
+      assessment_type: data.assessment_type,
+      recovers_term_id: data.assessment_type === 'recuperacao' ? data.recovers_term_id : null,
     };
 
     if (editingAssessment) {
@@ -122,6 +140,9 @@ export default function Avaliacoes() {
       weight: assessment.weight,
       class_id: assessment.class_id,
       subject_id: assessment.subject_id,
+      term_id: assessment.term_id ?? '',
+      assessment_type: assessment.assessment_type ?? 'regular',
+      recovers_term_id: assessment.recovers_term_id ?? undefined,
     });
     setIsModalOpen(true);
   };
@@ -245,7 +266,7 @@ export default function Avaliacoes() {
           <DialogTrigger asChild>
             <Button onClick={() => {
               setEditingAssessment(null);
-              form.reset({ weight: 1.0 });
+              form.reset({ weight: 1.0, assessment_type: 'regular' });
             }}>
               <Plus className="h-4 w-4 mr-2" />
               Nova Avaliação
@@ -324,6 +345,82 @@ export default function Avaliacoes() {
                     )}
                   />
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="term_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Bimestre/Trimestre *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {academicTerms.map((term) => (
+                              <SelectItem key={term.id} value={term.id}>
+                                {term.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="assessment_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tipo</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="regular">Regular</SelectItem>
+                            <SelectItem value="recuperacao">Recuperação</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {assessmentType === 'recuperacao' && (
+                  <FormField
+                    control={form.control}
+                    name="recovers_term_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Recupera o período *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o período resgatado" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {academicTerms.map((term) => (
+                              <SelectItem key={term.id} value={term.id}>
+                                {term.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
@@ -500,6 +597,8 @@ export default function Avaliacoes() {
                   <TableHead>Peso</TableHead>
                   <TableHead>Turma</TableHead>
                   <TableHead>Disciplina</TableHead>
+                  <TableHead>Período</TableHead>
+                  <TableHead>Tipo</TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -515,6 +614,16 @@ export default function Avaliacoes() {
                     </TableCell>
                     <TableCell>{assessment.classes?.name}</TableCell>
                     <TableCell>{assessment.subjects?.name}</TableCell>
+                    <TableCell>
+                      {academicTerms.find((t) => t.id === assessment.term_id)?.name || (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={assessment.assessment_type === 'recuperacao' ? 'default' : 'outline'}>
+                        {assessment.assessment_type === 'recuperacao' ? 'Recuperação' : 'Regular'}
+                      </Badge>
+                    </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
                         <Button

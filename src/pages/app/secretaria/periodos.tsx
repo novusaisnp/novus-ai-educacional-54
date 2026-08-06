@@ -10,12 +10,62 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Search, Plus, Edit, Trash2, CalendarDays } from 'lucide-react';
+import { Calendar, Search, Plus, Edit, Trash2, CalendarDays, CalendarClock, GraduationCap } from 'lucide-react';
 import { SubmodalPeriodos } from '@/features/secretaria/periodos/SubmodalPeriodos';
 import EmptyState from '@/components/EmptyState';
 import { IconBadge } from '@/components/IconBadge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useAcademicSettings, useUpdateAcademicSettings } from '@/hooks/useAcademicSettings';
+import { useUserRole } from '@/hooks/useUserRole';
+
+function AcademicSettingsCard() {
+  const { data: role } = useUserRole();
+  const canManage = role === 'admin' || role === 'coordenacao';
+  const { data: settings } = useAcademicSettings();
+  const updateSettings = useUpdateAcademicSettings();
+  const [value, setValue] = useState<string>('');
+
+  const currentValue = value || settings?.minimumPassingAverage?.toString() || '';
+
+  if (!canManage) return null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <GraduationCap className="h-5 w-5" />
+          Média Mínima de Aprovação
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-end gap-4">
+          <div className="space-y-1">
+            <label className="text-sm text-muted-foreground">
+              Nota mínima (0 a 10) para aprovação direta na disciplina, sem recuperação
+            </label>
+            <Input
+              type="number"
+              step="0.1"
+              min="0"
+              max="10"
+              className="w-32"
+              placeholder={settings?.minimumPassingAverage?.toString() ?? '6.0'}
+              value={currentValue}
+              onChange={(e) => setValue(e.target.value)}
+            />
+          </div>
+          <Button
+            onClick={() => updateSettings.mutate(parseFloat(currentValue) || 6.0)}
+            disabled={updateSettings.isPending || !currentValue}
+          >
+            Salvar
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function SecretariaPeriodos() {
   const [searchParams] = useSearchParams();
@@ -105,6 +155,8 @@ export default function SecretariaPeriodos() {
         </Button>
       </div>
 
+      <AcademicSettingsCard />
+
       <Card>
         <CardHeader>
           <CardTitle>Filtros</CardTitle>
@@ -192,6 +244,14 @@ export default function SecretariaPeriodos() {
                           onClick={() => navigate(`/app/secretaria/periodos/${period.id}/calendario`)}
                         >
                           <CalendarDays className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          title="Bimestres/Trimestres"
+                          onClick={() => navigate(`/app/secretaria/periodos/${period.id}/termos`)}
+                        >
+                          <CalendarClock className="h-4 w-4" />
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => handleEdit(period.id)}>
                           <Edit className="h-4 w-4" />

@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/hooks/useOrganization';
 
+export type AssessmentType = 'regular' | 'recuperacao';
+
 interface Assessment {
   id: string;
   title: string;
@@ -10,6 +12,9 @@ interface Assessment {
   weight: number;
   class_id: string;
   subject_id: string;
+  term_id: string | null;
+  assessment_type: AssessmentType;
+  recovers_term_id: string | null;
   organization_id: string;
   created_at: string;
   updated_at: string;
@@ -21,11 +26,16 @@ interface CreateAssessmentData {
   weight: number;
   class_id: string;
   subject_id: string;
+  term_id?: string | null;
+  assessment_type?: AssessmentType;
+  recovers_term_id?: string | null;
 }
 
 interface AssessmentFilters {
   classId?: string;
   subjectId?: string;
+  termId?: string;
+  assessmentType?: AssessmentType;
   dateStart?: string;
   dateEnd?: string;
 }
@@ -34,7 +44,7 @@ export const useAssessments = (filters?: AssessmentFilters) => {
   const { data: orgData } = useOrganization();
 
   return useQuery({
-    queryKey: ['assessments.listBy', orgData?.organization_id, filters?.classId ?? null, filters?.subjectId ?? null, filters?.dateStart ?? null, filters?.dateEnd ?? null],
+    queryKey: ['assessments.listBy', orgData?.organization_id, filters?.classId ?? null, filters?.subjectId ?? null, filters?.termId ?? null, filters?.assessmentType ?? null, filters?.dateStart ?? null, filters?.dateEnd ?? null],
     queryFn: async () => {
       if (!orgData?.organization_id) return [];
 
@@ -52,6 +62,12 @@ export const useAssessments = (filters?: AssessmentFilters) => {
       }
       if (filters?.subjectId) {
         query = query.eq('subject_id', filters.subjectId);
+      }
+      if (filters?.termId) {
+        query = query.eq('term_id', filters.termId);
+      }
+      if (filters?.assessmentType) {
+        query = query.eq('assessment_type', filters.assessmentType);
       }
       if (filters?.dateStart) {
         query = query.gte('date', filters.dateStart);

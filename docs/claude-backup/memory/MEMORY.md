@@ -13,3 +13,6 @@
 - [Referência: docs de ideias do roadmap](reference_novus_educacional_idea_docs.md) — arquivos em docs/ não cobertos pelo CLAUDE.md
 - [Projeto: skills de integração ERP↔satélite](project_erp_satellite_skills.md) — criar skill sempre que achar padrão reutilizável cross-repo
 - [Projeto: troca de conta do Supabase CLI](project_supabase_cli_account_switching.md) — novus-educacional e novusai-erp são contas diferentes, login exclusivo
+- [Feedback: repo de referência visual](feedback_visual_identity_reference_repo.md) — estudar hrshadhin/school-management-system só por cores/ícones/elementos, projeto ainda parece "cara de ERP"
+- [Feedback: mudanças visuais precisam ser ousadas](feedback_bold_visual_changes.md) — tweaks de token não registram; usuário quer mudança grande o suficiente pra notar, autorizou "me surpreenda"
+- [Projeto: Playwright instalado](project_playwright_installed.md) — Chromium real disponível nesta máquina agora; rodar com `bun`, nunca `networkidle` contra Vite dev server

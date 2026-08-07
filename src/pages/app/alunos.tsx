@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { StudentAvatar } from '@/components/StudentAvatar';
 import { StudentAttachments } from '@/components/StudentAttachments';
+import { useDocuments } from '@/hooks/useDocuments';
 import { useOrganization } from '@/hooks/useOrganization';
 import { SubmodalAlunos } from '@/features/secretaria/alunos/SubmodalAlunos';
 import { ModalMestre } from '@/features/secretaria/hub/ModalMestre';
@@ -38,6 +39,7 @@ export default function Alunos() {
   const navigate = useNavigate();
   const riskAnalysis = useRiskAnalysis();
   const { canAccess, getAccessStatus } = useIAAccess();
+  const { avatar: selectedStudentAvatar, uploadAvatarMutation } = useDocuments(selectedStudent?.id);
 
   // Hook para obter organização do usuário
   const { data: orgData, isLoading: isLoadingOrg } = useOrganization();
@@ -462,10 +464,11 @@ export default function Alunos() {
                 
                 <div className="pt-4">
                   <h4 className="font-medium mb-2">Avatar</h4>
-                  <StudentAvatar 
+                  <StudentAvatar
                     studentName={`${selectedStudent.first_name} ${selectedStudent.last_name}`}
-                    onUpload={() => {}} 
-                    isUploading={false}
+                    avatar={selectedStudentAvatar}
+                    onUpload={(file) => uploadAvatarMutation.mutate(file)}
+                    isUploading={uploadAvatarMutation.isPending}
                   />
                 </div>
               </div>

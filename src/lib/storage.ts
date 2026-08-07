@@ -31,30 +31,55 @@ export const docPath = (orgId: string, studentId: string, file: File): string =>
 
 export const uploadAvatar = async (file: File, orgId: string, studentId: string) => {
   const path = avatarPath(orgId, studentId, file);
-  
+
   const { data, error } = await supabase.storage
     .from('avatars')
     .upload(path, file, { upsert: true });
 
   if (error) throw error;
 
-  // Inserir/atualizar documento para o avatar
-  const { data: docData, error: docError } = await supabase
+  // documents não tem UNIQUE constraint pra (organization_id, owner_type,
+  // owner_id, title) — só PK(id) e FK(organization_id) (conferido via
+  // pg_get_constraintdef) — então upsert com onConflict nessas colunas
+  // sempre falhava com 400 (42P10). Em vez de criar um índice parcial só
+  // pra avatar (uploadDoc depende de títulos poderem se repetir), resolve
+  // explícito: busca a linha existente e decide insert/update.
+  const { data: existing, error: existingError } = await supabase
     .from('documents')
-    .upsert({
-      organization_id: orgId,
-      owner_type: 'student',
-      owner_id: studentId,
-      title: 'avatar',
-      file_path: `avatars/${path}`,
-      tags: ['avatar']
-    }, {
-      onConflict: 'organization_id,owner_type,owner_id,title'
-    })
-    .select()
-    .single();
+    .select('id, file_path')
+    .eq('organization_id', orgId)
+    .eq('owner_type', 'student')
+    .eq('owner_id', studentId)
+    .eq('title', 'avatar')
+    .maybeSingle();
+  if (existingError) throw existingError;
 
+  const payload = {
+    organization_id: orgId,
+    owner_type: 'student',
+    owner_id: studentId,
+    title: 'avatar',
+    file_path: `avatars/${path}`,
+    tags: ['avatar'],
+  };
+
+  const { data: docData, error: docError } = existing
+    ? await supabase.from('documents').update(payload).eq('id', existing.id).select().single()
+    : await supabase.from('documents').insert(payload).select().single();
   if (docError) throw docError;
+
+  // Melhor esforço: remove o avatar antigo do storage (cada upload gera um
+  // path com UUID novo via avatarPath, então sem isso o bucket acumula um
+  // arquivo órfão a cada troca de foto). Falha aqui não deve derrubar o
+  // upload que já foi bem-sucedido.
+  if (existing && existing.file_path !== payload.file_path) {
+    const [oldBucket, ...oldPathParts] = existing.file_path.split('/');
+    try {
+      await deleteStorageFile(oldBucket, oldPathParts.join('/'));
+    } catch {
+      // arquivo antigo pode já não existir — ignora
+    }
+  }
 
   return { data, docData };
 };

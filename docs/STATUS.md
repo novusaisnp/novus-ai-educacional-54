@@ -1,6 +1,23 @@
 # STATUS — novus-educacional
 
-**Última atualização: 2026-08-06.** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+**Última atualização: 2026-08-07.** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+
+## ✅ Bug corrigido: aluno novo "sumia" da lista por causa de INNER JOIN com matrícula (2026-08-07)
+
+**Contexto**: usuário reportou, direto no `docs/STATUS.md` (nota crua, não formatada, adicionada fora de uma sessão do Claude), que ao cadastrar um aluno novo "o ciclo se fechou aparentemente com sucesso, porém nada permaneceu". Varredura de status desta sessão investigou o relato. Confirmado direto no banco real (`ixnpotaccbpcbritxlud`) que o aluno em questão (ISAQUE MAINARDI DE OLIVEIRA, criado 2026-08-06 14:03:54 UTC) **estava persistido normalmente** (`status='ativo'`) — não era bug de RLS nem do padrão `onConflict`/42P10 já documentado neste arquivo (o fluxo de criação usa `.insert()` puro, com `await`/`throw` corretos, sem upsert).
+
+**Causa raiz real**: a lista de Alunos (`src/pages/app/alunos.tsx`) usava `enrollments!inner(...)` na query Supabase — um INNER JOIN. O botão "Novo Aluno" (`SubmodalAlunos.tsx`) só insere em `students` (e em `guardians`/`student_guardians` se o aluno for menor) — nunca cria uma matrícula (`enrollments`), isso só acontece no funil de admissão separado (reserva → conversão, `ConverterReservaDialog.tsx`). Resultado: qualquer aluno cadastrado direto por "Novo Aluno" ficava permanentemente invisível na listagem principal, indistinguível de "não persistiu" do ponto de vista do usuário. Confirmado via SQL direto contra o banco real, simulando a query antes/depois: `INNER JOIN` retornava 0 linhas para o aluno órfão, `LEFT JOIN` retornava 1.
+
+**O que mudou**:
+- `src/pages/app/alunos.tsx`: `enrollments!inner(...)` → `enrollments(...)` (LEFT JOIN) na query `['students.list', ...]`. Renderização da coluna Turma e do badge de status ajustada para mostrar "Sem matrícula" (em vez de célula em branco ou badge "Inativo" enganoso) quando o aluno não tem nenhuma matrícula.
+- `src/features/secretaria/alunos/SubmodalAlunos.tsx`: corrigida queryKey morta na invalidação pós-criação (`['students', context.orgId]` → `['students.list', context.orgId]`, a chave real usada pela lista) — achado secundário sem efeito visível (o `context.onSaved()` chamado logo depois já invalidava a chave certa), mas era sujeira do mesmo código.
+
+**Verificação**: `bun run typecheck`/`test` (47/47) limpos. Testado contra o banco real via `supabase db query --linked`, simulando a query antes/depois da correção para o aluno real órfão (ISAQUE) — confirmado `count=0` com INNER JOIN, `count=1` com LEFT JOIN. Sem tooling de browser funcional nesta máquina (gap já documentado) — não foi possível clicar na UI real, mas a mudança é de uma linha na query + guardas condicionais na renderização (já usava optional chaining antes).
+
+**Gaps conhecidos aceitos conscientemente**:
+- O aluno real "ISAQUE MAINARDI DE OLIVEIRA" continua sem matrícula no banco — a correção faz ele aparecer na lista (com "Sem matrícula"), mas não cria a matrícula automaticamente. Não mexido no dado de produção sem pedido explícito do usuário; matricular esse aluno é uma ação normal de UI (tela de Matrículas) a ser feita quando o usuário quiser.
+- Não foi alterado o fluxo de criação para exigir turma/matrícula no mesmo formulário do "Novo Aluno" — isso mudaria a semântica do botão (hoje é cadastro de registro; matrícula é fluxo à parte) e não foi pedido. Se isso incomodar no uso real, vale reconsiderar como fatia própria.
+- Mesmo padrão de "lista com `!inner` escondendo dado real sem aviso" não foi auditado em outras telas do app — `grep` encontrou `!inner` também em `src/hooks/useAssessments.ts`, `src/pages/app/secretaria/rematricula.tsx`, `src/pages/app/matriculas.tsx`, `src/pages/app/academico/chamada/relatorio.tsx`, `src/pages/app/academico/chamada.tsx`, `src/hooks/useBIData.ts` — não avaliado se são usos legítimos (INNER JOIN faz sentido quando a ausência da relação realmente significa "não deveria aparecer") ou o mesmo bug. Fica para auditoria futura, não avaliado nesta sessão.
 
 ## 🔖 Checkpoint de sessão (2026-08-06, leia isto primeiro)
 

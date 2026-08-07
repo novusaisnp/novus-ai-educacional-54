@@ -201,7 +201,7 @@ export function SubmodalAlunos({ context, editingStudent, onEditingChange }: Sub
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['students', context.orgId] });
+      queryClient.invalidateQueries({ queryKey: ['students.list', context.orgId] });
       toast({
         title: editingStudent ? 'Aluno atualizado' : 'Aluno criado',
         description: editingStudent ? 'Aluno atualizado com sucesso.' : 'Novo aluno criado com sucesso.',

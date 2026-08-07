@@ -53,7 +53,7 @@ export default function Alunos() {
         .from('students')
         .select(`
           *,
-          enrollments!inner(
+          enrollments(
             status,
             classes(name, year)
           )
@@ -375,7 +375,13 @@ export default function Alunos() {
                       {student.birth_date ? new Date(student.birth_date).toLocaleDateString('pt-BR') : '-'}
                     </TableCell>
                     <TableCell>
-                      {student.enrollments?.[0]?.classes?.name} ({student.enrollments?.[0]?.classes?.year})
+                      {student.enrollments?.[0]?.classes ? (
+                        <>
+                          {student.enrollments[0].classes.name} ({student.enrollments[0].classes.year})
+                        </>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">Sem matrícula</span>
+                      )}
                     </TableCell>
                     {canAccess('risco') && (
                       <TableCell>
@@ -391,9 +397,13 @@ export default function Alunos() {
                       </TableCell>
                     )}
                     <TableCell>
-                      <Badge variant={student.enrollments?.[0]?.status === 'ativa' ? 'default' : 'secondary'}>
-                        {student.enrollments?.[0]?.status === 'ativa' ? 'Ativo' : 'Inativo'}
-                      </Badge>
+                      {student.enrollments?.[0] ? (
+                        <Badge variant={student.enrollments[0].status === 'ativa' ? 'default' : 'secondary'}>
+                          {student.enrollments[0].status === 'ativa' ? 'Ativo' : 'Inativo'}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-muted-foreground">Sem matrícula</Badge>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">

@@ -63,6 +63,7 @@ import SecretariaSolicitacoes from '@/pages/app/secretaria/solicitacoes';
 import SecretariaRematriculaLote from '@/pages/app/secretaria/rematricula';
 import SecretariaRematricula from '@/pages/app/secretaria/rematricula/ListPage';
 import SecretariaContratoModelo from '@/pages/app/secretaria/contratos/modelo';
+import SecretariaTransferencias from '@/pages/app/secretaria/transferencias';
 
 import ConfigIntegracoesPage from '@/pages/app/config/integracoes';
 import OnboardingPage from '@/pages/app/onboarding';
@@ -174,6 +175,7 @@ function App() {
                 <Route path="secretaria/periodos/:periodId/calendario" element={<SecretariaPeriodCalendarPage />} />
                 <Route path="secretaria/periodos/:periodId/termos" element={<SecretariaPeriodTermsPage />} />
                 <Route path="secretaria/contratos/modelo" element={<SecretariaContratoModelo />} />
+                <Route path="secretaria/transferencias" element={<SecretariaTransferencias />} />
                 <Route path="secretaria/segmentos/list" element={<SecretariaSegmentsListPage />} />
                 <Route path="secretaria/series/list" element={<SecretariaSeriesListPage />} />
                 <Route path="secretaria/unidades/list" element={<SecretariaUnitsListPage />} />

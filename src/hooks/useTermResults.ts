@@ -79,6 +79,48 @@ export const useTermResultsByClass = (termId?: string, classId?: string) => {
   });
 };
 
+export interface TermResultByStudentRow {
+  id: string;
+  term_id: string;
+  original_average: number;
+  recovery_grade: number | null;
+  final_grade: number;
+  status: TermResultStatus;
+  subjects: { name: string } | null;
+  classes: { name: string; year: number } | null;
+  academic_terms: { name: string; date_start: string; date_end: string; periods: { name: string; year: number } | null } | null;
+}
+
+// Histórico acadêmico completo do aluno (todas as turmas/períodos em que já
+// teve resultado calculado) — usado pela guia de transferência escolar, que
+// precisa do que o aluno cursou ao longo do tempo, não só de uma turma×período
+// específico como useTermResultsByClass.
+export const useTermResultsByStudent = (studentId?: string) => {
+  const { data: orgData } = useOrganization();
+
+  return useQuery({
+    queryKey: ['term_results_by_student', orgData?.organization_id, studentId ?? null],
+    queryFn: async (): Promise<TermResultByStudentRow[]> => {
+      if (!orgData?.organization_id || !studentId) return [];
+
+      const { data, error } = await supabase
+        .from('term_results')
+        .select(
+          'id, term_id, original_average, recovery_grade, final_grade, status, subjects(name), classes(name, year), academic_terms(name, date_start, date_end, periods(name, year))'
+        )
+        .eq('organization_id', orgData.organization_id)
+        .eq('student_id', studentId);
+
+      if (error) throw error;
+      // Ordena cronologicamente pelo início do período — não dá pra usar
+      // .order() do PostgREST numa coluna de relação aninhada de forma simples.
+      const rows = (data || []) as unknown as TermResultByStudentRow[];
+      return rows.sort((a, b) => (a.academic_terms?.date_start || '').localeCompare(b.academic_terms?.date_start || ''));
+    },
+    enabled: !!orgData?.organization_id && !!studentId,
+  });
+};
+
 export const useCalculateTermResults = () => {
   const { data: orgData } = useOrganization();
   const queryClient = useQueryClient();

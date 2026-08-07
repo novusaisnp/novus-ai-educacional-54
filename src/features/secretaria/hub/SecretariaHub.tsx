@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, GraduationCap, BookOpen, UserCheck, ExternalLink, Building, Layers, Grid3X3, Calendar, UserPlus, FileText, UserMinus, ClipboardList, HelpCircle, UserX, RotateCcw, FileSignature } from 'lucide-react';
+import { Users, GraduationCap, BookOpen, UserCheck, ExternalLink, Building, Layers, Grid3X3, Calendar, UserPlus, FileText, UserMinus, ClipboardList, HelpCircle, UserX, RotateCcw, FileSignature, ArrowRightLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ModalType } from '../types';
 
@@ -24,6 +24,9 @@ export function SecretariaHub({ onOpenModal }: SecretariaHubProps) {
     // Página de configuração única (não é lista de itens) — rota própria
     if (moduleId === 'contratos') {
       return '/app/secretaria/contratos/modelo';
+    }
+    if (moduleId === 'transferencias') {
+      return '/app/secretaria/transferencias';
     }
 
     // Módulos exclusivos da secretaria
@@ -61,6 +64,7 @@ export function SecretariaHub({ onOpenModal }: SecretariaHubProps) {
     { id: 'ex-alunos' as const, title: 'Ex-Alunos', description: 'Alunos inativos/transferidos', icon: UserX, color: 'bg-slate-50 text-slate-600 border-slate-200' },
     { id: 'rematricula' as const, title: 'Rematrícula', description: 'Processo de rematrícula', icon: RotateCcw, color: 'bg-amber-50 text-amber-600 border-amber-200' },
     { id: 'contratos' as const, title: 'Modelo de Contrato', description: 'Texto do contrato de matrícula com assinatura eletrônica', icon: FileSignature, color: 'bg-rose-50 text-rose-600 border-rose-200', singlePage: true },
+    { id: 'transferencias' as const, title: 'Transferência Escolar', description: 'Guia de transferência com histórico acadêmico e assinatura eletrônica', icon: ArrowRightLeft, color: 'bg-orange-50 text-orange-600 border-orange-200', singlePage: true },
   ];
 
   return (

@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -1927,6 +1927,100 @@ export type Database = {
           },
           {
             foreignKeyName: "student_guardians_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_transfers: {
+        Row: {
+          created_at: string
+          destination_school: string | null
+          document_id: string | null
+          enrollment_id: string
+          finalized_at: string | null
+          finalized_by: string | null
+          id: string
+          organization_id: string
+          reason: string | null
+          signer_name: string | null
+          status: string
+          student_id: string
+          transfer_date: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          destination_school?: string | null
+          document_id?: string | null
+          enrollment_id: string
+          finalized_at?: string | null
+          finalized_by?: string | null
+          id?: string
+          organization_id: string
+          reason?: string | null
+          signer_name?: string | null
+          status?: string
+          student_id: string
+          transfer_date?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          destination_school?: string | null
+          document_id?: string | null
+          enrollment_id?: string
+          finalized_at?: string | null
+          finalized_by?: string | null
+          id?: string
+          organization_id?: string
+          reason?: string | null
+          signer_name?: string | null
+          status?: string
+          student_id?: string
+          transfer_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_transfers_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_transfers_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_transfers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_transfers_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_transfers_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_risco_evasao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_transfers_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "v_students_safe"

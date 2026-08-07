@@ -2,6 +2,35 @@
 
 **Última atualização: 2026-08-07.** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
 
+## 🔖 Checkpoint de sessão (2026-08-07, leia isto primeiro)
+
+Sessão começou com uma varredura de status pedida pelo usuário e virou uma sequência de 4 entregas, cada uma commitada separadamente (ver seções ✅ abaixo, mais recentes primeiro):
+
+1. **Bug real encontrado direto na varredura**: nota crua deixada pelo usuário no próprio `STATUS.md` ("tentei salvar aluno, não persistiu") — investigação mostrou que não era bug de persistência, e sim a lista de Alunos escondendo quem não tem matrícula (`enrollments!inner`). Corrigido.
+2. **Fase 1 fechada por completo**: última fatia pendente ("somar do MVP") era transferência escolar — guia com histórico acadêmico + assinatura eletrônica, implementada e testada ao vivo no navegador (criação → revisão → finalização → PDF baixado e conferido → status do aluno/matrícula mudou automaticamente via trigger).
+3. **Bug de upload de foto corrigido**: `uploadAvatar` usava `onConflict` numa combinação de colunas sem constraint real em `documents` — falhava sempre. Resolvido sem migration (select+insert/update explícito). Corrigido também um segundo ponto que usava o mesmo componente (`StudentAvatar` no modal de detalhes do aluno) e nunca esteve conectado a upload nenhum.
+4. **Miniatura da foto real na lista de Alunos**: pedido de acompanhamento depois do fix acima — achado no caminho que o bucket `avatars` está `public=false` no banco real (migration antiga dizia `true`), corrigido pra usar signed URL antes de virar bug silencioso de imagem quebrada.
+
+**Sobre verificação visual nesta sessão**: as entregas 1 e 2 foram clicadas de verdade no navegador (extensão do Chrome conectada e funcionando bem cedo na sessão). As entregas 3 e 4 foram verificadas só por typecheck/test/build + simulação direta contra o banco real via `supabase db query`/`curl` — a extensão do Chrome caiu no meio do trabalho e não reconectou até o fim da sessão. Recomendado conferir 3 e 4 visualmente (clicar em "Trocar Foto" de um aluno, confirmar que a miniatura aparece na lista) assim que houver acesso a browser numa próxima sessão.
+
+**Estado do repo**: working tree limpo, todos os commits da sessão já feitos (não empurrados pro remoto ainda — usuário não pediu push). `bun run dev` pode ter ficado rodando em background de uma chamada anterior desta sessão.
+
+## ✅ Miniatura da foto real na lista de Alunos (2026-08-07)
+
+**Contexto**: pedido direto do usuário depois do fix do upload de avatar (seção abaixo) — a lista de Alunos sempre mostrou um avatar gerado (dicebear, por iniciais), nunca a foto real, mesmo quando o aluno já tinha uma cadastrada (ex.: ISAQUE, testado pelo próprio usuário logo após o fix do upload, aproveitando o hot-reload do Vite).
+
+**Achado ao implementar**: o bucket `avatars` no banco real está com `public = false` — a migration original (`20250813035608-.sql`) criava com `public = true`, mas o estado real diverge (mesmo padrão de "migration não bate com banco" do `CLAUDE.md`). Confirmado tentando `getPublicUrl` + `curl` direto na URL gerada → 400. Corrigido pra usar signed URL (mesmo mecanismo já usado nesta sessão pros PDFs de contrato/ata/guia de transferência) antes de sequer tentar renderizar.
+
+**O que mudou**:
+- `src/hooks/useDocuments.ts`: novo `useStudentAvatars(studentIds)` — busca em **uma única query** os documentos `avatar` de todos os alunos exibidos (não uma query por linha), depois gera signed URL de cada um em paralelo (`Promise.all`), com `staleTime` de 30min (mesmo valor já usado pro avatar único de `StudentAvatar.tsx`).
+- `src/pages/app/alunos.tsx`: `AvatarImage` da lista agora usa a signed URL real quando existe (`avatarUrlByStudentId[student.id]`), caindo pro avatar gerado por iniciais (dicebear) só quando o aluno não tem foto — sem alterar o skeleton/fallback existente.
+
+**Verificação**: `bun run typecheck`/`test` (47/47)/`build` limpos. Sem acesso a browser nesta sessão pra clicar de fato (extensão do Chrome caiu no meio do trabalho e não reconectou) — a suposição de risco real (bucket público vs. privado) foi pega e corrigida via `curl` direto contra a URL gerada, não só assumida. Vale conferir visualmente na próxima sessão com browser disponível.
+
+**Gaps conhecidos aceitos conscientemente**:
+- Não foi feito nenhum tipo de placeholder/blur enquanto a signed URL carrega (mesmo padrão simples já usado em `StudentAvatar.tsx`).
+- Signed URL expira em 1h — em uma sessão muito longa sem refresh de página, a miniatura pode parar de carregar; mesmo trade-off já aceito em outros usos de `getSignedUrl` no app.
+
 ## ✅ Bug corrigido: upload de foto do aluno falhava sempre (42P10) (2026-08-07)
 
 **Contexto**: usuário reportou que "colocar foto nos alunos" dá erro. Investigação confirmou o bug já sinalizado no `CLAUDE.md`/Backlog desde a sessão de 2026-08-04 e nunca corrigido: `uploadAvatar` (`src/lib/storage.ts`) fazia `.upsert(..., { onConflict: 'organization_id,owner_type,owner_id,title' })` na tabela `documents`, mas essa tabela **não tem nenhuma UNIQUE constraint além da PK** (`id`) e da FK (`organization_id`) — conferido de novo agora via `pg_get_constraintdef`, mesmo diagnóstico de antes. Postgres rejeita com 400 (42P10, "no unique or exclusion constraint matching the ON CONFLICT specification") toda vez que alguém tenta trocar a foto de um aluno, sem exceção — não é intermitente.

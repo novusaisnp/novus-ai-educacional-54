@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { StudentAvatar } from '@/components/StudentAvatar';
 import { StudentAttachments } from '@/components/StudentAttachments';
-import { useDocuments } from '@/hooks/useDocuments';
+import { useDocuments, useStudentAvatars } from '@/hooks/useDocuments';
 import { useOrganization } from '@/hooks/useOrganization';
 import { SubmodalAlunos } from '@/features/secretaria/alunos/SubmodalAlunos';
 import { ModalMestre } from '@/features/secretaria/hub/ModalMestre';
@@ -76,6 +76,8 @@ export default function Alunos() {
     },
     enabled: !!orgData?.organization_id,
   });
+
+  const { data: avatarUrlByStudentId = {} } = useStudentAvatars((students || []).map((s) => s.id));
 
   // Mutation para deletar aluno
   const deleteMutation = useMutation({
@@ -357,7 +359,9 @@ export default function Alunos() {
                     <TableCell>
                       <div className="flex items-center space-x-3">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${student.first_name} ${student.last_name}`} />
+                          <AvatarImage
+                            src={avatarUrlByStudentId[student.id] || `https://api.dicebear.com/7.x/initials/svg?seed=${student.first_name} ${student.last_name}`}
+                          />
                           <AvatarFallback>
                             {student.first_name?.[0]}{student.last_name?.[0]}
                           </AvatarFallback>

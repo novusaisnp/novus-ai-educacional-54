@@ -2,7 +2,45 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { DocumentRecord, uploadAvatar, uploadDoc, deleteStorageFile } from '@/lib/storage';
+import { DocumentRecord, uploadAvatar, uploadDoc, deleteStorageFile, getSignedUrl } from '@/lib/storage';
+
+// Busca em lote o avatar de vários alunos de uma vez (uma query só, não uma
+// por linha) — usado pela miniatura na lista de Alunos. Bucket `avatars` no
+// banco real está com public=false (a migration original dizia `true`, mas
+// diverge do estado real — conferido via SQL direto, mesmo padrão de
+// "migration não bate com banco" já documentado no CLAUDE.md), então precisa
+// de signed URL, igual ao avatar único de StudentAvatar.
+export const useStudentAvatars = (studentIds: string[]) => {
+  const idsKey = [...studentIds].sort().join(',');
+
+  return useQuery({
+    queryKey: ['documents.avatars_by_student', idsKey],
+    queryFn: async (): Promise<Record<string, string>> => {
+      if (studentIds.length === 0) return {};
+
+      const { data, error } = await supabase
+        .from('documents')
+        .select('owner_id, file_path')
+        .eq('owner_type', 'student')
+        .eq('title', 'avatar')
+        .in('owner_id', studentIds);
+
+      if (error) throw error;
+
+      const entries = await Promise.all(
+        (data || []).map(async (doc) => {
+          const [bucket, ...pathParts] = doc.file_path.split('/');
+          const url = await getSignedUrl(bucket, pathParts.join('/'), 3600);
+          return [doc.owner_id, url] as const;
+        })
+      );
+
+      return Object.fromEntries(entries);
+    },
+    enabled: studentIds.length > 0,
+    staleTime: 30 * 60 * 1000,
+  });
+};
 
 export const useDocuments = (studentId?: string) => {
   const { toast } = useToast();

@@ -13,6 +13,9 @@ import { ClassInsert, ClassRow, ClassUpdate } from '@/integrations/supabase/db-t
 import { SecretariaModalContext } from '../types';
 import { useClassrooms } from '@/hooks/useAppQueries';
 
+const NO_PERIOD = '__none__';
+const NO_ROOM = '__none__';
+
 const classSchema = z.object({
   name: z.string().min(1, 'Nome obrigatório'),
   year: z.coerce.number().int().min(2000).max(2100),
@@ -44,8 +47,8 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
     defaultValues: {
       name: '',
       year: new Date().getFullYear(),
-      period_id: '',
-      room_id: '',
+      period_id: NO_PERIOD,
+      room_id: NO_ROOM,
       segment_id: '',
       series_id: '',
       shift: 'manha',
@@ -114,8 +117,8 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
         const payload: ClassUpdate = {
           name: data.name,
           year: Number(data.year),
-          period_id: data.period_id || null,
-          room_id: data.room_id || null,
+          period_id: data.period_id && data.period_id !== NO_PERIOD ? data.period_id : null,
+          room_id: data.room_id && data.room_id !== NO_ROOM ? data.room_id : null,
           series_id: data.series_id || null,
           shift: data.shift || undefined,
           capacity_limit: data.capacity_limit ?? null,
@@ -135,8 +138,8 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
           organization_id: context.orgId,
           name: data.name,
           year: Number(data.year),
-          period_id: data.period_id || null,
-          room_id: data.room_id || null,
+          period_id: data.period_id && data.period_id !== NO_PERIOD ? data.period_id : null,
+          room_id: data.room_id && data.room_id !== NO_ROOM ? data.room_id : null,
           series_id: data.series_id || null,
           shift: data.shift || undefined,
           capacity_limit: data.capacity_limit ?? null,
@@ -184,8 +187,8 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
       form.reset({
         name: editingClass.name,
         year: editingClass.year,
-        period_id: (editingClass as ClassRow & { period_id?: string | null }).period_id || '',
-        room_id: (editingClass as ClassRow & { room_id?: string | null }).room_id || '',
+        period_id: (editingClass as ClassRow & { period_id?: string | null }).period_id || NO_PERIOD,
+        room_id: (editingClass as ClassRow & { room_id?: string | null }).room_id || NO_ROOM,
         segment_id: currentSeries?.segment_id || '',
         series_id: editingClass.series_id || '',
         shift: editingClass.shift as ClassFormData['shift'],
@@ -195,8 +198,8 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
       form.reset({
         name: '',
         year: new Date().getFullYear(),
-        period_id: '',
-        room_id: '',
+        period_id: NO_PERIOD,
+        room_id: NO_ROOM,
         segment_id: '',
         series_id: '',
         shift: 'manha',
@@ -236,7 +239,7 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">Nenhum período</SelectItem>
+                    <SelectItem value={NO_PERIOD}>Nenhum período</SelectItem>
                     {periods.map((period) => (
                       <SelectItem key={period.id} value={period.id}>
                         {period.name} ({period.year})
@@ -261,7 +264,7 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">Nenhuma sala</SelectItem>
+                    <SelectItem value={NO_ROOM}>Nenhuma sala</SelectItem>
                     {classrooms.map((room) => (
                       <SelectItem key={room.id} value={room.id}>
                         {room.name} {room.building ? `(${room.building})` : ''} {room.capacity ? `[${room.capacity}]` : ''}

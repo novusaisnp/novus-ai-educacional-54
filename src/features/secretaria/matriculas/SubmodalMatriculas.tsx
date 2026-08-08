@@ -9,7 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { EnrollmentInsert, EnrollmentUpdate } from '@/integrations/supabase/db-types';
+import { EnrollmentInsert, EnrollmentRow, EnrollmentUpdate } from '@/integrations/supabase/db-types';
 import { SecretariaModalContext } from '../types';
 
 const enrollmentSchema = z.object({
@@ -23,8 +23,8 @@ type EnrollmentFormData = z.infer<typeof enrollmentSchema>;
 
 interface SubmodalMatriculasProps {
   context: SecretariaModalContext;
-  editingEnrollment?: any;
-  onEditingChange?: (enrollment: any) => void;
+  editingEnrollment?: EnrollmentRow | null;
+  onEditingChange?: (enrollment: EnrollmentRow | null) => void;
 }
 
 export function SubmodalMatriculas({ context, editingEnrollment, onEditingChange }: SubmodalMatriculasProps) {
@@ -138,7 +138,7 @@ export function SubmodalMatriculas({ context, editingEnrollment, onEditingChange
       form.reset({
         student_id: editingEnrollment.student_id,
         class_id: editingEnrollment.class_id,
-        status: editingEnrollment.status,
+        status: editingEnrollment.status as EnrollmentFormData['status'],
         enrollment_date: editingEnrollment.enrollment_date || '',
       });
     } else {

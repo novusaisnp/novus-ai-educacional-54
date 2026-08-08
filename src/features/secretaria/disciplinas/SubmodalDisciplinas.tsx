@@ -8,7 +8,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { SubjectInsert, SubjectUpdate } from '@/integrations/supabase/db-types';
+import { SubjectInsert, SubjectRow, SubjectUpdate } from '@/integrations/supabase/db-types';
 import { SecretariaModalContext } from '../types';
 
 const subjectSchema = z.object({
@@ -21,8 +21,8 @@ type SubjectFormData = z.infer<typeof subjectSchema>;
 
 interface SubmodalDisciplinasProps {
   context: SecretariaModalContext;
-  editingSubject?: any;
-  onEditingChange?: (subject: any) => void;
+  editingSubject?: SubjectRow | null;
+  onEditingChange?: (subject: SubjectRow | null) => void;
 }
 
 export function SubmodalDisciplinas({ context, editingSubject, onEditingChange }: SubmodalDisciplinasProps) {

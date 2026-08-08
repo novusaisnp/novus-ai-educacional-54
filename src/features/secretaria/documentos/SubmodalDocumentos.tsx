@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Upload, FileText, Download, Trash2, Eye } from 'lucide-react';
 import { SecretariaModalContext } from '../types';
+import { DocumentRow } from '@/integrations/supabase/db-types';
 
 const documentSchema = z.object({
   title: z.string().min(2, 'Título deve ter pelo menos 2 caracteres'),
@@ -28,8 +29,8 @@ type DocumentFormData = z.infer<typeof documentSchema>;
 
 interface SubmodalDocumentosProps {
   context: SecretariaModalContext;
-  editingDocument?: any;
-  onEditingChange?: (document: any) => void;
+  editingDocument?: DocumentRow | null;
+  onEditingChange?: (document: DocumentRow | null) => void;
 }
 
 const ownerTypes = [

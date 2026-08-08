@@ -9,7 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { StudentInsert, StudentUpdate } from '@/integrations/supabase/db-types';
+import { StudentInsert, StudentRow, StudentUpdate } from '@/integrations/supabase/db-types';
 import { SecretariaModalContext } from '../types';
 
 const exStudentSchema = z.object({
@@ -27,8 +27,8 @@ type ExStudentFormData = z.infer<typeof exStudentSchema>;
 
 interface SubmodalExAlunosProps {
   context: SecretariaModalContext;
-  editingStudent?: any;
-  onEditingChange?: (student: any) => void;
+  editingStudent?: StudentRow | null;
+  onEditingChange?: (student: StudentRow | null) => void;
 }
 
 export function SubmodalExAlunos({ context, editingStudent, onEditingChange }: SubmodalExAlunosProps) {
@@ -122,9 +122,9 @@ export function SubmodalExAlunos({ context, editingStudent, onEditingChange }: S
         first_name: editingStudent.first_name,
         last_name: editingStudent.last_name,
         birth_date: editingStudent.birth_date || '',
-        gender: editingStudent.gender,
+        gender: editingStudent.gender as ExStudentFormData['gender'],
         document_id: editingStudent.document_id || '',
-        status: editingStudent.status,
+        status: editingStudent.status as ExStudentFormData['status'],
         exit_reason: '',
         exit_date: '',
       });

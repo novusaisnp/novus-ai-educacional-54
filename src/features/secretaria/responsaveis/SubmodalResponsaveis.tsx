@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { SecretariaModalContext } from '../types';
 import { erpEmit } from '@/integrations/erp/emit';
+import { GuardianRow } from '@/integrations/supabase/db-types';
 
 const guardianSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
@@ -31,8 +32,8 @@ type GuardianFormData = z.infer<typeof guardianSchema>;
 
 interface SubmodalResponsaveisProps {
   context: SecretariaModalContext;
-  editingGuardian?: any;
-  onEditingChange?: (guardian: any) => void;
+  editingGuardian?: GuardianRow | null;
+  onEditingChange?: (guardian: GuardianRow | null) => void;
 }
 
 export function SubmodalResponsaveis({ 
@@ -53,7 +54,7 @@ export function SubmodalResponsaveis({
       phone: editingGuardian?.phone || '',
       relationship: editingGuardian?.relationship || '',
       cpf: editingGuardian?.cpf || '',
-      linkedStudents: editingGuardian?.linkedStudents || [],
+      linkedStudents: [],
     },
   });
 
@@ -67,7 +68,7 @@ export function SubmodalResponsaveis({
         phone: editingGuardian.phone || '',
         relationship: editingGuardian.relationship || '',
         cpf: editingGuardian.cpf || '',
-        linkedStudents: editingGuardian.linkedStudents || [],
+        linkedStudents: [],
       });
     }
   }, [editingGuardian, form]);

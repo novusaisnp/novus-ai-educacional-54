@@ -1,17 +1,26 @@
 
 import type { Database } from './types';
 
+export type StudentRow = Database['public']['Tables']['students']['Row'];
 export type StudentInsert = Database['public']['Tables']['students']['Insert'];
 export type StudentUpdate = Database['public']['Tables']['students']['Update'];
 
+export type SubjectRow = Database['public']['Tables']['subjects']['Row'];
 export type SubjectInsert = Database['public']['Tables']['subjects']['Insert'];
 export type SubjectUpdate = Database['public']['Tables']['subjects']['Update'];
 
+export type ClassRow = Database['public']['Tables']['classes']['Row'];
 export type ClassInsert = Database['public']['Tables']['classes']['Insert'];
 export type ClassUpdate = Database['public']['Tables']['classes']['Update'];
 
+export type EnrollmentRow = Database['public']['Tables']['enrollments']['Row'];
 export type EnrollmentInsert = Database['public']['Tables']['enrollments']['Insert'];
 export type EnrollmentUpdate = Database['public']['Tables']['enrollments']['Update'];
+
+export type GuardianRow = Database['public']['Tables']['guardians']['Row'];
+export type DocumentRow = Database['public']['Tables']['documents']['Row'];
+export type WaitlistApplicationRow = Database['public']['Tables']['waitlist_applications']['Row'];
+export type RequestRow = Database['public']['Tables']['requests']['Row'];
 
 export type ReEnrollmentRow = Database['public']['Tables']['re_enrollments']['Row'];
 export type ReEnrollmentInsert = Database['public']['Tables']['re_enrollments']['Insert'];

@@ -21,6 +21,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { SecretariaModalContext } from '../types';
+import { WaitlistApplicationRow } from '@/integrations/supabase/db-types';
 
 const reservaSchema = z.object({
   student_full_name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
@@ -37,8 +38,8 @@ type ReservaFormData = z.infer<typeof reservaSchema>;
 
 interface SubmodalReservasProps {
   context: SecretariaModalContext;
-  editingReserva?: any;
-  onEditingChange?: (reserva: any) => void;
+  editingReserva?: WaitlistApplicationRow | null;
+  onEditingChange?: (reserva: WaitlistApplicationRow | null) => void;
 }
 
 export function SubmodalReservas({ 

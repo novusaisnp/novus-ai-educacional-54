@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Upload, FileText, Download, Trash2, Eye, ClipboardList } from 'lucide-react';
 import { SecretariaModalContext } from '../types';
+import { RequestRow } from '@/integrations/supabase/db-types';
 
 const solicitacaoSchema = z.object({
   request_type: z.string().min(1, 'Tipo de solicitação é obrigatório'),
@@ -30,8 +31,8 @@ type SolicitacaoFormData = z.infer<typeof solicitacaoSchema>;
 
 interface SubmodalSolicitacoesProps {
   context: SecretariaModalContext;
-  editingSolicitacao?: any;
-  onEditingChange?: (solicitacao: any) => void;
+  editingSolicitacao?: RequestRow | null;
+  onEditingChange?: (solicitacao: RequestRow | null) => void;
 }
 
 const requestTypes = [
@@ -76,8 +77,8 @@ export function SubmodalSolicitacoes({
       request_type: editingSolicitacao?.request_type || '',
       requester_type: editingSolicitacao?.requester_type || '',
       requester_id: editingSolicitacao?.requester_id || '',
-      payload: editingSolicitacao?.payload || {},
-      notes: editingSolicitacao?.notes || '',
+      payload: (editingSolicitacao?.payload as Record<string, unknown>) || {},
+      notes: '',
     },
   });
 

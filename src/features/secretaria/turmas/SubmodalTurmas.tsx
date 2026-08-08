@@ -9,7 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ClassInsert, ClassUpdate } from '@/integrations/supabase/db-types';
+import { ClassInsert, ClassRow, ClassUpdate } from '@/integrations/supabase/db-types';
 import { SecretariaModalContext } from '../types';
 
 const classSchema = z.object({
@@ -23,8 +23,8 @@ type ClassFormData = z.infer<typeof classSchema>;
 
 interface SubmodalTurmasProps {
   context: SecretariaModalContext;
-  editingClass?: any;
-  onEditingChange?: (classItem: any) => void;
+  editingClass?: ClassRow | null;
+  onEditingChange?: (classItem: ClassRow | null) => void;
 }
 
 export function SubmodalTurmas({ context, editingClass, onEditingChange }: SubmodalTurmasProps) {
@@ -109,7 +109,7 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
       form.reset({
         name: editingClass.name,
         year: editingClass.year,
-        shift: editingClass.shift,
+        shift: editingClass.shift as ClassFormData['shift'],
         grade: editingClass.grade || '',
       });
     } else {

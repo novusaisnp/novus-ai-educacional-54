@@ -9,7 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { StudentInsert, StudentUpdate } from '@/integrations/supabase/db-types';
+import { GuardianRow, StudentInsert, StudentRow, StudentUpdate } from '@/integrations/supabase/db-types';
 import { StudentAvatar } from '@/components/StudentAvatar';
 import { StudentAttachments } from '@/components/StudentAttachments';
 import { useDocuments } from '@/hooks/useDocuments';
@@ -82,11 +82,15 @@ const isMinor = (birthDate: string | undefined) => {
   return age !== null && age < 18;
 };
 
+type LinkedGuardian = Pick<GuardianRow, 'id' | 'name' | 'cpf' | 'relationship' | 'email' | 'phone'> & {
+  is_primary: boolean;
+};
+
 interface SubmodalAlunosProps {
   context: SecretariaModalContext;
-  editingStudent?: any;
-  onEditingChange?: (student: any) => void;
-  onEditGuardian?: (guardian: any) => void;
+  editingStudent?: StudentRow | null;
+  onEditingChange?: (student: StudentRow | null) => void;
+  onEditGuardian?: (guardian: LinkedGuardian) => void;
 }
 
 export function SubmodalAlunos({ context, editingStudent, onEditingChange, onEditGuardian }: SubmodalAlunosProps) {
@@ -115,8 +119,9 @@ export function SubmodalAlunos({ context, editingStudent, onEditingChange, onEdi
         .eq('organization_id', context.orgId);
       if (error) throw error;
       return (data || [])
-        .map((link: any) => link.guardians && { ...link.guardians, is_primary: link.is_primary })
-        .filter(Boolean);
+        .map((link): LinkedGuardian | null =>
+          link.guardians ? { ...link.guardians, is_primary: link.is_primary } : null)
+        .filter((g): g is LinkedGuardian => g !== null);
     },
     enabled: !!editingStudent?.id && !!context.orgId,
   });
@@ -256,9 +261,9 @@ export function SubmodalAlunos({ context, editingStudent, onEditingChange, onEdi
         first_name: editingStudent.first_name,
         last_name: editingStudent.last_name,
         birth_date: editingStudent.birth_date || '',
-        gender: editingStudent.gender,
+        gender: editingStudent.gender as StudentFormData['gender'],
         document_id: editingStudent.document_id || '',
-        status: editingStudent.status,
+        status: editingStudent.status as StudentFormData['status'],
         _mode: 'edit',
         // Em edição o responsável não é gerenciado por este form — é exibido em
         // modo leitura (ver linkedGuardians) e editado via SubmodalResponsaveis,
@@ -451,7 +456,7 @@ export function SubmodalAlunos({ context, editingStudent, onEditingChange, onEdi
                   </p>
                 ) : (
                   <div className="space-y-3">
-                    {linkedGuardians.map((g: any) => (
+                    {linkedGuardians.map((g: LinkedGuardian) => (
                       <div key={g.id} className="flex items-center justify-between gap-4 rounded-md border p-3">
                         <div className="text-sm space-y-0.5">
                           <p className="font-medium">{g.name}{g.is_primary ? ' (principal)' : ''}</p>

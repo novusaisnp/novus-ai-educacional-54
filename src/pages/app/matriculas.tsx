@@ -15,7 +15,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { EnrollmentInsert, EnrollmentUpdate } from '@/integrations/supabase/db-types';
+import { EnrollmentInsert, EnrollmentRow, EnrollmentUpdate } from '@/integrations/supabase/db-types';
 import { useOrganization } from '@/hooks/useOrganization';
 import { SubmodalMatriculas } from '@/features/secretaria/matriculas/SubmodalMatriculas';
 import { ModalMestre } from '@/features/secretaria/hub/ModalMestre';
@@ -29,14 +29,6 @@ const enrollmentSchema = z.object({
 });
 
 type EnrollmentFormData = z.infer<typeof enrollmentSchema>;
-
-interface EnrollmentRow {
-  id: string;
-  student_id: string;
-  class_id: string;
-  status: string;
-  enrollment_date: string | null;
-}
 
 export default function Matriculas() {
   const [searchParams] = useSearchParams();

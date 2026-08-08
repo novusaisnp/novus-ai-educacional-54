@@ -159,7 +159,7 @@ export default function Turmas() {
             <SubmodalTurmas
               context={modalContext}
               editingClass={editingClass}
-              onEditingChange={setEditingClass}
+              onEditingChange={(classItem) => setEditingClass(classItem as ClassWithEnrollmentCount | null)}
             />
           </DialogContent>
         </Dialog>

@@ -9,7 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ReEnrollmentInsert } from '@/integrations/supabase/db-types';
+import { ReEnrollmentInsert, ReEnrollmentRow } from '@/integrations/supabase/db-types';
 import { SecretariaModalContext } from '../types';
 
 const reenrollmentSchema = z.object({
@@ -24,8 +24,8 @@ type ReenrollmentFormData = z.infer<typeof reenrollmentSchema>;
 
 interface SubmodalRematriculaProps {
   context: SecretariaModalContext;
-  editingReenrollment?: any;
-  onEditingChange?: (reenrollment: any) => void;
+  editingReenrollment?: ReEnrollmentRow | null;
+  onEditingChange?: (reenrollment: ReEnrollmentRow | null) => void;
 }
 
 export function SubmodalRematricula({ context, editingReenrollment, onEditingChange }: SubmodalRematriculaProps) {

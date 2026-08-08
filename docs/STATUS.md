@@ -2,6 +2,16 @@
 
 **Última atualização: 2026-08-08.** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
 
+## 🔖 Checkpoint de sessão (2026-08-08 — verificação ao vivo das 3 fatias de Fase 3, bug real corrigido)
+
+**Continuação direta** — usuário perguntou explicitamente se verificação ao vivo era necessária, já que as 3 fatias anteriores (year→periods, classrooms, timetable) só tinham typecheck/test/build limpos, sem clique real no navegador. Resposta: sim, e o teste **achou um bug real que quebrava a página inteira**.
+
+1. **Bug encontrado**: `SubmodalTurmas.tsx` usava `<SelectItem value="">Nenhum período</SelectItem>` e `<SelectItem value="">Nenhuma sala</SelectItem>` (sentinela vazio pra "sem seleção"). Radix Select **proíbe `value=""`** — é reservado internamente pra limpar seleção/mostrar placeholder. Ao abrir o dialog de editar turma, a página inteira quebrava: "Algo deu errado — A `<Select.Item />` must have a value prop that is not an empty string." Mesmo padrão (`NO_TEACHER`/`NO_TIME_SLOT` = `'__none__'`) já existia em `curriculo.tsx` desde a fatia de classrooms/timetable — só não foi replicado em `SubmodalTurmas.tsx` quando os selects de período/sala foram adicionados.
+2. **Corrigido**: sentinelas `NO_PERIOD`/`NO_ROOM = '__none__'` em `SubmodalTurmas.tsx`, com tradução pra `null` no payload de submit (mesmo padrão dos outros `NO_*`). `typecheck`/`test`(47/47)/`build` limpos.
+3. **Verificado ao vivo de ponta a ponta** (login manual do usuário, dev server em `localhost:8083`, org real `68860f6a-a89a-42cd-9cd0-7bbd9456fe51` — **achado secundário**: existem 4 organizações homônimas "NOVUS.AI - Escola Teste"/"Allegra..." no banco, dados de teste anteriores usaram um org_id errado por engano, corrigido on-the-fly): editar turma real → selects de Período/Sala renderizam sem crash → seleção persiste no banco (`period_id`/`room_id` confirmados via SQL) → dialog "Adicionar disciplina" em `/app/academico/curriculo` → selector de Horário mostra "Segunda 08:00-09:00" formatado → atribuição salva e removida sem erro de console. Dados de teste (período, sala, horário) limpos do banco ao final; turma revertida pro estado original.
+
+**Lição pro futuro**: `bun run typecheck`/`test`/`build` limpos **não pegam esse tipo de bug** — é erro de runtime do Radix, só aparece com o componente montado de verdade no navegador. Reforça o porquê deste projeto trata verificação ao vivo como não-opcional antes de fechar uma fatia, mesmo quando os 3 comandos automatizados passam.
+
 ## 🔖 Checkpoint de sessão (2026-08-08 — Fase 3, lacunas da turma: grade horária)
 
 **Continuação de Fase 3** — última fatia — usuário escolheu grade horária. Completado: schema, UI em currículo, type safety.

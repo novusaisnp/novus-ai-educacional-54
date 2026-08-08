@@ -2,6 +2,22 @@
 
 **Última atualização: 2026-08-08.** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
 
+## 🔖 Checkpoint de sessão (2026-08-08 — Fase 3, lacunas da turma: classrooms)
+
+**Continuação de Fase 3** — usuário escolheu sala/ambiente físico entre as 2 fatias restantes (sala física, grade horária). Completado: schema, FK, UI.
+
+1. **Migration `20260808180000_classrooms.sql`**: tabela `classrooms` (organization_id, name, code, type [classroom|lab|auditorium|library|other], capacity, building, resources array, active). RLS: `select` aberto, `manage` (insert/update/delete) pra qualquer usuário da organização (mesmo padrão de `units`). `classes.room_id` adicionada (UUID nullable, FK a classrooms.id, ON DELETE SET NULL).
+2. **UI**: `SubmodalTurmas.tsx` ganhou selector "Sala (opcional)", com renderização de tipo/building/capacity (ex: "Sala 101 (Bloco A) [30]"). Período e Sala em grid 2-colunas, ambos opcionais.
+3. **Query**: `useClassrooms()` novo em `useAppQueries.ts` (select id, name, code, type, capacity, building; filtered por active=true). `useClasses` atualizado pra incluir `room_id + join room:room_id(name)`.
+4. **Verification**: `typecheck`/`test` (47/47)/`build` limpos. **FK validado no banco real**: (a) UPDATE com `room_id` válido funcionou, (b) UPDATE com UUID inválido rejeitado com erro exato "violates foreign key constraint classes_room_id_fkey". Dados de teste (classroom + turma vinculada) criados, ligados, revertidos ao final.
+
+**Gaps conscientes**:
+- Sem interface de CRUD pra criar/editar salas (precisaria nova tela `secretaria/salas`). Salas criadas só via SQL/Supabase Dashboard hoje.
+- `resources` array é só coluna, não usado em UI (futura feature: filtrar turmas por recurso disponível).
+- ON DELETE SET NULL: se uma sala for deletada, turmas vinculadas perdem a referência (não quebram).
+
+**Próxima e última fatia Fase 3**: grade horária (dia-da-semana×hora). Usuário escolhe próximo.
+
 ## 🔖 Checkpoint de sessão (2026-08-08 — Fase 3, lacunas da turma: year→periods)
 
 **Continuação de Fase 3** — usuário escolheu `classes.year` normalization (baixo risco) entre as 3 fatias restantes (year, sala física, grade horária). Completado: FK constraint, UI, type safety.

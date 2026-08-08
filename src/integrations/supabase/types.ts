@@ -671,6 +671,7 @@ export type Database = {
           name: string
           organization_id: string
           period_id: string | null
+          room_id: string | null
           series_id: string | null
           shift: string | null
           updated_at: string
@@ -683,6 +684,7 @@ export type Database = {
           name: string
           organization_id: string
           period_id?: string | null
+          room_id?: string | null
           series_id?: string | null
           shift?: string | null
           updated_at?: string
@@ -695,6 +697,7 @@ export type Database = {
           name?: string
           organization_id?: string
           period_id?: string | null
+          room_id?: string | null
           series_id?: string | null
           shift?: string | null
           updated_at?: string
@@ -716,10 +719,67 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "classes_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "classrooms"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "classes_series_id_fkey"
             columns: ["series_id"]
             isOneToOne: false
             referencedRelation: "series"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classrooms: {
+        Row: {
+          active: boolean
+          building: string | null
+          capacity: number | null
+          code: string | null
+          created_at: string
+          id: string
+          name: string
+          organization_id: string
+          resources: string[] | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          building?: string | null
+          capacity?: number | null
+          code?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          organization_id: string
+          resources?: string[] | null
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          building?: string | null
+          capacity?: number | null
+          code?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          organization_id?: string
+          resources?: string[] | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classrooms_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]

@@ -12,12 +12,34 @@ export const useClasses = () => {
 
       const { data, error } = await supabase
         .from('classes')
-        .select('id, name, year, period_id, series:series_id(name), period:period_id(name)')
+        .select('id, name, year, period_id, room_id, series:series_id(name), period:period_id(name), room:room_id(name)')
         .eq('organization_id', orgData.organization_id)
         .order('name');
 
       if (error) throw error;
       return data;
+    },
+    enabled: !!orgData?.organization_id,
+  });
+};
+
+export const useClassrooms = () => {
+  const { data: orgData } = useOrganization();
+
+  return useQuery({
+    queryKey: ['classrooms', orgData?.organization_id],
+    queryFn: async () => {
+      if (!orgData?.organization_id) return [];
+
+      const { data, error } = await supabase
+        .from('classrooms')
+        .select('id, name, code, type, capacity, building')
+        .eq('organization_id', orgData.organization_id)
+        .eq('active', true)
+        .order('name');
+
+      if (error) throw error;
+      return data || [];
     },
     enabled: !!orgData?.organization_id,
   });

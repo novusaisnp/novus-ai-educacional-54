@@ -61,7 +61,7 @@ export function SubmodalMatriculas({ context, editingEnrollment, onEditingChange
     queryFn: async () => {
       const { data, error } = await supabase
         .from('classes')
-        .select('id, name, year, grade, shift')
+        .select('id, name, year, shift, series:series_id(name)')
         .order('year', { ascending: false })
         .order('name');
 
@@ -194,7 +194,7 @@ export function SubmodalMatriculas({ context, editingEnrollment, onEditingChange
                 <SelectContent>
                   {classes?.map((classItem) => (
                     <SelectItem key={classItem.id} value={classItem.id}>
-                      {classItem.name} - {classItem.year} ({classItem.grade || 'Sem série'})
+                      {classItem.name} - {classItem.year} ({classItem.series?.name || 'Sem série'})
                     </SelectItem>
                   ))}
                 </SelectContent>

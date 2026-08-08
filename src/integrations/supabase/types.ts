@@ -667,10 +667,10 @@ export type Database = {
         Row: {
           capacity_limit: number | null
           created_at: string
-          grade: string | null
           id: string
           name: string
           organization_id: string
+          series_id: string | null
           shift: string | null
           updated_at: string
           year: number
@@ -678,10 +678,10 @@ export type Database = {
         Insert: {
           capacity_limit?: number | null
           created_at?: string
-          grade?: string | null
           id?: string
           name: string
           organization_id: string
+          series_id?: string | null
           shift?: string | null
           updated_at?: string
           year: number
@@ -689,10 +689,10 @@ export type Database = {
         Update: {
           capacity_limit?: number | null
           created_at?: string
-          grade?: string | null
           id?: string
           name?: string
           organization_id?: string
+          series_id?: string | null
           shift?: string | null
           updated_at?: string
           year?: number
@@ -703,6 +703,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classes_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "series"
             referencedColumns: ["id"]
           },
         ]

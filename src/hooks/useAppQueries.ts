@@ -12,7 +12,7 @@ export const useClasses = () => {
 
       const { data, error } = await supabase
         .from('classes')
-        .select('id, name, grade, year')
+        .select('id, name, year, series:series_id(name)')
         .eq('organization_id', orgData.organization_id)
         .order('name');
 

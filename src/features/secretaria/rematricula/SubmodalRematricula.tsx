@@ -65,7 +65,7 @@ export function SubmodalRematricula({ context, editingReenrollment, onEditingCha
     queryFn: async () => {
       const { data, error } = await supabase
         .from('classes')
-        .select('id, name, year, grade')
+        .select('id, name, year, series:series_id(name)')
         .order('year', { ascending: false })
         .order('name');
 
@@ -192,7 +192,7 @@ export function SubmodalRematricula({ context, editingReenrollment, onEditingCha
                 <SelectContent>
                   {classes.map((classItem) => (
                     <SelectItem key={classItem.id} value={classItem.id}>
-                      {classItem.name} - {classItem.year} {classItem.grade && `(${classItem.grade})`}
+                      {classItem.name} - {classItem.year} {classItem.series?.name && `(${classItem.series.name})`}
                     </SelectItem>
                   ))}
                 </SelectContent>

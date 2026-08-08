@@ -135,7 +135,7 @@ export default function ConselhoClasse() {
         classId,
         termId,
         organizationName: orgData?.organizations?.name || 'Instituição',
-        className: `${selectedClass.name} - ${selectedClass.grade}`,
+        className: `${selectedClass.name} - ${selectedClass.series?.name || ''}`,
         termName: selectedTerm.name,
         termDateStart: selectedTerm.date_start,
         termDateEnd: selectedTerm.date_end,
@@ -188,7 +188,7 @@ export default function ConselhoClasse() {
               <SelectContent>
                 {classes.map((cls) => (
                   <SelectItem key={cls.id} value={cls.id}>
-                    {cls.name} - {cls.grade}
+                    {cls.name} - {cls.series?.name}
                   </SelectItem>
                 ))}
               </SelectContent>

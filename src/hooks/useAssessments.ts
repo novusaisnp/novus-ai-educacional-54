@@ -52,7 +52,7 @@ export const useAssessments = (filters?: AssessmentFilters) => {
         .from('assessments')
         .select(`
           *,
-          classes!inner(id, name, grade),
+          classes!inner(id, name, series:series_id(name)),
           subjects!inner(id, name, code)
         `)
         .eq('organization_id', orgData.organization_id);

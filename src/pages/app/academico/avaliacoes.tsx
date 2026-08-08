@@ -317,7 +317,7 @@ export default function Avaliacoes() {
                           <SelectContent>
                             {classes.map((cls) => (
                               <SelectItem key={cls.id} value={cls.id}>
-                                {cls.name} - {cls.grade}
+                                {cls.name} - {cls.series?.name}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -535,7 +535,7 @@ export default function Avaliacoes() {
                 <SelectItem value="all">Todas as turmas</SelectItem>
                 {classes.map((cls) => (
                   <SelectItem key={cls.id} value={cls.id}>
-                    {cls.name} - {cls.grade}
+                    {cls.name} - {cls.series?.name}
                   </SelectItem>
                 ))}
               </SelectContent>

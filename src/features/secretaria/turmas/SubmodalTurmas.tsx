@@ -1,5 +1,5 @@
 import React from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +15,8 @@ import { SecretariaModalContext } from '../types';
 const classSchema = z.object({
   name: z.string().min(1, 'Nome obrigatório'),
   year: z.coerce.number().int().min(2000).max(2100),
-  grade: z.string().optional(),
+  segment_id: z.string().optional(),
+  series_id: z.string().optional(),
   shift: z.enum(['manha', 'tarde', 'noite', 'integral']).optional(),
   capacity_limit: z.preprocess(
     (val) => (val === '' || val === undefined || val === null ? undefined : Number(val)),
@@ -40,11 +41,48 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
     defaultValues: {
       name: '',
       year: new Date().getFullYear(),
-      grade: '',
+      segment_id: '',
+      series_id: '',
       shift: 'manha',
       capacity_limit: undefined,
     },
   });
+
+  // Segmentos e séries (mesmo padrão em cascata já usado em SubmodalReservas.tsx)
+  const { data: segments = [] } = useQuery({
+    queryKey: ['segments', context.orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('segments')
+        .select('*')
+        .eq('organization_id', context.orgId)
+        .eq('active', true)
+        .order('order_index');
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!context.orgId,
+  });
+
+  const { data: allSeries = [] } = useQuery({
+    queryKey: ['series', context.orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('series')
+        .select('*')
+        .eq('organization_id', context.orgId)
+        .eq('active', true)
+        .order('order_index');
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!context.orgId,
+  });
+
+  const watchedSegment = form.watch('segment_id');
+  const availableSeries = allSeries.filter((s) => s.segment_id === watchedSegment);
 
   // Mutation para criar/editar turma
   const classMutation = useMutation({
@@ -53,7 +91,7 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
         const payload: ClassUpdate = {
           name: data.name,
           year: Number(data.year),
-          grade: data.grade || undefined,
+          series_id: data.series_id || null,
           shift: data.shift || undefined,
           capacity_limit: data.capacity_limit ?? null,
         };
@@ -64,7 +102,7 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
           .eq('id', editingClass.id)
           .select()
           .single();
-        
+
         if (error) throw error;
         return updated;
       } else {
@@ -72,7 +110,7 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
           organization_id: context.orgId,
           name: data.name,
           year: Number(data.year),
-          grade: data.grade || undefined,
+          series_id: data.series_id || null,
           shift: data.shift || undefined,
           capacity_limit: data.capacity_limit ?? null,
         };
@@ -82,7 +120,7 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
           .insert([payload])
           .select()
           .single();
-        
+
         if (error) throw error;
         return created;
       }
@@ -110,26 +148,31 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
     classMutation.mutate(data);
   };
 
-  // Reset form quando editingClass muda
+  // Reset form quando editingClass muda. segment_id é derivado da série já
+  // vinculada (classes só guarda series_id, não segment_id) — só dá pra
+  // resolver depois que allSeries carregou.
   React.useEffect(() => {
     if (editingClass) {
+      const currentSeries = allSeries.find((s) => s.id === editingClass.series_id);
       form.reset({
         name: editingClass.name,
         year: editingClass.year,
+        segment_id: currentSeries?.segment_id || '',
+        series_id: editingClass.series_id || '',
         shift: editingClass.shift as ClassFormData['shift'],
-        grade: editingClass.grade || '',
         capacity_limit: editingClass.capacity_limit ?? undefined,
       });
     } else {
       form.reset({
         name: '',
         year: new Date().getFullYear(),
-        grade: '',
+        segment_id: '',
+        series_id: '',
         shift: 'manha',
         capacity_limit: undefined,
       });
     }
-  }, [editingClass, form]);
+  }, [editingClass, allSeries, form]);
 
   return (
     <Form {...form}>
@@ -194,37 +237,79 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="grade"
+            name="segment_id"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Série</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="Ex: 1º Ano" />
-                </FormControl>
+                <FormLabel>Segmento</FormLabel>
+                <Select
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    form.setValue('series_id', '');
+                  }}
+                  value={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o segmento" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {segments.map((segment) => (
+                      <SelectItem key={segment.id} value={segment.id}>
+                        {segment.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
           />
           <FormField
             control={form.control}
-            name="capacity_limit"
+            name="series_id"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Capacidade (vagas)</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min={1}
-                    placeholder="Sem limite"
-                    {...field}
-                    value={field.value ?? ''}
-                  />
-                </FormControl>
+                <FormLabel>Série</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value} disabled={!watchedSegment}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder={watchedSegment ? 'Selecione a série' : 'Selecione o segmento antes'} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {availableSeries.map((series) => (
+                      <SelectItem key={series.id} value={series.id}>
+                        {series.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
+
+        <FormField
+          control={form.control}
+          name="capacity_limit"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Capacidade (vagas)</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  min={1}
+                  placeholder="Sem limite"
+                  {...field}
+                  value={field.value ?? ''}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="flex justify-end space-x-2">
           <Button type="button" variant="outline" onClick={context.onClose}>

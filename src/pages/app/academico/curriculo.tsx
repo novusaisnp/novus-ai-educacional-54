@@ -97,7 +97,7 @@ export default function CurriculoPage() {
             <SelectContent>
               {classes.map((cls) => (
                 <SelectItem key={cls.id} value={cls.id}>
-                  {cls.name} {cls.grade ? `- ${cls.grade}` : ''} ({cls.year})
+                  {cls.name} {cls.series?.name ? `- ${cls.series.name}` : ''} ({cls.year})
                 </SelectItem>
               ))}
             </SelectContent>

@@ -83,7 +83,7 @@ export default function SecretariaRematricula() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('classes')
-        .select('id, name, grade, year')
+        .select('id, name, year, series:series_id(name)')
         .order('name');
       
       if (error) throw error;
@@ -240,7 +240,7 @@ export default function SecretariaRematricula() {
                 <SelectContent>
                   {classes.map((classe) => (
                     <SelectItem key={classe.id} value={classe.id}>
-                      {classe.name} - {classe.grade} ({classe.year})
+                      {classe.name} - {classe.series?.name} ({classe.year})
                     </SelectItem>
                   ))}
                 </SelectContent>

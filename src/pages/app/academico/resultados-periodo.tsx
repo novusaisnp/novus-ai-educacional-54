@@ -80,7 +80,7 @@ export default function ResultadosPeriodo() {
               <SelectContent>
                 {classes.map((cls) => (
                   <SelectItem key={cls.id} value={cls.id}>
-                    {cls.name} - {cls.grade}
+                    {cls.name} - {cls.series?.name}
                   </SelectItem>
                 ))}
               </SelectContent>

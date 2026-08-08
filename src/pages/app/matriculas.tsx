@@ -70,7 +70,7 @@ export default function Matriculas() {
         .select(`
           *,
           students!inner(id, first_name, last_name),
-          classes!inner(id, name, year, grade, shift)
+          classes!inner(id, name, year, shift, series:series_id(name))
         `);
 
       // Filtros
@@ -129,7 +129,7 @@ export default function Matriculas() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('classes')
-        .select('id, name, year, grade, shift')
+        .select('id, name, year, shift, series:series_id(name)')
         .order('year', { ascending: false })
         .order('name');
 
@@ -432,7 +432,7 @@ export default function Matriculas() {
                     </TableCell>
                     <TableCell>
                       {enrollment.classes.name}
-                      {enrollment.classes.grade && ` - ${enrollment.classes.grade}`}
+                      {enrollment.classes.series?.name && ` - ${enrollment.classes.series.name}`}
                     </TableCell>
                     <TableCell>{enrollment.classes.year}</TableCell>
                     <TableCell>

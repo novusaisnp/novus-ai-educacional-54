@@ -18,8 +18,8 @@ import type { ReEnrollmentRow } from '@/integrations/supabase/db-types';
 
 type RematriculaWithJoins = ReEnrollmentRow & {
   students: { first_name: string; last_name: string } | null;
-  current_class: { name: string; grade: string | null; year: number } | null;
-  target_class: { name: string; grade: string | null; year: number } | null;
+  current_class: { name: string; year: number } | null;
+  target_class: { name: string; year: number } | null;
 };
 
 const STATUS_OPTIONS = [
@@ -47,8 +47,8 @@ export default function SecretariaRematriculaListPage() {
         .select(`
           *,
           students(first_name, last_name),
-          current_class:classes!re_enrollments_current_class_id_fkey(name, grade, year),
-          target_class:classes!re_enrollments_target_class_id_fkey(name, grade, year)
+          current_class:classes!re_enrollments_current_class_id_fkey(name, year),
+          target_class:classes!re_enrollments_target_class_id_fkey(name, year)
         `)
         .order('created_at', { ascending: false });
 

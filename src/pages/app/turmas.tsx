@@ -17,6 +17,7 @@ import type { Database } from '@/integrations/supabase/types';
 
 type ClassWithEnrollmentCount = Database['public']['Tables']['classes']['Row'] & {
   enrollments: { count: number }[];
+  series: { name: string } | null;
 };
 
 export default function Turmas() {
@@ -44,7 +45,8 @@ export default function Turmas() {
         .from('classes')
         .select(`
           *,
-          enrollments(count)
+          enrollments(count),
+          series(name)
         `)
         .order('year', { ascending: false })
         .order('name');
@@ -192,7 +194,7 @@ export default function Turmas() {
                     <TableCell className="font-medium">{classItem.name}</TableCell>
                     <TableCell>{classItem.year}</TableCell>
                     <TableCell>{getShiftLabel(classItem.shift)}</TableCell>
-                    <TableCell>{classItem.grade || '-'}</TableCell>
+                    <TableCell>{classItem.series?.name || '-'}</TableCell>
                     <TableCell>
                       <div className="flex items-center">
                         <Users className="mr-1 h-4 w-4" />

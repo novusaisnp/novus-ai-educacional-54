@@ -86,7 +86,7 @@ export default function ChamadaRelatorio() {
       
       const { data, error } = await supabase
         .from('classes')
-        .select('id, name, grade, year')
+        .select('id, name, year, series:series_id(name)')
         .eq('organization_id', orgData.organization_id)
         .order('name');
         
@@ -286,7 +286,7 @@ export default function ChamadaRelatorio() {
                         <SelectContent>
                           {classes.map((cls) => (
                             <SelectItem key={cls.id} value={cls.id}>
-                              {cls.name} - {cls.grade} ({cls.year})
+                              {cls.name} - {cls.series?.name} ({cls.year})
                             </SelectItem>
                           ))}
                         </SelectContent>

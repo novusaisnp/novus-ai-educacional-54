@@ -13,18 +13,29 @@ export const useOrganization = () => {
       if (!user?.id) {
         throw new Error('Usuário não autenticado');
       }
-      
-      const { data, error } = await supabase
+
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('organization_id, organizations(*)')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        throw error;
+      if (profileData) {
+        return profileData;
       }
 
-      return data;
+      // Guardian do portal não tem linha em profiles (é staff-only) — cai pra guardians.
+      const { data: guardianData, error: guardianError } = await supabase
+        .from('guardians')
+        .select('organization_id, organizations(*)')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (guardianData) {
+        return guardianData;
+      }
+
+      throw profileError ?? guardianError ?? new Error('Organização não encontrada');
     },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutos

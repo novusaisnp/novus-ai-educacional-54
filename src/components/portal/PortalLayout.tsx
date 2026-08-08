@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { usePortalAuth } from "@/hooks/usePortalAuth";
 import { useOrganization } from "@/hooks/useOrganization";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  Home, 
-  CreditCard, 
-  FileText, 
-  MessageSquare, 
-  HelpCircle, 
+import {
+  Home,
+  GraduationCap,
+  CreditCard,
+  FileText,
+  MessageSquare,
+  HelpCircle,
   LogOut,
   Menu
 } from "lucide-react";
@@ -22,6 +23,7 @@ import { logAuditSafe } from "@/utils/auditSafe";
 
 const navigation = [
   { name: 'Dashboard', href: '/portal/dashboard', icon: Home },
+  { name: 'Notas e Frequência', href: '/portal/academico', icon: GraduationCap },
   { name: 'Financeiro', href: '/portal/financeiro', icon: CreditCard },
   { name: 'Documentos', href: '/portal/documentos', icon: FileText },
   { name: 'Interações', href: '/portal/interacoes', icon: MessageSquare },

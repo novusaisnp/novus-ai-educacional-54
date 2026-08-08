@@ -23,6 +23,7 @@ const PortalFinanceiro = lazy(() => import('@/pages/portal/financeiro'));
 const PortalDocumentos = lazy(() => import('@/pages/portal/documentos'));
 const PortalInteracoes = lazy(() => import('@/pages/portal/interacoes'));
 const PortalDemandas = lazy(() => import('@/pages/portal/demandas'));
+const PortalAcademico = lazy(() => import('@/pages/portal/academico'));
 
 import AlunosPage from '@/pages/app/alunos';
 import TurmasPage from '@/pages/app/turmas';
@@ -116,6 +117,7 @@ function App() {
               <Route element={<PortalLayout />}>
                 <Route path="/portal" element={<PortalDashboard />} />
                 <Route path="/portal/dashboard" element={<PortalDashboard />} />
+                <Route path="/portal/academico" element={<PortalAcademico />} />
                 <Route path="/portal/financeiro" element={<PortalFinanceiro />} />
                 <Route path="/portal/documentos" element={<PortalDocumentos />} />
                 <Route path="/portal/interacoes" element={<PortalInteracoes />} />

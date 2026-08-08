@@ -2,6 +2,22 @@
 
 **Última atualização: 2026-08-08.** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
 
+## 🔖 Checkpoint de sessão (2026-08-08 — Fase 3, lacunas da turma: grade horária)
+
+**Continuação de Fase 3** — última fatia — usuário escolheu grade horária. Completado: schema, UI em currículo, type safety.
+
+1. **Migration `20260808190000_class_timetable.sql`**: tabela `time_slots` (organization_id, day_of_week 0-6, start_time, end_time, UNIQUE(organization_id, day_of_week, start_time, end_time)). RLS: `select` aberto, `manage` pra qualquer usuário da organização. `class_subjects.time_slot_id` adicionada (UUID nullable, FK a time_slots.id, ON DELETE SET NULL). **Sem enforcement de conflito** — não impede professor/sala em 2 slots ao mesmo tempo (V2 feature).
+2. **UI**: `curriculo.tsx` ganhou coluna "Horário" na tabela de disciplinas + selector no dialog. Formatação legível: "Segunda 09:00-10:00" (DAY_NAMES traduzido, start/end sliced). Período e Horário independentes (não cascata, ambos opcionais).
+3. **Query**: `useTimeSlots()` novo em `useAppQueries.ts` (select id, day_of_week, start_time, end_time, ordered). `useClassSubjects` interface estendida: `time_slot_id + time_slots join`. `upsertClassSubject` recebe timeSlotId opcional.
+4. **Verification**: `typecheck`/`test` (47/47)/`build` limpos. time_slot criado, FK validado (tentativa com UUID inválido rejeitada). Dados de teste limpos.
+
+**Gaps conscientes**:
+- Sem UI pra criar/gerenciar time_slots (precisaria `secretaria/horários`). Criados só via SQL hoje.
+- Sem enforcement de conflito (horário×professor, horário×sala). Tabela apenas registra atribuição, não valida.
+- Recorrência é semanal simples (seg-dom, hora fixa) — não cobre períodos com grades diferentes.
+
+**Fase 3 COMPLETA**: 3 fatias entregues na mesma sessão (year→periods, classrooms, timetable). Ainda pendente no roadmap: Fase 4+ (salas com horário real, conflito detection, rematrícula automática, etc.).
+
 ## 🔖 Checkpoint de sessão (2026-08-08 — Fase 3, lacunas da turma: classrooms)
 
 **Continuação de Fase 3** — usuário escolheu sala/ambiente físico entre as 2 fatias restantes (sala física, grade horária). Completado: schema, FK, UI.

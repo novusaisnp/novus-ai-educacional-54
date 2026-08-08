@@ -135,3 +135,24 @@ export const useAcademicTerms = (periodId?: string) => {
     enabled: !!orgData?.organization_id,
   });
 };
+
+export const useTimeSlots = () => {
+  const { data: orgData } = useOrganization();
+
+  return useQuery({
+    queryKey: ['time_slots', orgData?.organization_id],
+    queryFn: async () => {
+      if (!orgData?.organization_id) return [];
+
+      const { data, error } = await supabase
+        .from('time_slots')
+        .select('id, day_of_week, start_time, end_time')
+        .eq('organization_id', orgData.organization_id)
+        .order('day_of_week, start_time');
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!orgData?.organization_id,
+  });
+};

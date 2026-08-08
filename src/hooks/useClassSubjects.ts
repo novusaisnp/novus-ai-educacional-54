@@ -8,8 +8,10 @@ export interface ClassSubjectAssignment {
   class_id: string;
   subject_id: string;
   teacher_id: string | null;
+  time_slot_id: string | null;
   subjects: { id: string; name: string; code: string | null } | null;
   profiles: { id: string; full_name: string } | null;
+  time_slots: { id: string; day_of_week: number; start_time: string; end_time: string } | null;
 }
 
 // Grade curricular de uma turma: uma linha por disciplina atribuída, com o professor
@@ -25,7 +27,7 @@ export const useClassSubjects = (classId?: string) => {
 
       const { data, error } = await supabase
         .from('class_subjects')
-        .select('id, class_id, subject_id, teacher_id, subjects(id, name, code), profiles(id, full_name)')
+        .select('id, class_id, subject_id, teacher_id, time_slot_id, subjects(id, name, code), profiles(id, full_name), time_slots(id, day_of_week, start_time, end_time)')
         .eq('organization_id', orgData.organization_id)
         .eq('class_id', classId);
 
@@ -48,10 +50,12 @@ export const useUpsertClassSubject = () => {
       classId,
       subjectId,
       teacherId,
+      timeSlotId,
     }: {
       classId: string;
       subjectId: string;
       teacherId: string | null;
+      timeSlotId?: string | null;
     }) => {
       if (!orgData?.organization_id) {
         throw new Error('Organização não encontrada');
@@ -65,6 +69,7 @@ export const useUpsertClassSubject = () => {
           class_id: classId,
           subject_id: subjectId,
           teacher_id: teacherId,
+          time_slot_id: timeSlotId || null,
         },
         { onConflict: 'class_id,subject_id' }
       );

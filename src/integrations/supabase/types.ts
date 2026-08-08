@@ -605,6 +605,7 @@ export type Database = {
           organization_id: string
           subject_id: string
           teacher_id: string | null
+          time_slot_id: string | null
           updated_at: string
         }
         Insert: {
@@ -614,6 +615,7 @@ export type Database = {
           organization_id: string
           subject_id: string
           teacher_id?: string | null
+          time_slot_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -623,6 +625,7 @@ export type Database = {
           organization_id?: string
           subject_id?: string
           teacher_id?: string | null
+          time_slot_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -659,6 +662,13 @@ export type Database = {
             columns: ["teacher_id"]
             isOneToOne: false
             referencedRelation: "v_profiles_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_subjects_time_slot_id_fkey"
+            columns: ["time_slot_id"]
+            isOneToOne: false
+            referencedRelation: "time_slots"
             referencedColumns: ["id"]
           },
         ]
@@ -2356,6 +2366,44 @@ export type Database = {
             columns: ["term_id"]
             isOneToOne: false
             referencedRelation: "academic_terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      time_slots: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          organization_id: string
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          id?: string
+          organization_id: string
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          organization_id?: string
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_slots_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]

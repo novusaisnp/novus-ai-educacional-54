@@ -8,13 +8,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { useClasses, useSubjects, useTeachers } from '@/hooks/useAppQueries';
+import { useClasses, useSubjects, useTeachers, useTimeSlots } from '@/hooks/useAppQueries';
 import { useClassSubjects, useUpsertClassSubject, useDeleteClassSubject } from '@/hooks/useClassSubjects';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useOrganization } from '@/hooks/useOrganization';
 import EmptyState from '@/components/EmptyState';
 
 const NO_TEACHER = '__none__';
+const NO_TIME_SLOT = '__none__';
+
+const DAY_NAMES = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+
+const formatTimeSlot = (slot: { day_of_week: number; start_time: string; end_time: string } | null) => {
+  if (!slot) return '';
+  return `${DAY_NAMES[slot.day_of_week]} ${slot.start_time.slice(0, 5)}-${slot.end_time.slice(0, 5)}`;
+};
 
 export default function CurriculoPage() {
   const { data: orgData } = useOrganization();
@@ -25,10 +33,12 @@ export default function CurriculoPage() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [newSubjectId, setNewSubjectId] = useState('');
   const [newTeacherId, setNewTeacherId] = useState('');
+  const [newTimeSlotId, setNewTimeSlotId] = useState('');
 
   const { data: classes = [] } = useClasses();
   const { data: subjects = [] } = useSubjects();
   const { data: teachers = [] } = useTeachers();
+  const { data: timeSlots = [] } = useTimeSlots();
   const { data: assignments = [], isLoading } = useClassSubjects(classId || undefined);
 
   const upsertAssignment = useUpsertClassSubject();
@@ -44,12 +54,14 @@ export default function CurriculoPage() {
         classId,
         subjectId: newSubjectId,
         teacherId: newTeacherId && newTeacherId !== NO_TEACHER ? newTeacherId : null,
+        timeSlotId: newTimeSlotId && newTimeSlotId !== NO_TIME_SLOT ? newTimeSlotId : null,
       },
       {
         onSuccess: () => {
           setAddDialogOpen(false);
           setNewSubjectId('');
           setNewTeacherId('');
+          setNewTimeSlotId('');
         },
       }
     );
@@ -61,6 +73,17 @@ export default function CurriculoPage() {
       classId,
       subjectId,
       teacherId: teacherId && teacherId !== NO_TEACHER ? teacherId : null,
+    });
+  };
+
+  const handleChangeTimeSlot = (subjectId: string, timeSlotId: string) => {
+    if (!classId) return;
+    const assignment = assignments.find((a) => a.subject_id === subjectId);
+    upsertAssignment.mutate({
+      classId,
+      subjectId,
+      teacherId: assignment?.teacher_id ?? null,
+      timeSlotId: timeSlotId && timeSlotId !== NO_TIME_SLOT ? timeSlotId : null,
     });
   };
 
@@ -143,6 +166,7 @@ export default function CurriculoPage() {
                     <TableRow>
                       <TableHead>Disciplina</TableHead>
                       <TableHead className="w-[280px]">Professor responsável</TableHead>
+                      <TableHead className="w-[200px]">Horário</TableHead>
                       {canManage && <TableHead className="w-[60px]" />}
                     </TableRow>
                   </TableHeader>
@@ -164,6 +188,25 @@ export default function CurriculoPage() {
                               {teachers.map((teacher) => (
                                 <SelectItem key={teacher.id} value={teacher.id}>
                                   {teacher.full_name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Select
+                            value={assignment.time_slot_id ?? NO_TIME_SLOT}
+                            onValueChange={(value) => handleChangeTimeSlot(assignment.subject_id, value)}
+                            disabled={!canManage}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Sem horário" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value={NO_TIME_SLOT}>Sem horário</SelectItem>
+                              {timeSlots.map((slot) => (
+                                <SelectItem key={slot.id} value={slot.id}>
+                                  {formatTimeSlot(slot)}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -223,6 +266,22 @@ export default function CurriculoPage() {
                   {teachers.map((teacher) => (
                     <SelectItem key={teacher.id} value={teacher.id}>
                       {teacher.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Horário (opcional)</label>
+              <Select value={newTimeSlotId} onValueChange={setNewTimeSlotId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Definir depois" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_TIME_SLOT}>Definir depois</SelectItem>
+                  {timeSlots.map((slot) => (
+                    <SelectItem key={slot.id} value={slot.id}>
+                      {formatTimeSlot(slot)}
                     </SelectItem>
                   ))}
                 </SelectContent>

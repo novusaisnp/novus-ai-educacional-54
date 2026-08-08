@@ -670,6 +670,7 @@ export type Database = {
           id: string
           name: string
           organization_id: string
+          period_id: string | null
           series_id: string | null
           shift: string | null
           updated_at: string
@@ -681,6 +682,7 @@ export type Database = {
           id?: string
           name: string
           organization_id: string
+          period_id?: string | null
           series_id?: string | null
           shift?: string | null
           updated_at?: string
@@ -692,6 +694,7 @@ export type Database = {
           id?: string
           name?: string
           organization_id?: string
+          period_id?: string | null
           series_id?: string | null
           shift?: string | null
           updated_at?: string
@@ -703,6 +706,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classes_period_id_fkey"
+            columns: ["period_id"]
+            isOneToOne: false
+            referencedRelation: "periods"
             referencedColumns: ["id"]
           },
           {

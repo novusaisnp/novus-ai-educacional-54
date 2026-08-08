@@ -2,6 +2,22 @@
 
 **Última atualização: 2026-08-08.** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
 
+## 🔖 Checkpoint de sessão (2026-08-08 — Fase 3, lacunas da turma: year→periods)
+
+**Continuação de Fase 3** — usuário escolheu `classes.year` normalization (baixo risco) entre as 3 fatias restantes (year, sala física, grade horária). Completado: FK constraint, UI, type safety.
+
+1. **Migration `20260808170000_class_year_normalization.sql`**: `period_id UUID NULLABLE REFERENCES periods(id) ON DELETE RESTRICT` + index. `classes.year` fica `NOT NULL` (não dropa, coexistência limpa); client migra gradualmente pra `period_id` ao lado do `year` legado.
+2. **UI**: `SubmodalTurmas.tsx` ganhou selector "Período Letivo (opcional)", com carregamento de periods por organização e preenchimento automático ao editar (derivando `period_id` da turma já vinculada quando existe). Período opcional — turmas sem período definido funcionam normalmente.
+3. **Query**: `useAppQueries.ts` (`useClasses`) agora seleciona `period_id + join period:period_id(name)` — mesmo padrão já usado com `series`. Permite que telas que exibem turmas possam mostrar o período associado sem query extra.
+4. **Verification**: `typecheck`/`test` (47/47)/`build` limpos. **FK validado no banco real**: (a) UPDATE com `period_id` válido funcionou, (b) UPDATE com UUID inválido rejeitado com erro exato "violates foreign key constraint classes_period_id_fkey". Dados de teste (período + turma vinculada) criados, ligados, revertidos ao final.
+
+**Gaps conscientes**:
+- `classes.year` continua INTEGER (não dropa) — confuso de propósito, evita quebrar queries antigas no client enquanto transição pra `period_id` acontece.
+- Sem verificação visual ao vivo em navegador (tooling gap). Selector renderizado, Zod schema válido, type-safety fechado.
+- `periods` vazio no banco (zero período criado hoje) — turmas sem período vinculado funcionam, exibindo "Nenhum período vinculado" na UI.
+
+**Próxima fatia Fase 3**: sala/ambiente físico ou grade horária. Usuário escolhe.
+
 ## 🔖 Checkpoint de sessão (2026-08-08 — Fase 3, lacunas da turma: grade→series)
 
 **Continuação da mesma sessão** (após shift + capacidade) — usuário escolheu **Grade normalization** como próxima fatia (a mais arriscada das 3 pendentes, já sinalizada como tal no checkpoint anterior). Confirmado antes de mexer que `classes.grade` (TEXT solto) estava desconectado da tabela normalizada `series` (que já existe, usada por `waitlist_applications`).

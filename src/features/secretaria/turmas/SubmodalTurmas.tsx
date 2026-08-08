@@ -15,6 +15,7 @@ import { SecretariaModalContext } from '../types';
 const classSchema = z.object({
   name: z.string().min(1, 'Nome obrigatório'),
   year: z.coerce.number().int().min(2000).max(2100),
+  period_id: z.string().optional(),
   segment_id: z.string().optional(),
   series_id: z.string().optional(),
   shift: z.enum(['manha', 'tarde', 'noite', 'integral']).optional(),
@@ -41,6 +42,7 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
     defaultValues: {
       name: '',
       year: new Date().getFullYear(),
+      period_id: '',
       segment_id: '',
       series_id: '',
       shift: 'manha',
@@ -81,6 +83,22 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
     enabled: !!context.orgId,
   });
 
+  const { data: periods = [] } = useQuery({
+    queryKey: ['periods', context.orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('periods')
+        .select('id, name, year')
+        .eq('organization_id', context.orgId)
+        .eq('active', true)
+        .order('year', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!context.orgId,
+  });
+
   const watchedSegment = form.watch('segment_id');
   const availableSeries = allSeries.filter((s) => s.segment_id === watchedSegment);
 
@@ -91,6 +109,7 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
         const payload: ClassUpdate = {
           name: data.name,
           year: Number(data.year),
+          period_id: data.period_id || null,
           series_id: data.series_id || null,
           shift: data.shift || undefined,
           capacity_limit: data.capacity_limit ?? null,
@@ -110,6 +129,7 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
           organization_id: context.orgId,
           name: data.name,
           year: Number(data.year),
+          period_id: data.period_id || null,
           series_id: data.series_id || null,
           shift: data.shift || undefined,
           capacity_limit: data.capacity_limit ?? null,
@@ -157,6 +177,7 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
       form.reset({
         name: editingClass.name,
         year: editingClass.year,
+        period_id: (editingClass as ClassRow & { period_id?: string | null }).period_id || '',
         segment_id: currentSeries?.segment_id || '',
         series_id: editingClass.series_id || '',
         shift: editingClass.shift as ClassFormData['shift'],
@@ -166,6 +187,7 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
       form.reset({
         name: '',
         year: new Date().getFullYear(),
+        period_id: '',
         segment_id: '',
         series_id: '',
         shift: 'manha',
@@ -186,6 +208,32 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
               <FormControl>
                 <Input {...field} placeholder="Ex: 1º Ano A" />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="period_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Período Letivo (opcional)</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Nenhum período vinculado" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="">Nenhum período</SelectItem>
+                  {periods.map((period) => (
+                    <SelectItem key={period.id} value={period.id}>
+                      {period.name} ({period.year})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

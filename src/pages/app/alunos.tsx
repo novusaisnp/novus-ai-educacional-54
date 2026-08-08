@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { StudentAvatar } from '@/components/StudentAvatar';
 import { StudentAttachments } from '@/components/StudentAttachments';
+import { StudentPeiSection } from '@/components/StudentPeiSection';
 import { useDocuments, useStudentAvatars } from '@/hooks/useDocuments';
 import { useOrganization } from '@/hooks/useOrganization';
 import { SubmodalAlunos, LinkedGuardian } from '@/features/secretaria/alunos/SubmodalAlunos';
@@ -491,13 +492,17 @@ export default function Alunos() {
               
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Documentos</h3>
-                <StudentAttachments 
-                  attachments={[]} 
-                  onUpload={() => {}} 
+                <StudentAttachments
+                  attachments={[]}
+                  onUpload={() => {}}
                   onDelete={() => {}}
                   isUploading={false}
                 />
               </div>
+            </div>
+
+            <div className="pt-4 border-t">
+              <StudentPeiSection studentId={selectedStudent.id} />
             </div>
           </DialogContent>
         </Dialog>

@@ -2090,6 +2090,96 @@ export type Database = {
           },
         ]
       }
+      student_pei: {
+        Row: {
+          accommodations: string[]
+          created_at: string
+          created_by: string | null
+          diagnosis: string | null
+          goals: string | null
+          id: string
+          laudo_document_id: string | null
+          needs: string | null
+          organization_id: string
+          responsible_professional: string | null
+          review_date: string | null
+          start_date: string
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          accommodations?: string[]
+          created_at?: string
+          created_by?: string | null
+          diagnosis?: string | null
+          goals?: string | null
+          id?: string
+          laudo_document_id?: string | null
+          needs?: string | null
+          organization_id: string
+          responsible_professional?: string | null
+          review_date?: string | null
+          start_date?: string
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          accommodations?: string[]
+          created_at?: string
+          created_by?: string | null
+          diagnosis?: string | null
+          goals?: string | null
+          id?: string
+          laudo_document_id?: string | null
+          needs?: string | null
+          organization_id?: string
+          responsible_professional?: string | null
+          review_date?: string | null
+          start_date?: string
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_pei_laudo_document_id_fkey"
+            columns: ["laudo_document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_pei_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_pei_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_pei_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_risco_evasao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_pei_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_transfers: {
         Row: {
           created_at: string

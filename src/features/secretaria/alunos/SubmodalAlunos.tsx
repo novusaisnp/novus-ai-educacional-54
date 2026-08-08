@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,13 +24,18 @@ const studentSchema = z.object({
   status: z.enum(['ativo', 'inativo', 'transferido']).default('ativo'),
   document_id: z.string().optional(),
   person_id: z.string().optional(),
-  // Campos do responsável legal
+  // Campo de controle client-side (nunca enviado ao Supabase): em modo edição o
+  // responsável é gerenciado pela tela de Responsáveis, não por este form.
+  _mode: z.enum(['create', 'edit']).default('create'),
+  // Campos do responsável legal (só usados em modo criação)
   responsible_full_name: z.string().optional(),
   responsible_relationship: z.string().optional(),
   responsible_document_id: z.string().optional(),
   responsible_email: z.string().email('E-mail inválido').optional().or(z.literal('')),
   responsible_phone: z.string().optional(),
 }).refine((data) => {
+  // Em edição, o responsável não é preenchido por este form — não validar aqui.
+  if (data._mode === 'edit') return true;
   // Se tem data de nascimento e é menor de 18 anos, responsável é obrigatório
   if (data.birth_date) {
     const birthDate = new Date(data.birth_date);
@@ -81,9 +86,10 @@ interface SubmodalAlunosProps {
   context: SecretariaModalContext;
   editingStudent?: any;
   onEditingChange?: (student: any) => void;
+  onEditGuardian?: (guardian: any) => void;
 }
 
-export function SubmodalAlunos({ context, editingStudent, onEditingChange }: SubmodalAlunosProps) {
+export function SubmodalAlunos({ context, editingStudent, onEditingChange, onEditGuardian }: SubmodalAlunosProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -97,6 +103,24 @@ export function SubmodalAlunos({ context, editingStudent, onEditingChange }: Sub
     validateDocMutation,
   } = useDocuments(editingStudent?.id);
 
+  // Responsável(is) vinculados ao aluno (só relevante em modo edição — a criação
+  // usa o form manual abaixo, que ainda não tem vínculo pra buscar).
+  const { data: linkedGuardians = [], isLoading: isLoadingGuardians } = useQuery({
+    queryKey: ['student-guardians', editingStudent?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('student_guardians')
+        .select('is_primary, guardians(id, name, cpf, relationship, email, phone)')
+        .eq('student_id', editingStudent.id)
+        .eq('organization_id', context.orgId);
+      if (error) throw error;
+      return (data || [])
+        .map((link: any) => link.guardians && { ...link.guardians, is_primary: link.is_primary })
+        .filter(Boolean);
+    },
+    enabled: !!editingStudent?.id && !!context.orgId,
+  });
+
   const form = useForm<StudentFormData>({
     resolver: zodResolver(studentSchema),
     defaultValues: {
@@ -107,6 +131,7 @@ export function SubmodalAlunos({ context, editingStudent, onEditingChange }: Sub
       document_id: '',
       status: 'ativo',
       person_id: '',
+      _mode: 'create',
       responsible_full_name: '',
       responsible_relationship: '',
       responsible_document_id: '',
@@ -234,8 +259,10 @@ export function SubmodalAlunos({ context, editingStudent, onEditingChange }: Sub
         gender: editingStudent.gender,
         document_id: editingStudent.document_id || '',
         status: editingStudent.status,
-        // Por enquanto, campos do responsável ficarão vazios na edição
-        // até implementarmos a tabela de responsáveis
+        _mode: 'edit',
+        // Em edição o responsável não é gerenciado por este form — é exibido em
+        // modo leitura (ver linkedGuardians) e editado via SubmodalResponsaveis,
+        // reaproveitando aquele CRUD (já faz update real + resync com o ERP).
         responsible_full_name: '',
         responsible_relationship: '',
         responsible_document_id: '',
@@ -251,6 +278,7 @@ export function SubmodalAlunos({ context, editingStudent, onEditingChange }: Sub
         document_id: '',
         status: 'ativo',
         person_id: '',
+        _mode: 'create',
         responsible_full_name: '',
         responsible_relationship: '',
         responsible_document_id: '',
@@ -413,90 +441,118 @@ export function SubmodalAlunos({ context, editingStudent, onEditingChange }: Sub
           {showResponsibleSection && (
             <fieldset className="border border-border rounded-lg p-4 space-y-4">
               <legend className="text-lg font-semibold px-2">Responsável Legal</legend>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="responsible_full_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome Completo *</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="responsible_relationship"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Parentesco *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+
+              {editingStudent ? (
+                isLoadingGuardians ? (
+                  <p className="text-sm text-muted-foreground">Carregando responsável...</p>
+                ) : linkedGuardians.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Nenhum responsável vinculado a este aluno. Cadastre um na tela de Responsáveis.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {linkedGuardians.map((g: any) => (
+                      <div key={g.id} className="flex items-center justify-between gap-4 rounded-md border p-3">
+                        <div className="text-sm space-y-0.5">
+                          <p className="font-medium">{g.name}{g.is_primary ? ' (principal)' : ''}</p>
+                          <p className="text-muted-foreground">{g.relationship || 'Parentesco não informado'}</p>
+                          <p className="text-muted-foreground">CPF: {g.cpf || 'não informado'}</p>
+                          <p className="text-muted-foreground">{g.email || 'sem e-mail'} · {g.phone || 'sem telefone'}</p>
+                        </div>
+                        <Button type="button" variant="outline" size="sm" onClick={() => onEditGuardian?.(g)}>
+                          Editar responsável
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="responsible_full_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nome Completo *</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="responsible_relationship"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Parentesco *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o parentesco" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="mae">Mãe</SelectItem>
+                              <SelectItem value="pai">Pai</SelectItem>
+                              <SelectItem value="avo">Avô/Avó</SelectItem>
+                              <SelectItem value="tio">Tio/Tia</SelectItem>
+                              <SelectItem value="tutor">Tutor Legal</SelectItem>
+                              <SelectItem value="outro">Outro</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="responsible_document_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>CPF *</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="000.000.000-00" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="responsible_email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>E-mail</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="email" placeholder="email@exemplo.com" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="responsible_phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Telefone</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o parentesco" />
-                          </SelectTrigger>
+                          <Input {...field} placeholder="(11) 99999-9999" />
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value="mae">Mãe</SelectItem>
-                          <SelectItem value="pai">Pai</SelectItem>
-                          <SelectItem value="avo">Avô/Avó</SelectItem>
-                          <SelectItem value="tio">Tio/Tia</SelectItem>
-                          <SelectItem value="tutor">Tutor Legal</SelectItem>
-                          <SelectItem value="outro">Outro</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="responsible_document_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CPF *</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="000.000.000-00" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="responsible_email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>E-mail</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="email" placeholder="email@exemplo.com" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="responsible_phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Telefone</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="(11) 99999-9999" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
             </fieldset>
           )}
 

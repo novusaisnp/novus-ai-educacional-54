@@ -217,6 +217,17 @@ export function SubmodalResponsaveis({
 
       if (error) throw error;
 
+      // Capturar quais vínculos eram principais antes de recriar (o delete+insert
+      // abaixo não pode rebaixar silenciosamente um vínculo já marcado como principal)
+      const { data: existingLinks } = await supabase
+        .from('student_guardians')
+        .select('student_id, is_primary')
+        .eq('guardian_id', editingGuardian.id)
+        .eq('organization_id', context.orgId);
+      const primaryStudentIds = new Set(
+        (existingLinks || []).filter((l) => l.is_primary).map((l) => l.student_id)
+      );
+
       // Remover vínculos existentes
       await supabase
         .from('student_guardians')
@@ -230,7 +241,7 @@ export function SubmodalResponsaveis({
           guardian_id: editingGuardian.id,
           student_id: studentId,
           organization_id: context.orgId,
-          is_primary: false,
+          is_primary: primaryStudentIds.has(studentId),
           legal_consent: false,
         }));
 

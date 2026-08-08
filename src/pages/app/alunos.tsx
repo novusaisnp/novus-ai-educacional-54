@@ -34,6 +34,8 @@ export default function Alunos() {
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(searchParams.get('modal') === 'alunos');
   const [showRiskOnly, setShowRiskOnly] = useState(false);
+  const [editingGuardianFromStudent, setEditingGuardianFromStudent] = useState<any>(null);
+  const [isGuardianModalOpen, setIsGuardianModalOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -281,7 +283,7 @@ export default function Alunos() {
               Novo Aluno
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingStudent ? 'Editar Aluno' : 'Novo Aluno'}
@@ -291,6 +293,11 @@ export default function Alunos() {
               context={modalContext}
               editingStudent={editingStudent}
               onEditingChange={setEditingStudent}
+              onEditGuardian={(guardian) => {
+                setIsCreateOpen(false);
+                setEditingGuardianFromStudent(guardian);
+                setIsGuardianModalOpen(true);
+              }}
             />
           </DialogContent>
         </Dialog>
@@ -495,6 +502,18 @@ export default function Alunos() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         defaultTab="alunos"
+      />
+
+      <ModalMestre
+        isOpen={isGuardianModalOpen}
+        onClose={() => {
+          setIsGuardianModalOpen(false);
+          setEditingGuardianFromStudent(null);
+          queryClient.invalidateQueries({ queryKey: ['students.list'] });
+          queryClient.invalidateQueries({ queryKey: ['student-guardians'] });
+        }}
+        defaultTab="responsaveis"
+        editingItem={editingGuardianFromStudent}
       />
     </div>
   );

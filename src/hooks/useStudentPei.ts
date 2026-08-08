@@ -57,6 +57,37 @@ export const useStudentPei = (studentId?: string) => {
   });
 };
 
+export interface ActiveStudentPei extends StudentPei {
+  student: { first_name: string; last_name: string } | null;
+}
+
+// Painel de coordenação: todos os PEIs ativos da organização, aluno mais próximo
+// de revisão primeiro (review_date null vai por último — sem data definida não é
+// "urgente"). Não filtra por studentId, diferente de useStudentPei.
+export const useActiveStudentPeiList = () => {
+  const { data: orgData } = useOrganization();
+
+  return useQuery({
+    queryKey: ['student_pei.active_list', orgData?.organization_id],
+    queryFn: async (): Promise<ActiveStudentPei[]> => {
+      if (!orgData?.organization_id) return [];
+
+      const { data, error } = await supabase
+        .from('student_pei')
+        .select(
+          'id, student_id, diagnosis, needs, goals, accommodations, responsible_professional, status, start_date, review_date, laudo_document_id, student:student_id(first_name, last_name)'
+        )
+        .eq('organization_id', orgData.organization_id)
+        .eq('status', 'ativo')
+        .order('review_date', { ascending: true, nullsFirst: false });
+
+      if (error) throw error;
+      return (data || []) as unknown as ActiveStudentPei[];
+    },
+    enabled: !!orgData?.organization_id,
+  });
+};
+
 export const useUpsertStudentPei = () => {
   const { data: orgData } = useOrganization();
   const queryClient = useQueryClient();

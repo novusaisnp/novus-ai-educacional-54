@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { IconBadge } from '@/components/IconBadge';
-import { BarChart3, BookOpen, Trophy, TrendingUp, UserCheck, Gavel } from 'lucide-react';
+import { BarChart3, BookOpen, Trophy, TrendingUp, UserCheck, Gavel, HeartHandshake } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Academico() {
@@ -96,6 +96,24 @@ export default function Academico() {
             <p className="text-sm text-muted-foreground">Defina quais disciplinas cada turma tem e quem leciona cada uma</p>
             <Button asChild>
               <Link to="/app/academico/curriculo">Abrir Currículo</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center space-x-3">
+              <IconBadge icon={HeartHandshake} tone="warm" />
+              <div>
+                <CardTitle className="text-xl">Coordenação Inclusiva</CardTitle>
+                <CardDescription>PEIs ativos e revisões pendentes</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">Acompanhe todos os Planos Educacionais Individualizados da instituição em um só lugar</p>
+            <Button asChild>
+              <Link to="/app/academico/pei-coordenacao">Abrir Painel</Link>
             </Button>
           </CardContent>
         </Card>

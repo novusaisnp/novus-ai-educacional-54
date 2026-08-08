@@ -27,12 +27,15 @@ export default function Academico() {
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm text-muted-foreground">Registre a presença dos alunos por turma e disciplina</p>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button asChild>
                 <Link to="/app/academico/chamada">Abrir Lista</Link>
               </Button>
               <Button variant="outline" asChild>
                 <Link to="/app/academico/chamada?date=today">Hoje</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to="/app/academico/justificativas-falta">Justificativas de Falta</Link>
               </Button>
             </div>
           </CardContent>

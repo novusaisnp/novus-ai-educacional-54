@@ -1,11 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import PortalPageHeader from '@/components/portal/PortalPageHeader';
-import { GraduationCap } from 'lucide-react';
-import { useLinkedStudents, useStudentGrades, useStudentAttendance, StudentAttendanceRow } from '@/hooks/usePortalAcademic';
+import { GraduationCap, Paperclip } from 'lucide-react';
+import {
+  useLinkedStudents,
+  useStudentGrades,
+  useStudentAttendance,
+  useAttendanceJustifications,
+  useCreateAttendanceJustification,
+  StudentAttendanceRow,
+  AttendanceJustification,
+} from '@/hooks/usePortalAcademic';
 
 function getStatusLabel(status: StudentAttendanceRow['status']) {
   switch (status) {
@@ -25,9 +37,90 @@ function getStatusColor(status: StudentAttendanceRow['status']) {
   }
 }
 
+// Última justificativa por attendance_id (mais recente primeiro) — se a mais
+// recente foi recusada, o responsável pode enviar outra pro mesmo dia.
+function latestJustificationByAttendance(justifications: AttendanceJustification[]) {
+  const map = new Map<string, AttendanceJustification>();
+  for (const j of [...justifications].sort((a, b) => b.created_at.localeCompare(a.created_at))) {
+    if (!map.has(j.attendance_id)) map.set(j.attendance_id, j);
+  }
+  return map;
+}
+
+function JustifyAbsenceDialog({
+  attendanceId,
+  studentId,
+  open,
+  onOpenChange,
+}: {
+  attendanceId: string;
+  studentId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [reason, setReason] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const createJustification = useCreateAttendanceJustification();
+
+  const handleSubmit = async () => {
+    if (!reason.trim()) return;
+    await createJustification.mutateAsync({ attendanceId, studentId, reason: reason.trim(), file });
+    setReason('');
+    setFile(null);
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Justificar falta</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="justify-reason">Motivo</Label>
+            <Textarea
+              id="justify-reason"
+              placeholder="Descreva o motivo da falta/atraso..."
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows={4}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Atestado ou comprovante (opcional)</Label>
+            <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+              <Paperclip className="h-4 w-4 mr-2" />
+              {file ? file.name : 'Anexar arquivo'}
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,image/*"
+              className="hidden"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <Button type="button" onClick={handleSubmit} disabled={!reason.trim() || createJustification.isPending}>
+            {createJustification.isPending ? 'Enviando...' : 'Enviar justificativa'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function PortalAcademico() {
   const { data: students, isLoading: loadingStudents } = useLinkedStudents();
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
+  const [justifyingAttendanceId, setJustifyingAttendanceId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!selectedStudentId && students && students.length > 0) {
@@ -37,6 +130,8 @@ export default function PortalAcademico() {
 
   const { data: grades, isLoading: loadingGrades } = useStudentGrades(selectedStudentId || undefined);
   const { data: attendance, isLoading: loadingAttendance } = useStudentAttendance(selectedStudentId || undefined);
+  const { data: justifications } = useAttendanceJustifications(selectedStudentId || undefined);
+  const latestJustification = latestJustificationByAttendance(justifications || []);
 
   const attendanceCounts = (attendance || []).reduce(
     (acc, row) => {
@@ -175,20 +270,54 @@ export default function PortalAcademico() {
           ) : !attendance || attendance.length === 0 ? (
             <p className="text-muted-foreground text-sm">Nenhum registro de frequência ainda.</p>
           ) : (
+            <>
             <div className="space-y-2">
-              {attendance.slice(0, 20).map((row) => (
-                <div key={row.id} className="flex items-center justify-between border-b pb-2 last:border-b-0">
-                  <div>
-                    <p className="font-medium">{row.subject?.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(row.date).toLocaleDateString('pt-BR')}
-                      {row.note ? ` · ${row.note}` : ''}
-                    </p>
+              {attendance.slice(0, 20).map((row) => {
+                const justification = latestJustification.get(row.id);
+                const canJustify = (row.status === 'falta' || row.status === 'atraso') &&
+                  (!justification || justification.status === 'recusada');
+
+                return (
+                  <div key={row.id} className="flex items-center justify-between border-b pb-2 last:border-b-0 gap-2">
+                    <div>
+                      <p className="font-medium">{row.subject?.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(row.date).toLocaleDateString('pt-BR')}
+                        {row.note ? ` · ${row.note}` : ''}
+                      </p>
+                      {justification?.status === 'pendente' && (
+                        <p className="text-xs text-amber-600 mt-1">Justificativa enviada — aguardando revisão da escola</p>
+                      )}
+                      {justification?.status === 'recusada' && (
+                        <p className="text-xs text-red-600 mt-1">
+                          Justificativa recusada{justification.review_note ? `: ${justification.review_note}` : ''}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge className={getStatusColor(row.status)}>{getStatusLabel(row.status)}</Badge>
+                      {canJustify && (
+                        <Button size="sm" variant="outline" onClick={() => setJustifyingAttendanceId(row.id)}>
+                          {justification?.status === 'recusada' ? 'Reenviar' : 'Justificar'}
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  <Badge className={getStatusColor(row.status)}>{getStatusLabel(row.status)}</Badge>
-                </div>
-              ))}
+                );
+              })}
             </div>
+
+            {justifyingAttendanceId && selectedStudentId && (
+              <JustifyAbsenceDialog
+                attendanceId={justifyingAttendanceId}
+                studentId={selectedStudentId}
+                open={!!justifyingAttendanceId}
+                onOpenChange={(open) => {
+                  if (!open) setJustifyingAttendanceId(null);
+                }}
+              />
+            )}
+            </>
           )}
         </CardContent>
       </Card>

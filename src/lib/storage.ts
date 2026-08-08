@@ -112,6 +112,44 @@ export const uploadDoc = async (file: File, orgId: string, studentId: string) =>
   return { data, docData };
 };
 
+export const guardianDocPath = (orgId: string, guardianId: string, file: File): string => {
+  const ext = file.name.split('.').pop();
+  const uuid = uuidv4();
+  const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+  return `${orgId}/guardians/${guardianId}/doc-${uuid}-${safeName}`;
+};
+
+// Upload feito pelo próprio responsável (portal) — owner_type='guardian', path
+// separado de uploadDoc (que é owner_type='student', usado pelo staff) porque as
+// policies de RLS (tabela documents e storage.objects do bucket docs) distinguem
+// os dois casos via current_org_id() (staff) vs current_guardian_org_id() (guardian).
+export const uploadGuardianDoc = async (file: File, orgId: string, guardianId: string, tags: string[] = []) => {
+  const path = guardianDocPath(orgId, guardianId, file);
+
+  const { data, error } = await supabase.storage
+    .from('docs')
+    .upload(path, file);
+
+  if (error) throw error;
+
+  const { data: docData, error: docError } = await supabase
+    .from('documents')
+    .insert({
+      organization_id: orgId,
+      owner_type: 'guardian',
+      owner_id: guardianId,
+      title: file.name,
+      file_path: `docs/${path}`,
+      tags,
+    })
+    .select()
+    .single();
+
+  if (docError) throw docError;
+
+  return { data, docData };
+};
+
 export const getSignedUrl = async (bucket: string, path: string, expiresInSec: number = 3600) => {
   const { data, error } = await supabase.storage
     .from(bucket)

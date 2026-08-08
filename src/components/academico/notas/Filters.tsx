@@ -12,8 +12,8 @@ interface FiltersProps {
     dateEnd: string;
   };
   onFiltersChange: (filters: Partial<FiltersProps['filters']>) => void;
-  classes: any[];
-  subjects: any[];
+  classes: Array<{ id: string; name: string; grade: string }>;
+  subjects: Array<{ id: string; name: string }>;
 }
 
 export const Filters = memo(({ filters, onFiltersChange, classes, subjects }: FiltersProps) => {

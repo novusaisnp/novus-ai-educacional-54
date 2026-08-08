@@ -8,15 +8,16 @@ import { useOrganization } from '@/hooks/useOrganization';
 import { safeToast } from '@/lib/safeToast';
 import { supabase } from '@/integrations/supabase/client';
 import { toCsv, downloadCsv } from '@/lib/csv';
+import type { Json } from '@/integrations/supabase/types';
 
 interface ExportToolbarProps {
   reportType: 'academico' | 'financeiro' | 'crm';
-  data: any[];
-  filters?: Record<string, any>;
+  data: Record<string, unknown>[];
+  filters?: Record<string, unknown>;
   csvColumns?: Array<{
     key: string;
     label: string;
-    format?: (value: any) => string;
+    format?: (value: unknown) => string;
   }>;
 }
 
@@ -63,7 +64,7 @@ export function ExportToolbar({
           organization_id: orgData.organization_id,
           table_name: 'bi',
           action: 'export_csv',
-          diff: { reportType, filters, recordCount: data.length },
+          diff: { reportType, filters: filters as Record<string, Json>, recordCount: data.length },
         });
       }
 
@@ -71,12 +72,13 @@ export function ExportToolbar({
         title: 'CSV exportado com sucesso',
         description: `${data.length} registros exportados`,
       });
-    } catch (error: any) {
-      logger.error('Erro ao exportar CSV', { error: error.message });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error('Erro ao exportar CSV', { error: message });
       safeToast({
         variant: 'destructive',
         title: 'Erro ao exportar CSV',
-        description: error.message,
+        description: message,
       });
     }
   };
@@ -120,15 +122,16 @@ export function ExportToolbar({
         organization_id: orgData.organization_id,
         table_name: 'bi',
         action: 'export_pdf',
-        diff: { reportType, filters, recordCount: data.length },
+        diff: { reportType, filters: filters as Record<string, Json>, recordCount: data.length },
       });
 
-    } catch (error: any) {
-      logger.error('Erro ao exportar PDF', { error: error.message });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error('Erro ao exportar PDF', { error: message });
       safeToast({
         variant: 'destructive',
         title: 'Erro ao exportar PDF',
-        description: error.message,
+        description: message,
       });
     } finally {
       setIsExportingPDF(false);

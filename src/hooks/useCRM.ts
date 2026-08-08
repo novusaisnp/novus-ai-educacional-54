@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/hooks/useOrganization';
 import { logger } from '@/lib/logger';
+import type { Json } from '@/integrations/supabase/types';
 
 // Tipos para CRM
 export interface Lead {
@@ -31,7 +32,7 @@ export interface Interaction {
   direction: 'inbound' | 'outbound';
   channel: 'phone' | 'email' | 'whatsapp' | 'presencial' | 'sistema';
   summary: string;
-  payload?: any;
+  payload?: Json;
   performed_by: string;
   performed_by_name: string;
   created_at: string;
@@ -243,8 +244,8 @@ export const useDemandas = (filters?: { status?: string; tipo?: string; origem?:
         status: item.status as 'aberta' | 'em_andamento' | 'concluida' | 'cancelada',
         origem: item.requester_type,
         requester_id: item.requester_id,
-        assunto: (item.payload as any)?.subject || '',
-        descricao: (item.payload as any)?.description || '',
+        assunto: (item.payload as { subject?: string; description?: string } | null)?.subject || '',
+        descricao: (item.payload as { subject?: string; description?: string } | null)?.description || '',
         solicitante_nome: '',
         criado_por_nome: item.profiles?.full_name || '',
         created_at: item.created_at,
@@ -314,7 +315,7 @@ export const useCreateInteraction = () => {
       direction: 'inbound' | 'outbound';
       channel: string;
       summary: string;
-      payload?: any;
+      payload?: Json;
     }) => {
       const user = await supabase.auth.getUser();
       

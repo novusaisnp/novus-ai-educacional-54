@@ -5,9 +5,22 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { normalizeGradeInput, formatGrade, calculateWeightedAverage } from '@/lib/utils/grades';
 
+interface GradesGridStudent {
+  id: string;
+  first_name: string;
+  last_name: string;
+}
+
+interface GradesGridAssessment {
+  id: string;
+  title: string;
+  date: string;
+  weight: number;
+}
+
 interface GradesGridProps {
-  students: any[];
-  assessments: any[];
+  students: GradesGridStudent[];
+  assessments: GradesGridAssessment[];
   gradesMap: Record<string, number | undefined>;
   onGradeChange: (studentId: string, assessmentId: string, value: number | undefined) => void;
   canEdit: boolean;

@@ -64,7 +64,7 @@ export default function SecretariaRematriculaListPage() {
       queryClient.invalidateQueries({ queryKey: ['re_enrollments'] });
       toast({ title: 'Rematrícula excluída com sucesso!' });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao excluir rematrícula',
@@ -86,7 +86,7 @@ export default function SecretariaRematriculaListPage() {
       queryClient.invalidateQueries({ queryKey: ['re_enrollments'] });
       toast({ title: 'Rematrícula aprovada com sucesso!' });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao aprovar rematrícula',
@@ -125,7 +125,7 @@ export default function SecretariaRematriculaListPage() {
       queryClient.invalidateQueries({ queryKey: ['enrollments'] });
       toast({ title: 'Rematrícula finalizada! Matrícula criada com sucesso.' });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao finalizar rematrícula',

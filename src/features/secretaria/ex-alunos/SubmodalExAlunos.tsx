@@ -102,7 +102,7 @@ export function SubmodalExAlunos({ context, editingStudent, onEditingChange }: S
       form.reset();
       onEditingChange?.(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao salvar ex-aluno',

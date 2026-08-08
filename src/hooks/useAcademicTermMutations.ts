@@ -34,7 +34,7 @@ export const useAcademicTermMutations = () => {
       invalidate();
       toast({ title: 'Período de avaliação criado com sucesso!' });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao criar período de avaliação',
@@ -57,7 +57,7 @@ export const useAcademicTermMutations = () => {
       invalidate();
       toast({ title: 'Período de avaliação atualizado com sucesso!' });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao atualizar período de avaliação',
@@ -80,7 +80,7 @@ export const useAcademicTermMutations = () => {
       invalidate();
       toast({ title: 'Período de avaliação excluído com sucesso!' });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao excluir período de avaliação',

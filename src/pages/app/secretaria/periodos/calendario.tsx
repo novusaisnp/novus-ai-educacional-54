@@ -122,7 +122,7 @@ export default function PeriodoCalendario() {
       toast({ title: 'Calendário atualizado com sucesso!' });
       setSelectedDate(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao atualizar calendário',
@@ -173,7 +173,7 @@ export default function PeriodoCalendario() {
       setRangeEnd('');
       setRangeDescription('');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao atualizar calendário',
@@ -191,7 +191,7 @@ export default function PeriodoCalendario() {
       queryClient.invalidateQueries({ queryKey: ['calendar-exceptions'] });
       toast({ title: 'Exceção removida com sucesso!' });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao remover exceção',

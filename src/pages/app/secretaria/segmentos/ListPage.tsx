@@ -48,7 +48,7 @@ export default function SecretariaSegmentosListPage() {
       queryClient.invalidateQueries({ queryKey: ['segments'] });
       toast({ title: 'Segmento excluído com sucesso!' });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ 
         variant: 'destructive',
         title: 'Erro ao excluir segmento',

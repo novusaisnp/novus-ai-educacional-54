@@ -106,7 +106,7 @@ export const useDocuments = (studentId?: string) => {
         description: 'Avatar do aluno foi atualizado com sucesso.',
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao fazer upload',
@@ -128,7 +128,7 @@ export const useDocuments = (studentId?: string) => {
         description: 'Documento foi anexado com sucesso.',
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao fazer upload',
@@ -162,7 +162,7 @@ export const useDocuments = (studentId?: string) => {
         description: 'Documento foi removido com sucesso.',
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao remover documento',
@@ -187,7 +187,7 @@ export const useDocuments = (studentId?: string) => {
         description: 'O documento foi analisado pela IA.',
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao validar documento',

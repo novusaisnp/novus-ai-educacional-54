@@ -106,7 +106,7 @@ export const usePortalData = () => {
         description: 'Sua mensagem foi enviada com sucesso.',
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       logger.error('Error creating interaction', { error: error.message });
       toast({
         variant: 'destructive',
@@ -149,7 +149,7 @@ export const usePortalData = () => {
         description: 'Sua demanda foi criada com sucesso.',
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       logger.error('Error creating request', { error: error.message });
       toast({
         variant: 'destructive',

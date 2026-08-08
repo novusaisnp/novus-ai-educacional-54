@@ -115,7 +115,7 @@ export function SubmodalRematricula({ context, editingReenrollment, onEditingCha
       form.reset();
       onEditingChange?.(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao criar solicitação de rematrícula',

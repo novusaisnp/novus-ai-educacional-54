@@ -75,7 +75,7 @@ export default function Turmas() {
         description: 'Turma removida com sucesso.',
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao remover turma',

@@ -68,7 +68,7 @@ export default function SecretariaSeriesListPage() {
       queryClient.invalidateQueries({ queryKey: ['series'] });
       toast({ title: 'Série excluída com sucesso!' });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ 
         variant: 'destructive',
         title: 'Erro ao excluir série',

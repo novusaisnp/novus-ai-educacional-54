@@ -67,7 +67,7 @@ export default function SecretariaSolicitacoes() {
       queryClient.invalidateQueries({ queryKey: ['requests'] });
       toast({ title: 'Solicitação excluída com sucesso!' });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ 
         variant: 'destructive',
         title: 'Erro ao excluir solicitação',

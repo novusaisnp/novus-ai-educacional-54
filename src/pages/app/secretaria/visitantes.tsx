@@ -48,7 +48,7 @@ export default function SecretariaVisitantes() {
       queryClient.invalidateQueries({ queryKey: ['visitors'] });
       toast({ title: 'Visitante excluído com sucesso!' });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ 
         variant: 'destructive',
         title: 'Erro ao excluir visitante',

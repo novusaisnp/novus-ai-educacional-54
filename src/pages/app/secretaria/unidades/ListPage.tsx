@@ -49,7 +49,7 @@ export default function SecretariaUnidadesListPage() {
       queryClient.invalidateQueries({ queryKey: ['units'] });
       toast({ title: 'Unidade excluída com sucesso!' });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ 
         variant: 'destructive',
         title: 'Erro ao excluir unidade',

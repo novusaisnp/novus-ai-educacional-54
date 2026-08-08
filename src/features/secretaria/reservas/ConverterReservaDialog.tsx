@@ -214,7 +214,7 @@ export function ConverterReservaDialog({ open, onClose, application, orgId }: Co
       form.reset();
       onClose();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao converter reserva',

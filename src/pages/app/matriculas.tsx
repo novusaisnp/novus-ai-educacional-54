@@ -204,7 +204,7 @@ export default function Matriculas() {
       setEditingEnrollment(null);
       form.reset();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao salvar matrícula',
@@ -229,7 +229,7 @@ export default function Matriculas() {
         description: 'Matrícula removida com sucesso.',
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao remover matrícula',

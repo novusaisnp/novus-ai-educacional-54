@@ -75,7 +75,7 @@ export const GradeInputCell: React.FC<GradeInputCellProps> = ({
           onSuccess: (data) => {
             lastSavedRef.current = data.grade ?? null;
           },
-          onError: (error: any) => {
+          onError: (error: Error) => {
             toast({
               variant: 'destructive',
               title: 'Erro ao salvar nota',

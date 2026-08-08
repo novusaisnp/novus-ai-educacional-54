@@ -144,7 +144,7 @@ export default function SecretariaRematricula() {
         description: `${result.created} alunos rematriculados. ${result.duplicates > 0 ? `${result.duplicates} já estavam matriculados.` : ''}`,
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao realizar rematrícula',

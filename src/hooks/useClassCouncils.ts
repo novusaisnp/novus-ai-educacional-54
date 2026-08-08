@@ -113,7 +113,7 @@ export const useCreateClassCouncil = () => {
       queryClient.invalidateQueries({ queryKey: ['class_council_opinions', orgData?.organization_id, council.id] });
       toast({ title: 'Ata de conselho de classe criada — preencha os pareceres.' });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao criar ata',
@@ -175,7 +175,7 @@ export const useFinalizeClassCouncil = () => {
       queryClient.invalidateQueries({ queryKey: ['class_council_opinions', orgData?.organization_id, council.id] });
       toast({ title: 'Ata finalizada e assinada com sucesso!' });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao finalizar ata',

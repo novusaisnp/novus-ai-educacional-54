@@ -63,7 +63,7 @@ export default function ModeloContrato() {
           toast({ title: editingId ? 'Modelo atualizado' : 'Modelo criado' });
           if (!editingId) startNew();
         },
-        onError: (error: any) => {
+        onError: (error: Error) => {
           toast({ variant: 'destructive', title: 'Erro ao salvar modelo', description: error.message });
         },
       }
@@ -73,7 +73,7 @@ export default function ModeloContrato() {
   const handleActivate = (templateId: string) => {
     activateMutation.mutate(templateId, {
       onSuccess: () => toast({ title: 'Versão ativada', description: 'Esta versão passa a ser usada nas próximas assinaturas de matrícula.' }),
-      onError: (error: any) => {
+      onError: (error: Error) => {
         toast({ variant: 'destructive', title: 'Erro ao ativar versão', description: error.message });
       },
     });

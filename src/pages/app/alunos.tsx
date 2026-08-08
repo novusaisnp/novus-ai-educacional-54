@@ -98,7 +98,7 @@ export default function Alunos() {
         description: 'Aluno foi marcado como inativo.',
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao remover aluno',

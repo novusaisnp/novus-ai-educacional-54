@@ -113,7 +113,7 @@ export const useCreateStudentTransfer = () => {
       queryClient.invalidateQueries({ queryKey: ['student_transfers', orgData?.organization_id] });
       toast({ title: 'Transferência iniciada — gere a guia e assine para concluir.' });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao iniciar transferência',
@@ -141,7 +141,7 @@ export const useFinalizeStudentTransfer = () => {
       queryClient.invalidateQueries({ queryKey: ['students_with_active_enrollment'] });
       toast({ title: 'Transferência finalizada e guia assinada com sucesso!' });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao finalizar transferência',

@@ -50,7 +50,7 @@ export default function SecretariaResponsaveis() {
       queryClient.invalidateQueries({ queryKey: ['guardians'] });
       toast({ title: 'Responsável excluído com sucesso!' });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ 
         variant: 'destructive',
         title: 'Erro ao excluir responsável',

@@ -119,7 +119,7 @@ export function SubmodalMatriculas({ context, editingEnrollment, onEditingChange
       form.reset();
       onEditingChange?.(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao salvar matrícula',

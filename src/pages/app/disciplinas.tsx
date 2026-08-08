@@ -128,7 +128,7 @@ export default function Disciplinas() {
       setEditingSubject(null);
       form.reset();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao salvar disciplina',
@@ -154,7 +154,7 @@ export default function Disciplinas() {
         description: 'Disciplina removida com sucesso.',
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao remover disciplina',

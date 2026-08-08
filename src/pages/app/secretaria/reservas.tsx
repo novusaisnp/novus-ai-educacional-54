@@ -73,7 +73,7 @@ export default function SecretariaReservas() {
       queryClient.invalidateQueries({ queryKey: ['waitlist_applications'] });
       toast({ title: 'Reserva excluída com sucesso!' });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ 
         variant: 'destructive',
         title: 'Erro ao excluir reserva',
@@ -95,7 +95,7 @@ export default function SecretariaReservas() {
       queryClient.invalidateQueries({ queryKey: ['waitlist_applications'] });
       toast({ title: 'Reserva aprovada com sucesso!' });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao aprovar reserva',
@@ -117,7 +117,7 @@ export default function SecretariaReservas() {
       queryClient.invalidateQueries({ queryKey: ['waitlist_applications'] });
       toast({ title: 'Reserva rejeitada.' });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao rejeitar reserva',

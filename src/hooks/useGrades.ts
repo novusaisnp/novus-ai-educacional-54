@@ -109,7 +109,7 @@ export const useUpsertGrade = () => {
         });
       }
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       // Erro tratado pelo componente com toast; aqui registramos log
       logger.error('Erro ao salvar nota', { error: error.message });
     },

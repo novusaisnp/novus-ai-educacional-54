@@ -72,7 +72,7 @@ export default function SecretariaDocumentos() {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       toast({ title: 'Documento excluído com sucesso!' });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao excluir documento',

@@ -266,7 +266,7 @@ export const useCalculateTermResults = () => {
         description: `${data.calculated} aluno(s) com resultado atualizado.`,
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao calcular resultados',

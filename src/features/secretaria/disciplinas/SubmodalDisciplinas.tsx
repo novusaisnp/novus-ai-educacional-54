@@ -85,7 +85,7 @@ export function SubmodalDisciplinas({ context, editingSubject, onEditingChange }
       form.reset();
       onEditingChange?.(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         variant: 'destructive',
         title: 'Erro ao salvar disciplina',

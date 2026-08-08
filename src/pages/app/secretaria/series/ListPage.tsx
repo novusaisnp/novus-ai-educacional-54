@@ -21,6 +21,7 @@ export default function SecretariaSeriesListPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSegment, setSelectedSegment] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(searchParams.get('modal') === 'series');
+  const [editingId, setEditingId] = useState<string | undefined>(undefined);
 
   const { data: segments = [] } = useQuery({
     queryKey: ['segments', orgData?.organization_id],
@@ -77,11 +78,18 @@ export default function SecretariaSeriesListPage() {
   });
 
   const handleOpenModal = () => {
+    setEditingId(undefined);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (id: string) => {
+    setEditingId(id);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    setEditingId(undefined);
     queryClient.invalidateQueries({ queryKey: ['series'] });
   };
 
@@ -176,13 +184,17 @@ export default function SecretariaSeriesListPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button size="sm" variant="outline">
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(serie.id)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
-                          onClick={() => deleteSerie.mutate(serie.id)}
+                          onClick={() => {
+                            if (confirm('Tem certeza que deseja excluir esta série?')) {
+                              deleteSerie.mutate(serie.id);
+                            }
+                          }}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -200,6 +212,7 @@ export default function SecretariaSeriesListPage() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         defaultTab="series"
+        editingItem={editingId}
       />
     </div>
   );

@@ -18,6 +18,7 @@ export default function SecretariaResponsaveis() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(searchParams.get('modal') === 'responsaveis');
+  const [editingItem, setEditingItem] = useState<any>(undefined);
 
   const { data: guardians = [], isLoading } = useQuery({
     queryKey: ['guardians', orgData?.organization_id],
@@ -59,11 +60,18 @@ export default function SecretariaResponsaveis() {
   });
 
   const handleOpenModal = () => {
+    setEditingItem(undefined);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (guardian: any) => {
+    setEditingItem(guardian);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    setEditingItem(undefined);
     queryClient.invalidateQueries({ queryKey: ['guardians'] });
   };
 
@@ -137,13 +145,21 @@ export default function SecretariaResponsaveis() {
                     <TableCell>{guardian.student_guardians?.length || 0}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button size="sm" variant="outline">
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(guardian)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
-                          onClick={() => deleteGuardian.mutate(guardian.id)}
+                          onClick={() => {
+                            const hasLinkedStudents = (guardian.student_guardians?.length || 0) > 0;
+                            const message = hasLinkedStudents
+                              ? `Tem certeza que deseja excluir este responsável? O vínculo com ${guardian.student_guardians.length} aluno(s) será removido junto, sem opção de desfazer.`
+                              : 'Tem certeza que deseja excluir este responsável?';
+                            if (confirm(message)) {
+                              deleteGuardian.mutate(guardian.id);
+                            }
+                          }}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -161,6 +177,7 @@ export default function SecretariaResponsaveis() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         defaultTab="responsaveis"
+        editingItem={editingItem}
       />
     </div>
   );

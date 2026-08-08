@@ -158,7 +158,7 @@ export function SubmodalRematricula({ context, editingReenrollment, onEditingCha
           render={({ field }) => (
             <FormItem>
               <FormLabel>Aluno</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um aluno" />
@@ -183,7 +183,7 @@ export function SubmodalRematricula({ context, editingReenrollment, onEditingCha
           render={({ field }) => (
             <FormItem>
               <FormLabel>Turma de Destino</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione uma turma" />

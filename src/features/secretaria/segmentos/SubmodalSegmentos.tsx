@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -75,14 +75,16 @@ export function SubmodalSegmentos({ isOpen, onClose, editingId }: SubmodalSegmen
   });
 
   // Preencher form quando houver dados para edição
-  if (editingSegment && editingId) {
-    form.reset({
-      name: editingSegment.name,
-      code: editingSegment.code || '',
-      order_index: editingSegment.order_index || 0,
-      active: editingSegment.active,
-    });
-  }
+  useEffect(() => {
+    if (editingSegment && editingId) {
+      form.reset({
+        name: editingSegment.name,
+        code: editingSegment.code || '',
+        order_index: editingSegment.order_index || 0,
+        active: editingSegment.active,
+      });
+    }
+  }, [editingSegment, editingId, form]);
 
   const createMutation = useMutation({
     mutationFn: async (data: SegmentoFormData) => {

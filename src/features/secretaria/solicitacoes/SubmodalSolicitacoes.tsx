@@ -354,7 +354,7 @@ export function SubmodalSolicitacoes({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Tipo de Solicitação *</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o tipo" />
@@ -379,7 +379,7 @@ export function SubmodalSolicitacoes({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Tipo de Solicitante *</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o tipo" />

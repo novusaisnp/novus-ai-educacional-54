@@ -332,7 +332,7 @@ export function SubmodalReservas({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Segmento Desejado *</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o segmento" />
@@ -359,7 +359,7 @@ export function SubmodalReservas({
                   <FormLabel>Série Desejada</FormLabel>
                   <Select 
                     onValueChange={field.onChange} 
-                    defaultValue={field.value}
+                    value={field.value}
                     disabled={!watchedSegment}
                   >
                     <FormControl>

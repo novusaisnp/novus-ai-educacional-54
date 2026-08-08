@@ -52,6 +52,20 @@ export function SubmodalResponsaveis({
     },
   });
 
+  // Repopular form quando o responsável em edição muda (mount do modal já pode ter
+  // acontecido antes de editingGuardian chegar via seed do ModalMestre)
+  React.useEffect(() => {
+    if (editingGuardian) {
+      form.reset({
+        name: editingGuardian.name || '',
+        email: editingGuardian.email || '',
+        phone: editingGuardian.phone || '',
+        relationship: editingGuardian.relationship || '',
+        linkedStudents: editingGuardian.linkedStudents || [],
+      });
+    }
+  }, [editingGuardian, form]);
+
   // Buscar estudantes para linkagem
   const { data: students = [] } = useQuery({
     queryKey: ['students', context.orgId],
@@ -342,7 +356,7 @@ export function SubmodalResponsaveis({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Grau de Parentesco</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o parentesco" />

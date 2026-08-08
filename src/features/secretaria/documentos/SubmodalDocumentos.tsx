@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -65,6 +65,19 @@ export function SubmodalDocumentos({
       tags: editingDocument?.tags || [],
     },
   });
+
+  // Repopular form quando o documento em edição muda (mount do modal já pode ter
+  // acontecido antes de editingDocument chegar via seed do ModalMestre)
+  useEffect(() => {
+    if (editingDocument) {
+      form.reset({
+        title: editingDocument.title || '',
+        owner_type: editingDocument.owner_type || '',
+        owner_id: editingDocument.owner_id || '',
+        tags: editingDocument.tags || [],
+      });
+    }
+  }, [editingDocument, form]);
 
   // Buscar documentos existentes se editando
   const { data: existingFiles = [] } = useQuery({
@@ -281,7 +294,7 @@ export function SubmodalDocumentos({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Tipo de Proprietário *</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o tipo" />

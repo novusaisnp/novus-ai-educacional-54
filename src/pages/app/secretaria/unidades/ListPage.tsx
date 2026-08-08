@@ -19,6 +19,7 @@ export default function SecretariaUnidadesListPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(searchParams.get('modal') === 'unidades');
+  const [editingId, setEditingId] = useState<string | undefined>(undefined);
 
   const { data: unidades = [], isLoading } = useQuery({
     queryKey: ['units', orgData?.organization_id],
@@ -58,11 +59,18 @@ export default function SecretariaUnidadesListPage() {
   });
 
   const handleOpenModal = () => {
+    setEditingId(undefined);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (id: string) => {
+    setEditingId(id);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    setEditingId(undefined);
     queryClient.invalidateQueries({ queryKey: ['units'] });
   };
 
@@ -140,13 +148,17 @@ export default function SecretariaUnidadesListPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button size="sm" variant="outline">
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(unidade.id)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
-                          onClick={() => deleteUnidade.mutate(unidade.id)}
+                          onClick={() => {
+                            if (confirm('Tem certeza que deseja excluir esta unidade?')) {
+                              deleteUnidade.mutate(unidade.id);
+                            }
+                          }}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -164,6 +176,7 @@ export default function SecretariaUnidadesListPage() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         defaultTab="unidades"
+        editingItem={editingId}
       />
     </div>
   );

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/hooks/useOrganization';
@@ -26,6 +26,7 @@ export default function SecretariaDocumentos() {
   const [searchParams] = useSearchParams();
   const { data: orgData } = useOrganization();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOwnerType, setSelectedOwnerType] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(searchParams.get('modal') === 'documentos');
@@ -56,6 +57,47 @@ export default function SecretariaDocumentos() {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+  };
+
+  const deleteDocument = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('documents')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+      toast({ title: 'Documento excluído com sucesso!' });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao excluir documento',
+        description: error.message,
+      });
+    },
+  });
+
+  const handleView = async (filePath: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('docs')
+        .createSignedUrl(filePath.replace('docs/', ''), 3600);
+
+      if (error) throw error;
+      if (data?.signedUrl) {
+        window.open(data.signedUrl, '_blank');
+      }
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao visualizar documento',
+        description: error.message,
+      });
+    }
   };
 
   const handleDownload = async (filePath: string, title: string) => {
@@ -197,10 +239,18 @@ export default function SecretariaDocumentos() {
                         >
                           <Download className="h-4 w-4" />
                         </Button>
-                        <Button size="sm" variant="outline">
+                        <Button size="sm" variant="outline" onClick={() => handleView(document.file_path)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button size="sm" variant="outline">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            if (confirm('Tem certeza que deseja excluir este documento? Se ele estiver anexado a um contrato, ata ou guia de transferência assinados, a referência será desvinculada em silêncio.')) {
+                              deleteDocument.mutate(document.id);
+                            }
+                          }}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>

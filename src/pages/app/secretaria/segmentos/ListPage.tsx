@@ -19,6 +19,7 @@ export default function SecretariaSegmentosListPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(searchParams.get('modal') === 'segmentos');
+  const [editingId, setEditingId] = useState<string | undefined>(undefined);
 
   const { data: segmentos = [], isLoading } = useQuery({
     queryKey: ['segments', orgData?.organization_id],
@@ -57,11 +58,18 @@ export default function SecretariaSegmentosListPage() {
   });
 
   const handleOpenModal = () => {
+    setEditingId(undefined);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (id: string) => {
+    setEditingId(id);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    setEditingId(undefined);
     queryClient.invalidateQueries({ queryKey: ['segments'] });
   };
 
@@ -137,13 +145,17 @@ export default function SecretariaSegmentosListPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button size="sm" variant="outline">
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(segmento.id)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
-                          onClick={() => deleteSegmento.mutate(segmento.id)}
+                          onClick={() => {
+                            if (confirm('Tem certeza que deseja excluir este segmento?')) {
+                              deleteSegmento.mutate(segmento.id);
+                            }
+                          }}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -161,6 +173,7 @@ export default function SecretariaSegmentosListPage() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         defaultTab="segmentos"
+        editingItem={editingId}
       />
     </div>
   );

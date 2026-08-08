@@ -47,9 +47,7 @@ import SecretariaDisciplinasPage from '@/pages/app/secretaria/disciplinas';
 import SecretariaMatriculasPage from '@/pages/app/secretaria/matriculas';
 import SecretariaVisitantesPage from '@/pages/app/secretaria/visitantes';
 import SecretariaResponsaveisPage from '@/pages/app/secretaria/responsaveis';
-import SecretariaResponsaveisListPage from '@/pages/app/secretaria/responsaveis/ListPage';
 import SecretariaDocumentosPage from '@/pages/app/secretaria/documentos';
-import SecretariaDocumentosListPage from '@/pages/app/secretaria/documentos/ListPage';
 import SecretariaPeriodsPage from '@/pages/app/secretaria/periodos';
 import SecretariaPeriodCalendarPage from '@/pages/app/secretaria/periodos/calendario';
 import SecretariaPeriodTermsPage from '@/pages/app/secretaria/periodos/termos';
@@ -57,7 +55,6 @@ import SecretariaSegmentsListPage from '@/pages/app/secretaria/segmentos/ListPag
 import SecretariaSeriesListPage from '@/pages/app/secretaria/series/ListPage';
 import SecretariaUnitsListPage from '@/pages/app/secretaria/unidades/ListPage';
 import SecretariaExAlunos from '@/pages/app/secretaria/ex-alunos';
-import SecretariaExAlunosListPage from '@/pages/app/secretaria/ex-alunos/ListPage';
 import SecretariaReservas from '@/pages/app/secretaria/reservas';
 import SecretariaSolicitacoes from '@/pages/app/secretaria/solicitacoes';
 import SecretariaRematriculaLote from '@/pages/app/secretaria/rematricula';
@@ -168,19 +165,19 @@ function App() {
                 <Route path="secretaria/matriculas" element={<SecretariaMatriculasPage />} />
                 <Route path="secretaria/visitantes" element={<SecretariaVisitantesPage />} />
                 <Route path="secretaria/responsaveis" element={<SecretariaResponsaveisPage />} />
-                <Route path="secretaria/responsaveis/list" element={<SecretariaResponsaveisListPage />} />
                 <Route path="secretaria/documentos" element={<SecretariaDocumentosPage />} />
-                <Route path="secretaria/documentos/list" element={<SecretariaDocumentosListPage />} />
                 <Route path="secretaria/periodos" element={<SecretariaPeriodsPage />} />
                 <Route path="secretaria/periodos/:periodId/calendario" element={<SecretariaPeriodCalendarPage />} />
                 <Route path="secretaria/periodos/:periodId/termos" element={<SecretariaPeriodTermsPage />} />
                 <Route path="secretaria/contratos/modelo" element={<SecretariaContratoModelo />} />
                 <Route path="secretaria/transferencias" element={<SecretariaTransferencias />} />
+                <Route path="secretaria/segmentos" element={<SecretariaSegmentsListPage />} />
                 <Route path="secretaria/segmentos/list" element={<SecretariaSegmentsListPage />} />
+                <Route path="secretaria/series" element={<SecretariaSeriesListPage />} />
                 <Route path="secretaria/series/list" element={<SecretariaSeriesListPage />} />
+                <Route path="secretaria/unidades" element={<SecretariaUnitsListPage />} />
                 <Route path="secretaria/unidades/list" element={<SecretariaUnitsListPage />} />
                 <Route path="secretaria/ex-alunos" element={<SecretariaExAlunos />} />
-                <Route path="secretaria/ex-alunos/list" element={<SecretariaExAlunosListPage />} />
                 <Route path="secretaria/reservas" element={<SecretariaReservas />} />
                 <Route path="secretaria/solicitacoes" element={<SecretariaSolicitacoes />} />
                 <Route path="secretaria/rematricula" element={<SecretariaRematricula />} />

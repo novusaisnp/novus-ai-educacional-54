@@ -2,7 +2,7 @@
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { logAuditSafe } from '@/utils/auditSafe';
 import { logger } from '@/lib/logger';
-import { ReactNode } from 'react';
+import { ErrorInfo, ReactNode } from 'react';
 
 // Helper to normalize unknown errors
 function toError(e: unknown): Error {
@@ -15,7 +15,7 @@ interface AppErrorBoundaryProps {
 }
 
 export function AppErrorBoundary({ children }: AppErrorBoundaryProps) {
-  const handleError = async (error: unknown, errorInfo: any) => {
+  const handleError = async (error: unknown, errorInfo: ErrorInfo) => {
     const normalizedError = toError(error);
     
     // Log para auditoria sem PII

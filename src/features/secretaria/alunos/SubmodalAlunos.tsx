@@ -82,7 +82,7 @@ const isMinor = (birthDate: string | undefined) => {
   return age !== null && age < 18;
 };
 
-type LinkedGuardian = Pick<GuardianRow, 'id' | 'name' | 'cpf' | 'relationship' | 'email' | 'phone'> & {
+export type LinkedGuardian = Pick<GuardianRow, 'id' | 'name' | 'cpf' | 'relationship' | 'email' | 'phone'> & {
   is_primary: boolean;
 };
 

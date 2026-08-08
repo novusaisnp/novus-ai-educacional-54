@@ -74,7 +74,7 @@ describe('AppErrorBoundary', () => {
     )
 
     const auditCall = logAuditSafeSpy.mock.calls[0]
-    const payload = auditCall[1] as any
+    const payload = auditCall[1] as { userAgent: string }
     
     // User agent should be truncated to 100 chars for safety
     expect(payload.userAgent.length).toBeLessThanOrEqual(100)

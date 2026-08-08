@@ -15,7 +15,7 @@ import { StudentAvatar } from '@/components/StudentAvatar';
 import { StudentAttachments } from '@/components/StudentAttachments';
 import { useDocuments, useStudentAvatars } from '@/hooks/useDocuments';
 import { useOrganization } from '@/hooks/useOrganization';
-import { SubmodalAlunos } from '@/features/secretaria/alunos/SubmodalAlunos';
+import { SubmodalAlunos, LinkedGuardian } from '@/features/secretaria/alunos/SubmodalAlunos';
 import { ModalMestre } from '@/features/secretaria/hub/ModalMestre';
 import { useRiscoEvasao, useRiskAnalysis } from '@/hooks/useAI';
 import { RiskBadge } from '@/components/RiskBadge';
@@ -26,15 +26,20 @@ import { logAudit } from '@/lib/audit/logAudit';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useNavigate } from 'react-router-dom';
 import { useIAAccess } from '@/hooks/useIAAccess';
+import type { StudentRow } from '@/integrations/supabase/db-types';
+
+type StudentWithEnrollments = StudentRow & {
+  enrollments: { status: string; classes: { name: string; year: number } | null }[];
+};
 
 export default function Alunos() {
   const [searchParams] = useSearchParams();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [editingStudent, setEditingStudent] = useState<any>(null);
-  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [editingStudent, setEditingStudent] = useState<StudentWithEnrollments | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<StudentWithEnrollments | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(searchParams.get('modal') === 'alunos');
   const [showRiskOnly, setShowRiskOnly] = useState(false);
-  const [editingGuardianFromStudent, setEditingGuardianFromStudent] = useState<any>(null);
+  const [editingGuardianFromStudent, setEditingGuardianFromStudent] = useState<LinkedGuardian | null>(null);
   const [isGuardianModalOpen, setIsGuardianModalOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -107,7 +112,7 @@ export default function Alunos() {
     },
   });
 
-  const handleEdit = (student: any) => {
+  const handleEdit = (student: StudentWithEnrollments) => {
     setEditingStudent(student);
     setIsCreateOpen(true);
   };
@@ -118,7 +123,7 @@ export default function Alunos() {
     }
   };
 
-  const handleStudentClick = (student: any) => {
+  const handleStudentClick = (student: StudentWithEnrollments) => {
     setSelectedStudent(student);
   };
 
@@ -292,7 +297,7 @@ export default function Alunos() {
             <SubmodalAlunos
               context={modalContext}
               editingStudent={editingStudent}
-              onEditingChange={setEditingStudent}
+              onEditingChange={(student) => setEditingStudent(student as StudentWithEnrollments | null)}
               onEditGuardian={(guardian) => {
                 setIsCreateOpen(false);
                 setEditingGuardianFromStudent(guardian);

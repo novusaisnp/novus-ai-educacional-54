@@ -27,7 +27,7 @@ interface EditingStates {
   segmentos: string | null;
   series: string | null;
   periodos: string | null;
-  responsaveis: GuardianRow | null;
+  responsaveis: Pick<GuardianRow, 'id' | 'name' | 'cpf' | 'relationship' | 'email' | 'phone'> | null;
   documentos: DocumentRow | null;
   visitantes: string | null;
   reservas: WaitlistApplicationRow | null;

@@ -30,10 +30,12 @@ const guardianSchema = z.object({
 
 type GuardianFormData = z.infer<typeof guardianSchema>;
 
+type GuardianEditTarget = Pick<GuardianRow, 'id' | 'name' | 'cpf' | 'relationship' | 'email' | 'phone'>;
+
 interface SubmodalResponsaveisProps {
   context: SecretariaModalContext;
-  editingGuardian?: GuardianRow | null;
-  onEditingChange?: (guardian: GuardianRow | null) => void;
+  editingGuardian?: GuardianEditTarget | null;
+  onEditingChange?: (guardian: GuardianEditTarget | null) => void;
 }
 
 export function SubmodalResponsaveis({ 

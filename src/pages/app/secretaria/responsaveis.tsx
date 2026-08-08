@@ -10,6 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { UserPlus, Search, Plus, Edit, Trash2 } from 'lucide-react';
 import { ModalMestre } from '@/features/secretaria/hub/ModalMestre';
+import type { GuardianRow } from '@/integrations/supabase/db-types';
+
+type GuardianWithLinks = GuardianRow & { student_guardians: { id: string }[] };
 
 export default function SecretariaResponsaveis() {
   const [searchParams] = useSearchParams();
@@ -18,7 +21,7 @@ export default function SecretariaResponsaveis() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(searchParams.get('modal') === 'responsaveis');
-  const [editingItem, setEditingItem] = useState<any>(undefined);
+  const [editingItem, setEditingItem] = useState<GuardianWithLinks | undefined>(undefined);
 
   const { data: guardians = [], isLoading } = useQuery({
     queryKey: ['guardians', orgData?.organization_id],
@@ -64,7 +67,7 @@ export default function SecretariaResponsaveis() {
     setIsModalOpen(true);
   };
 
-  const handleEdit = (guardian: any) => {
+  const handleEdit = (guardian: GuardianWithLinks) => {
     setEditingItem(guardian);
     setIsModalOpen(true);
   };

@@ -16,7 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { IconBadge } from '@/components/IconBadge';
 import { UserCheck, FileSignature } from 'lucide-react';
-import { StudentInsert, EnrollmentInsert } from '@/integrations/supabase/db-types';
+import { StudentInsert, EnrollmentInsert, WaitlistApplicationRow } from '@/integrations/supabase/db-types';
 import { createGuardianForStudent } from '../lib/createGuardianForStudent';
 import { signEnrollmentContract } from '../lib/signEnrollmentContract';
 import { renderContractText, DEFAULT_TEMPLATE_BODY } from '../lib/enrollmentContractTemplate';
@@ -75,7 +75,7 @@ const splitName = (fullName: string) => {
 interface ConverterReservaDialogProps {
   open: boolean;
   onClose: () => void;
-  application: any;
+  application: WaitlistApplicationRow | null;
   orgId: string;
 }
 

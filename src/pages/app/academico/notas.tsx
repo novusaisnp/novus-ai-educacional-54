@@ -30,8 +30,15 @@ const DEFAULT_FILTERS: FiltersState = {
   assessment: 'all',
 };
 
+interface GradeEntry {
+  assessment_id: string;
+  student_id: string;
+  grade: number | null;
+  comments: string | null;
+}
+
 // Adapter puro para normalizar dados de grades
-const createGradesAdapter = (grades: any[]) => {
+const createGradesAdapter = (grades: GradeEntry[]) => {
   const gradesMap = new Map<string, { grade?: number; comments?: string }>();
   
   grades.forEach(grade => {

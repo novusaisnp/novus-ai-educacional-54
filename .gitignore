@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Lock files (use bun as package manager, not npm/pnpm)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+bun.lockb
+
 # Environment variables (local secrets/config, use .env.example as template)
 .env
 

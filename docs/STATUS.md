@@ -2,6 +2,23 @@
 
 **Última atualização: 2026-08-08.** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
 
+## 🔖 Checkpoint de sessão (2026-08-08 — Fase 3, lacunas da turma: shift + capacidade)
+
+**Continuação da mesma sessão** (após fast-follow de `notas.tsx`) — usuário pediu pra seguir com o roadmap. Schema audit (agente investigador) mapeou os gaps de `classes` já listados no checkpoint anterior. Escopo escolhido: **shift + capacidade** (baixo risco, mecânico) — normalização de `classes.grade`→`series` fica pra outra sessão (precisa backfill + redesign de UI, maior).
+
+1. **Shift incompleto, corrigido**: banco aceita `CHECK (shift IN ('manha','tarde','noite','integral'))` desde a migration original, mas Zod schema + `SelectContent` de `SubmodalTurmas.tsx` só ofereciam 3 opções — "integral" era inatingível pela UI. Adicionado `integral` ao enum Zod, ao `SelectContent`, e ao mapa de labels de `turmas.tsx` (`getShiftLabel` mostraria "integral" cru sem isso).
+2. **Capacidade por turma, implementada com enforcement real no banco** (mesmo padrão já usado em `class_subjects` — trava de verdade, não só coluna nova sem uso): migration `20260808150000_class_capacity.sql` — `classes.capacity_limit INTEGER` (nullable, `CHECK (capacity_limit IS NULL OR capacity_limit > 0)`, sem limite = sem trava) + trigger `enforce_class_capacity` (`BEFORE INSERT OR UPDATE ON enrollments`) que bloqueia nova matrícula com `status='ativa'` quando a turma já está no limite (`COUNT(*) WHERE class_id=X AND status='ativa' >= capacity_limit`). Aplicada via `supabase db query --linked --file` (mesma razão de sempre — `db push` falha por dessincronia pré-existente de histórico, não relacionada). `supabase gen types typescript --linked` rodado depois.
+3. **UI**: `SubmodalTurmas.tsx` ganhou campo "Capacidade (vagas)" (`z.preprocess` pra converter string vazia em `undefined`, sem trava se não preenchido). `turmas.tsx` — coluna "Total de Alunos" agora mostra `"{count}/{capacity_limit}"` quando configurado, só `{count}` quando não.
+4. **Verificação**: `bun run typecheck`/`test` (47/47) limpos. **Trigger testado direto contra o banco real** (`db query --linked`, turma de teste `capacity_limit=1`): 1ª matrícula ativa aceita, 2ª bloqueada com a mensagem exata do `RAISE EXCEPTION` ("Turma atingiu a capacidade máxima (1 vagas)"), trancar a 1ª libera a vaga e a 2ª passa a ser aceita — dado de teste limpo do banco ao final. **Verificado ao vivo no navegador** (Chrome conectado, dev server rodando): editada a turma real "TESTE Contrato Turma A" pra Turno=Integral + Capacidade=10, badge da lista mostrou "4/10" corretamente, dropdown de Turno mostrou as 4 opções incluindo Integral — depois revertido pro estado original (Manhã, sem capacidade) pra não deixar dado de produção alterado sem necessidade.
+
+**Gaps conhecidos aceitos conscientemente**:
+- A coluna "Total de Alunos" conta **todas** as matrículas (`enrollments(count)` sem filtro de status), mas o trigger de capacidade só considera `status='ativa'`. Badge pode mostrar `"5/10"` mesmo que só 3 estejam `ativa` (2 `trancada`/`concluida`) — mismatch visual pré-existente (contagem sem filtro já era assim antes desta sessão), não corrigido por estar fora do escopo (mudaria a métrica "Total de Alunos" da tela inteira, não só o badge de capacidade).
+- `classes.grade` continua `TEXT` solto, desconectado da tabela normalizada `series` — próxima fatia natural da Fase 3, mais complexa (precisa decidir se `series` vira FK obrigatória ou opcional, e como migrar as turmas já cadastradas com texto livre).
+- `classes.year` continua sem FK pra `periods`/`academic_terms` — não tocado.
+- Sala/ambiente físico e grade horária — ainda não iniciados, são as outras 2 fatias mapeadas no checkpoint anterior.
+
+**Estado do repo**: mudanças ainda não commitadas nesta sessão (migration + 3 arquivos de código + este checkpoint) — ver commit ao final da sessão.
+
 ## 🔖 Checkpoint de sessão (2026-08-08 — verificação visual de fast-follow)
 
 **Continuação da sessão de lint.** Usuário pediu para "seguir com roadmap do educacional" após lint zerada (0 erros). Perguntado qual frente atacar — escolheu **Fast-follow: `notas.tsx` filtering** (mesmo que o STATUS.md tivesse contradições sobre o status, o código de fato estava implementado). Tarefa: verificar ao vivo no navegador que o filtro curricular em `notas.tsx` funciona como em `chamada.tsx`.

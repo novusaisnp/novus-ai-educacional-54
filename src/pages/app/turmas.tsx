@@ -105,6 +105,7 @@ export default function Turmas() {
       manha: 'Manhã',
       tarde: 'Tarde',
       noite: 'Noite',
+      integral: 'Integral',
     };
     return labels[shift as keyof typeof labels] || shift;
   };
@@ -196,6 +197,7 @@ export default function Turmas() {
                       <div className="flex items-center">
                         <Users className="mr-1 h-4 w-4" />
                         {classItem.enrollments?.[0]?.count || 0}
+                        {classItem.capacity_limit != null && `/${classItem.capacity_limit}`}
                       </div>
                     </TableCell>
                     <TableCell>

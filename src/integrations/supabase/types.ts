@@ -665,6 +665,7 @@ export type Database = {
       }
       classes: {
         Row: {
+          capacity_limit: number | null
           created_at: string
           grade: string | null
           id: string
@@ -675,6 +676,7 @@ export type Database = {
           year: number
         }
         Insert: {
+          capacity_limit?: number | null
           created_at?: string
           grade?: string | null
           id?: string
@@ -685,6 +687,7 @@ export type Database = {
           year: number
         }
         Update: {
+          capacity_limit?: number | null
           created_at?: string
           grade?: string | null
           id?: string

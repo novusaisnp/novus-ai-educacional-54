@@ -16,7 +16,11 @@ const classSchema = z.object({
   name: z.string().min(1, 'Nome obrigatório'),
   year: z.coerce.number().int().min(2000).max(2100),
   grade: z.string().optional(),
-  shift: z.enum(['manha', 'tarde', 'noite']).optional(),
+  shift: z.enum(['manha', 'tarde', 'noite', 'integral']).optional(),
+  capacity_limit: z.preprocess(
+    (val) => (val === '' || val === undefined || val === null ? undefined : Number(val)),
+    z.number().int().positive().optional()
+  ),
 });
 
 type ClassFormData = z.infer<typeof classSchema>;
@@ -38,6 +42,7 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
       year: new Date().getFullYear(),
       grade: '',
       shift: 'manha',
+      capacity_limit: undefined,
     },
   });
 
@@ -50,6 +55,7 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
           year: Number(data.year),
           grade: data.grade || undefined,
           shift: data.shift || undefined,
+          capacity_limit: data.capacity_limit ?? null,
         };
 
         const { data: updated, error } = await supabase
@@ -68,6 +74,7 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
           year: Number(data.year),
           grade: data.grade || undefined,
           shift: data.shift || undefined,
+          capacity_limit: data.capacity_limit ?? null,
         };
 
         const { data: created, error } = await supabase
@@ -111,6 +118,7 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
         year: editingClass.year,
         shift: editingClass.shift as ClassFormData['shift'],
         grade: editingClass.grade || '',
+        capacity_limit: editingClass.capacity_limit ?? undefined,
       });
     } else {
       form.reset({
@@ -118,6 +126,7 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
         year: new Date().getFullYear(),
         grade: '',
         shift: 'manha',
+        capacity_limit: undefined,
       });
     }
   }, [editingClass, form]);
@@ -173,6 +182,7 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
                     <SelectItem value="manha">Manhã</SelectItem>
                     <SelectItem value="tarde">Tarde</SelectItem>
                     <SelectItem value="noite">Noite</SelectItem>
+                    <SelectItem value="integral">Integral</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -181,19 +191,40 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="grade"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Série</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="Ex: 1º Ano" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="grade"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Série</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Ex: 1º Ano" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="capacity_limit"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Capacidade (vagas)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min={1}
+                    placeholder="Sem limite"
+                    {...field}
+                    value={field.value ?? ''}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <div className="flex justify-end space-x-2">
           <Button type="button" variant="outline" onClick={context.onClose}>

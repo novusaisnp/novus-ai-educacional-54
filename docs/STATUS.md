@@ -2,6 +2,22 @@
 
 **Última atualização: 2026-08-08.** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
 
+## 🔖 Checkpoint de sessão (2026-08-08 tarde, leia isto primeiro)
+
+Sessão de continuação direta da anterior (mesmo dia) — usuário pediu pra fechar as 4 pendências deixadas em aberto. As 3 primeiras foram resolvidas nesta sessão; a 4ª (auditoria do ERP) virou um bug real corrigido, não só uma leitura.
+
+1. **CPF fabricado no sync `guardians`→ERP, corrigido**: `SubmodalResponsaveis.tsx` não tinha campo de CPF e sincronizava responsáveis com o ERP usando um CPF fake (dígitos do telefone, ou `'00000000000'` sem telefone) — como `upsertClientByCPF` usa CPF como chave de identidade do cliente no ERP, responsáveis sem telefone colidiam no mesmo cliente fictício, um sobrescrevendo o outro em silêncio. Mesmo fallback existia em `createGuardianForStudent.ts` (helper compartilhado, usado também em `SubmodalAlunos.tsx`/`ConverterReservaDialog.tsx`) quando `documentId` vinha vazio. Corrigido: CPF virou campo obrigatório em `SubmodalResponsaveis.tsx` (novo) e em `ConverterReservaDialog.tsx` quando há responsável (antes opcional); `createGuardianForStudent.ts` agora pula o sync com o ERP em vez de inventar valor quando não há CPF real. **Regra generalizada pro ecossistema inteiro** (pedido explícito do usuário) e documentada na skill global `erp-satellite-integration` — qualquer satélite futuro que sincronize uma entidade financeira/jurídica com o ERP via CPF/CNPJ precisa seguir a mesma disciplina.
+2. **UX do seletor de alunos em Responsáveis, resolvida**: card "Vínculos com Estudantes" (lista de checkbox de todos os alunos ativos, sem busca) ganhou campo de busca por nome que filtra a lista — pendência já mapeada na sessão anterior, resolvida no mesmo arquivo que ganhou o campo de CPF.
+3. **Teste ao vivo no navegador: bloqueado por tooling, não pela lógica**. Confirmado que não há `chromium-cli`, Playwright segue não funcional (mesmo gap já documentado), e não há extensão de Chrome conectada nesta sessão — diferente de sessões anteriores, onde a extensão aparentemente foi reconectada manualmente pelo usuário. Servidor de dev (`bun run dev`, porta 8080) deixado rodando em background para o usuário conferir manualmente. Verificação alternativa feita: (a) revisão estática confirmando que os 5 `confirm()` de exclusão e o Eye/Trash2 de `documentos.tsx` seguem corretamente implementados; (b) teste direto contra o banco real com 2 CPFs reais fornecidos pelo usuário (inseridos e removidos logo em seguida) confirmando que dois responsáveis sem telefone gravam CPFs distintos — exatamente o cenário que colidia antes da correção.
+4. **Push pendente** — ver seção de estado do repo abaixo.
+
+**Verificação**: `bun run typecheck`/`test` (47/47) limpos. `pg_get_constraintdef` confirmou que `guardians.cpf` não tem UNIQUE/CHECK (só índice), então torná-lo obrigatório no client não corre risco de 42P10 nem de dado legado quebrar.
+
+**Gaps conhecidos aceitos conscientemente**:
+- Guardiões já existentes no banco com `cpf` nulo (criados antes desta correção) só ganham CPF real na próxima vez que forem editados pela tela de Responsáveis — não houve backfill.
+- `ConverterReservaDialog.tsx` ainda permite converter uma reserva **sem nenhum responsável** (campo `guardian_name` continua opcional) — nesse caso não há CPF pra validar e a mensalidade/contrato fica sem `clienteCpfCnpj`. Não mexido nesta sessão (fora do escopo do pedido, que era sobre CPF fabricado, não sobre tornar responsável obrigatório).
+- Teste de clique real (confirm() bloqueando, Eye abrindo documento, form de Responsáveis renderizando o campo novo) não foi feito — mesma limitação de tooling de sessões anteriores, ainda sem solução.
+
 ## 🔖 Checkpoint de sessão (2026-08-08, leia isto primeiro)
 
 Sessão de continuação (backlog técnico pequeno) que virou uma investigação maior por causa de uma descoberta no meio do caminho. Resumo, mais recente primeiro:

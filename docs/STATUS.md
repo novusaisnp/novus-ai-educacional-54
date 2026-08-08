@@ -1,6 +1,20 @@
 # STATUS — novus-educacional
 
-**Última atualização: 2026-08-08 (Fase 1.5, PEI core).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+**Última atualização: 2026-08-08 (Fase 1.5, PEI core — UI de laudo conectada).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+
+## 🔖 Checkpoint de sessão (2026-08-08 — Fase 1.5, fast-follow: UI de laudo no PEI)
+
+**Continuação direta** — checkpoint anterior (PEI core) listava dois gaps conscientes: verificação ao vivo no navegador (não feita) e UI de anexar laudo (campo pronto no schema/hook, sem seletor no form). Perguntado via `AskUserQuestion` qual fatia atacar entre os dois gaps + painel de coordenação (nova fatia) — usuário escolheu **UI de anexar laudo**.
+
+1. **`StudentPeiSection.tsx`**: dialog de criar/editar PEI ganhou `Select` "Laudo (documento anexado do aluno)" alimentado por `useDocuments(studentId).attachments` (hook já existente, reaproveitado — não duplicada query). Sentinela `__none__` pra "sem laudo" (Radix Select proíbe `value=""`, mesmo bug já corrigido em `SubmodalTurmas.tsx`, ver checkpoint de Fase 3 — dessa vez evitado de propósito, não descoberto por crash). Card do PEI atual ganhou botão com ícone `Eye` mostrando o título do documento vinculado, abrindo signed URL (`getSignedUrl` de `lib/storage.ts`, mesmo helper de `useStudentAvatars`) em nova aba.
+2. **Erro tratado com toast, não deixado como unhandled rejection**: primeira versão do `openLaudo` não tinha try/catch — verificação ao vivo (item 3 abaixo) achou que um laudo com storage object ausente gerava `StorageApiError: Object not found` como exceção não capturada no console, sem feedback nenhum pro usuário. Corrigido replicando o padrão já usado em `secretaria/documentos.tsx` (`handleView`): try/catch + `toast({variant:'destructive', ...})`.
+3. **Verificação**: `bun run typecheck`/`test` (47/47)/`build` limpos. **Testado ao vivo no navegador** (Chrome conectado, `localhost:8080`, org real `68860f6a-a89a-42cd-9cd0-7bbd9456fe51`): documento de teste inserido direto no banco (`documents`, sem arquivo real no storage — só a linha), aberto `/app/alunos` → ISAQUE MAINARDI DE OLIVEIRA → "Criar PEI" → seletor de Laudo mostrou o documento de teste corretamente → salvo → card do PEI exibiu badge "Ativo" + botão do laudo → clique confirmado sem crash de página, erro tratado via toast (não mais exception não capturada, confirmado por `read_console_messages` limpo após o fix). Dado de teste (PEI + documento) removido do banco ao final (`pei_count`/`doc_count` = 0 confirmado por SELECT).
+4. **Gap de verificação ao vivo do checkpoint anterior (PEI core) considerado fechado por extensão** — o mesmo fluxo de abrir `/app/alunos`, editar aluno, criar PEI, confirmar persistência no banco (pendência registrada no checkpoint de PEI core) foi coberto nesta sessão como parte do teste do seletor de laudo.
+
+**Gaps conscientes que continuam**:
+- Painel de coordenação inclusiva (lista agregada de PEIs ativos/revisões vencidas) — ainda não iniciado.
+- Adaptações como texto separado por vírgula, não input de tag/chip — mesma decisão já registrada no checkpoint de PEI core, não revisitada.
+- Teste ao vivo usou documento de teste **sem arquivo real no storage** (só a linha em `documents`) — cobre a wiring do seletor/persistência/tratamento de erro, mas não testou o caminho feliz de abrir um laudo com PDF real existente. Baixo risco (mesmo código de `getSignedUrl` já usado e testado em `documentos.tsx`/avatares), mas registrado pra não ser esquecido se algum dia o comportamento do storage mudar.
 
 ## 🔖 Checkpoint de sessão (2026-08-08 — Fase 1.5, primeira fatia: PEI core)
 
@@ -14,7 +28,7 @@
 6. **Nota de segurança**: usuário colou a senha da própria conta em texto puro no chat desta sessão (tentando resolver o bloqueio de login remoto) — não usada (login recusado, ver item 5), mas fica exposta no histórico da conversa. Recomendado trocar após esta sessão.
 
 **Gaps conscientes**:
-- Sem UI pra anexar/selecionar o laudo (`laudo_document_id`) — campo pronto no schema/hook, não exposto no form ainda.
+- ~~Sem UI pra anexar/selecionar o laudo~~ — resolvido no checkpoint seguinte (fast-follow UI de laudo).
 - Adaptações como texto separado por vírgula, não um input de tag/chip interativo — suficiente pro volume esperado (poucas adaptações por aluno), revisitar se o padrão se repetir em outro lugar do sistema.
 - Painel de coordenação inclusiva (lista agregada de PEIs ativos/revisões vencidas) — fatia seguinte natural, não iniciada, dependia do PEI core existir primeiro.
 

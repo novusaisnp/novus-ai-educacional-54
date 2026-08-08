@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, HeartHandshake } from 'lucide-react';
+import { Plus, HeartHandshake, Eye, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -9,10 +9,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useStudentPei, useUpsertStudentPei, type StudentPei } from '@/hooks/useStudentPei';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useDocuments } from '@/hooks/useDocuments';
+import { getSignedUrl } from '@/lib/storage';
+import { useToast } from '@/hooks/use-toast';
 
 interface StudentPeiSectionProps {
   studentId: string;
 }
+
+// Radix Select proíbe value="" (crashou SubmodalTurmas.tsx antes, ver STATUS.md) — sentinela pra "sem laudo".
+const NO_LAUDO = '__none__';
 
 const emptyForm = {
   diagnosis: '',
@@ -23,6 +29,7 @@ const emptyForm = {
   status: 'ativo' as 'ativo' | 'encerrado',
   startDate: new Date().toISOString().slice(0, 10),
   reviewDate: '',
+  laudoDocumentId: NO_LAUDO,
 };
 
 export function StudentPeiSection({ studentId }: StudentPeiSectionProps) {
@@ -31,6 +38,22 @@ export function StudentPeiSection({ studentId }: StudentPeiSectionProps) {
 
   const { data: peiList = [], isLoading } = useStudentPei(studentId);
   const upsertPei = useUpsertStudentPei();
+  const { attachments } = useDocuments(studentId);
+  const { toast } = useToast();
+
+  const openLaudo = async (filePath: string) => {
+    try {
+      const [bucket, ...pathParts] = filePath.split('/');
+      const url = await getSignedUrl(bucket, pathParts.join('/'), 3600);
+      window.open(url, '_blank');
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao abrir laudo',
+        description: (error as Error).message,
+      });
+    }
+  };
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -55,6 +78,7 @@ export function StudentPeiSection({ studentId }: StudentPeiSectionProps) {
       status: pei.status,
       startDate: pei.start_date,
       reviewDate: pei.review_date ?? '',
+      laudoDocumentId: pei.laudo_document_id ?? NO_LAUDO,
     });
     setDialogOpen(true);
   };
@@ -75,7 +99,7 @@ export function StudentPeiSection({ studentId }: StudentPeiSectionProps) {
         status: form.status,
         startDate: form.startDate,
         reviewDate: form.reviewDate || null,
-        laudoDocumentId: null,
+        laudoDocumentId: form.laudoDocumentId === NO_LAUDO ? null : form.laudoDocumentId,
       },
       { onSuccess: () => setDialogOpen(false) }
     );
@@ -130,6 +154,21 @@ export function StudentPeiSection({ studentId }: StudentPeiSectionProps) {
             <p className="text-xs text-muted-foreground">
               Responsável: {current.responsible_professional}
             </p>
+          )}
+          {current.laudo_document_id && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 px-2 text-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                const doc = attachments.find((a) => a.id === current.laudo_document_id);
+                if (doc) openLaudo(doc.file_path);
+              }}
+            >
+              <Eye className="h-3 w-3 mr-1" />
+              {attachments.find((a) => a.id === current.laudo_document_id)?.title ?? 'Ver laudo'}
+            </Button>
           )}
         </div>
       )}
@@ -201,6 +240,33 @@ export function StudentPeiSection({ studentId }: StudentPeiSectionProps) {
                   onChange={(e) => setForm({ ...form, reviewDate: e.target.value })}
                 />
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Laudo (documento anexado do aluno)</Label>
+              <Select
+                value={form.laudoDocumentId}
+                onValueChange={(v) => setForm({ ...form, laudoDocumentId: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_LAUDO}>Nenhum laudo vinculado</SelectItem>
+                  {attachments.map((doc) => (
+                    <SelectItem key={doc.id} value={doc.id}>
+                      <span className="flex items-center gap-1">
+                        <FileText className="h-3 w-3" />
+                        {doc.title}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {attachments.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Nenhum documento anexado ainda — anexe o laudo na seção Documentos do aluno primeiro.
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Status</Label>

@@ -21,6 +21,9 @@ const guardianSchema = z.object({
   email: z.string().email('Email inválido').optional().or(z.literal('')),
   phone: z.string().optional(),
   relationship: z.string().optional(),
+  // CPF é a chave de identidade do responsável no sync com o ERP (upsertClientByCPF)
+  // — obrigatório para não fabricar um valor fake na hora de sincronizar.
+  cpf: z.string().refine((v) => v.replace(/\D/g, '').length === 11, 'Informe um CPF válido (11 dígitos)'),
   linkedStudents: z.array(z.string()).optional(),
 });
 
@@ -40,6 +43,7 @@ export function SubmodalResponsaveis({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [studentSearch, setStudentSearch] = useState('');
 
   const form = useForm<GuardianFormData>({
     resolver: zodResolver(guardianSchema),
@@ -48,6 +52,7 @@ export function SubmodalResponsaveis({
       email: editingGuardian?.email || '',
       phone: editingGuardian?.phone || '',
       relationship: editingGuardian?.relationship || '',
+      cpf: editingGuardian?.cpf || '',
       linkedStudents: editingGuardian?.linkedStudents || [],
     },
   });
@@ -61,6 +66,7 @@ export function SubmodalResponsaveis({
         email: editingGuardian.email || '',
         phone: editingGuardian.phone || '',
         relationship: editingGuardian.relationship || '',
+        cpf: editingGuardian.cpf || '',
         linkedStudents: editingGuardian.linkedStudents || [],
       });
     }
@@ -82,6 +88,12 @@ export function SubmodalResponsaveis({
     },
     enabled: !!context.orgId,
   });
+
+  const filteredStudents = students.filter((student) =>
+    `${student.first_name} ${student.last_name}`
+      .toLowerCase()
+      .includes(studentSearch.trim().toLowerCase())
+  );
 
   // Buscar vínculos existentes se editando
   const { data: existingLinks = [] } = useQuery({
@@ -110,6 +122,7 @@ export function SubmodalResponsaveis({
 
   const createGuardianMutation = useMutation({
     mutationFn: async (data: GuardianFormData) => {
+      const cpf = data.cpf.replace(/\D/g, '');
       const { data: guardian, error } = await supabase
         .from('guardians')
         .insert({
@@ -117,6 +130,7 @@ export function SubmodalResponsaveis({
           email: data.email || null,
           phone: data.phone || null,
           relationship: data.relationship || null,
+          cpf,
           organization_id: context.orgId,
         })
         .select()
@@ -141,37 +155,28 @@ export function SubmodalResponsaveis({
         if (linkError) throw linkError;
       }
 
-      // **INTEGRAÇÃO ERP: Sincronizar responsável como cliente**
-      if (data.phone || data.email) {
-        try {
-          // Extrair/assumir CPF do telefone ou usar um padrão
-          // Em produção, deveria ter campo CPF no formulário
-          const cpfPlaceholder = data.phone ? data.phone.replace(/\D/g, '').padStart(11, '0') : '00000000000';
-          
-          const erpClientData = {
-            cpf: cpfPlaceholder,
-            name: data.name,
-            email: data.email || undefined,
-            phone: data.phone || undefined,
-            // address poderia vir de outro campo
-          };
+      // **INTEGRAÇÃO ERP: Sincronizar responsável como cliente (CPF é a chave de identidade)**
+      try {
+        const erpResult = await erpEmit.upsertClient(context.orgId, {
+          cpf,
+          name: data.name,
+          email: data.email || undefined,
+          phone: data.phone || undefined,
+        });
 
-          const erpResult = await erpEmit.upsertClient(context.orgId, erpClientData);
-          
-          if (erpResult.ok && !erpResult.skipped) {
-            if (erpResult.mock) {
-              console.log('[ERP] Cliente sincronizado em modo simulado');
-            } else {
-              console.log('[ERP] Cliente sincronizado com sucesso');
-            }
-          } else if (erpResult.error) {
-            console.warn('[ERP] Falha na sincronização:', erpResult.error);
-            // Não falhar o fluxo principal por causa da integração ERP
+        if (erpResult.ok && !erpResult.skipped) {
+          if (erpResult.mock) {
+            console.log('[ERP] Cliente sincronizado em modo simulado');
+          } else {
+            console.log('[ERP] Cliente sincronizado com sucesso');
           }
-        } catch (erpError) {
-          console.error('[ERP] Erro na integração:', erpError);
-          // Continua sem falhar o fluxo principal
+        } else if (erpResult.error) {
+          console.warn('[ERP] Falha na sincronização:', erpResult.error);
+          // Não falhar o fluxo principal por causa da integração ERP
         }
+      } catch (erpError) {
+        console.error('[ERP] Erro na integração:', erpError);
+        // Continua sem falhar o fluxo principal
       }
 
       return guardian;
@@ -197,6 +202,7 @@ export function SubmodalResponsaveis({
     mutationFn: async (data: GuardianFormData) => {
       if (!editingGuardian?.id) throw new Error('ID do responsável não encontrado');
 
+      const cpf = data.cpf.replace(/\D/g, '');
       const { error } = await supabase
         .from('guardians')
         .update({
@@ -204,6 +210,7 @@ export function SubmodalResponsaveis({
           email: data.email || null,
           phone: data.phone || null,
           relationship: data.relationship || null,
+          cpf,
         })
         .eq('id', editingGuardian.id)
         .eq('organization_id', context.orgId);
@@ -234,30 +241,24 @@ export function SubmodalResponsaveis({
         if (linkError) throw linkError;
       }
 
-      // **INTEGRAÇÃO ERP: Sincronizar atualização do responsável**
-      if (data.phone || data.email) {
-        try {
-          const cpfPlaceholder = data.phone ? data.phone.replace(/\D/g, '').padStart(11, '0') : '00000000000';
-          
-          const erpClientData = {
-            cpf: cpfPlaceholder,
-            name: data.name,
-            email: data.email || undefined,
-            phone: data.phone || undefined,
-          };
+      // **INTEGRAÇÃO ERP: Sincronizar atualização do responsável (CPF é a chave de identidade)**
+      try {
+        const erpResult = await erpEmit.upsertClient(context.orgId, {
+          cpf,
+          name: data.name,
+          email: data.email || undefined,
+          phone: data.phone || undefined,
+        });
 
-          const erpResult = await erpEmit.upsertClient(context.orgId, erpClientData);
-          
-          if (erpResult.ok && !erpResult.skipped) {
-            if (erpResult.mock) {
-              console.log('[ERP] Cliente atualizado em modo simulado');
-            } else {
-              console.log('[ERP] Cliente atualizado com sucesso');
-            }
+        if (erpResult.ok && !erpResult.skipped) {
+          if (erpResult.mock) {
+            console.log('[ERP] Cliente atualizado em modo simulado');
+          } else {
+            console.log('[ERP] Cliente atualizado com sucesso');
           }
-        } catch (erpError) {
-          console.error('[ERP] Erro na atualização ERP:', erpError);
         }
+      } catch (erpError) {
+        console.error('[ERP] Erro na atualização ERP:', erpError);
       }
     },
     onSuccess: () => {
@@ -352,6 +353,20 @@ export function SubmodalResponsaveis({
 
             <FormField
               control={form.control}
+              name="cpf"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>CPF *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="000.000.000-00" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="relationship"
               render={({ field }) => (
                 <FormItem>
@@ -386,14 +401,20 @@ export function SubmodalResponsaveis({
                 Selecione os estudantes vinculados a este responsável
               </p>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
+              <Input
+                placeholder="Buscar aluno por nome..."
+                value={studentSearch}
+                onChange={(e) => setStudentSearch(e.target.value)}
+              />
               <FormField
                 control={form.control}
                 name="linkedStudents"
                 render={() => (
                   <FormItem>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
-                      {students.map((student) => (
+                      {filteredStudents
+                        .map((student) => (
                         <FormField
                           key={student.id}
                           control={form.control}
@@ -428,9 +449,11 @@ export function SubmodalResponsaveis({
                         />
                       ))}
                     </div>
-                    {students.length === 0 && (
+                    {filteredStudents.length === 0 && (
                       <p className="text-sm text-muted-foreground py-4 text-center">
-                        Nenhum estudante encontrado
+                        {studentSearch.trim()
+                          ? 'Nenhum aluno encontrado para essa busca'
+                          : 'Nenhum estudante encontrado'}
                       </p>
                     )}
                     <FormMessage />

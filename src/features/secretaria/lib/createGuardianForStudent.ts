@@ -54,20 +54,26 @@ export async function createGuardianForStudent({
 
   if (linkError) throw linkError;
 
-  try {
-    const cpf = normalizedCpf || phone?.replace(/\D/g, '').padStart(11, '0') || '00000000000';
-    const erpResult = await erpEmit.upsertClient(orgId, {
-      cpf,
-      name,
-      email: email || undefined,
-      phone: phone || undefined,
-    });
+  // upsertClientByCPF usa o CPF como chave de identidade do cliente no ERP — sem
+  // CPF real não há como sincronizar sem risco de colidir com outro responsável
+  // (ex.: dois sem telefone cadastrado cairiam no mesmo valor fabricado).
+  if (normalizedCpf) {
+    try {
+      const erpResult = await erpEmit.upsertClient(orgId, {
+        cpf: normalizedCpf,
+        name,
+        email: email || undefined,
+        phone: phone || undefined,
+      });
 
-    if (erpResult.error) {
-      console.warn('[ERP] Falha na sincronização do responsável:', erpResult.error);
+      if (erpResult.error) {
+        console.warn('[ERP] Falha na sincronização do responsável:', erpResult.error);
+      }
+    } catch (erpError) {
+      console.error('[ERP] Erro na integração ao criar responsável:', erpError);
     }
-  } catch (erpError) {
-    console.error('[ERP] Erro na integração ao criar responsável:', erpError);
+  } else {
+    console.warn('[ERP] Responsável sem CPF — sincronização com o ERP pulada.');
   }
 
   return guardian;

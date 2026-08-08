@@ -34,6 +34,19 @@ const converterSchema = z.object({
   due_day: z.coerce.number().int().min(1, 'Escolha um dia entre 1 e 28').max(28, 'Escolha um dia entre 1 e 28'),
   signer_name: z.string().min(3, 'Digite o nome completo de quem está assinando'),
   accepted_terms: z.boolean().refine((v) => v === true, 'É necessário aceitar os termos do contrato'),
+}).superRefine((data, ctx) => {
+  // O responsável é o titular financeiro/jurídico do contrato — se há responsável,
+  // o CPF é obrigatório (é a chave de identidade do cliente no ERP).
+  if (data.guardian_name) {
+    const digits = (data.guardian_document_id || '').replace(/\D/g, '');
+    if (digits.length !== 11) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Informe um CPF válido (11 dígitos) para o responsável',
+        path: ['guardian_document_id'],
+      });
+    }
+  }
 });
 
 type ConverterFormData = z.infer<typeof converterSchema>;
@@ -373,7 +386,7 @@ export function ConverterReservaDialog({ open, onClose, application, orgId }: Co
                       name="guardian_document_id"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>CPF</FormLabel>
+                          <FormLabel>CPF {form.watch('guardian_name') && '*'}</FormLabel>
                           <FormControl><Input placeholder="000.000.000-00" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>

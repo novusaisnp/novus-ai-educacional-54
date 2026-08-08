@@ -4,7 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useStudents } from '@/hooks/useStudents';
 import { useGrades } from '@/hooks/useGrades';
-import { useCanEditGrades } from '@/hooks/useUserRole';
+import { useCanEditGrades, useUserRole } from '@/hooks/useUserRole';
+import { useSession } from '@/hooks/useSession';
+import { useClassSubjects } from '@/hooks/useClassSubjects';
 import { GradesFilters } from '@/components/academico/notas/GradesFilters';
 import { GradeInputCell } from '@/components/academico/notas/GradeInputCell';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -155,6 +157,24 @@ export default function NotasPage() {
     gcTime: 10 * 60 * 1000,
   });
 
+  // Currículo da turma selecionada (Fase 3 — atribuição disciplina↔turma↔professor,
+  // mesmo padrão já aplicado em chamada.tsx). Sem turma escolhida ("all"), mantém a
+  // lista completa de disciplinas — não há currículo de uma turma específica pra filtrar.
+  const { user: currentUser } = useSession();
+  const { data: userRole } = useUserRole();
+  const { data: classSubjects = [] } = useClassSubjects(memoizedFilters.classId);
+
+  const availableSubjects = useMemo(() => {
+    if (!memoizedFilters.classId || classSubjects.length === 0) return subjects;
+
+    const assigned = userRole === 'professor'
+      ? classSubjects.filter((cs) => cs.teacher_id === currentUser?.id)
+      : classSubjects;
+
+    const assignedIds = new Set(assigned.map((cs) => cs.subject_id));
+    return subjects.filter((s) => assignedIds.has(s.id));
+  }, [subjects, classSubjects, userRole, currentUser?.id, memoizedFilters.classId]);
+
   // Hook para estudantes
   const { data: students = [], isLoading: isLoadingStudents } = useStudents(memoizedFilters.classId);
 
@@ -221,7 +241,7 @@ export default function NotasPage() {
         onSubjectChange={handleSubjectChange}
         onAssessmentChange={handleAssessmentChange}
         classes={classes}
-        subjects={subjects}
+        subjects={availableSubjects}
         assessments={assessments}
         isLoading={isLoading}
       />

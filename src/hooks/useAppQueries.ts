@@ -44,6 +44,28 @@ export const useSubjects = () => {
   });
 };
 
+export const useTeachers = () => {
+  const { data: orgData } = useOrganization();
+
+  return useQuery({
+    queryKey: ['teachers', orgData?.organization_id],
+    queryFn: async () => {
+      if (!orgData?.organization_id) return [];
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .eq('organization_id', orgData.organization_id)
+        .eq('role', 'professor')
+        .order('full_name');
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!orgData?.organization_id,
+  });
+};
+
 export const usePeriods = () => {
   const { data: orgData } = useOrganization();
 

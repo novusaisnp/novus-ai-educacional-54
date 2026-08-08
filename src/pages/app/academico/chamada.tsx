@@ -21,6 +21,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/hooks/useOrganization';
+import { useSession } from '@/hooks/useSession';
+import { useUserRole } from '@/hooks/useUserRole';
+import { useClassSubjects } from '@/hooks/useClassSubjects';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
 import { isSchoolDay } from '@/lib/schoolCalendar';
@@ -95,18 +98,36 @@ export default function Chamada() {
     queryKey: ['subjects', orgData?.organization_id],
     queryFn: async () => {
       if (!orgData?.organization_id) return [];
-      
+
       const { data, error } = await supabase
         .from('subjects')
         .select('id, name, code')
         .eq('organization_id', orgData.organization_id)
         .order('name');
-        
+
       if (error) throw error;
       return data;
     },
     enabled: !!orgData?.organization_id,
   });
+
+  // Currículo da turma selecionada (Fase 3 — atribuição disciplina↔turma↔professor).
+  // Turma sem nenhuma atribuição configurada ainda cai no fallback "mostrar todas as
+  // disciplinas" (transição, não quebra chamada.tsx pra turmas não configuradas).
+  const { user: currentUser } = useSession();
+  const { data: userRole } = useUserRole();
+  const { data: classSubjects = [] } = useClassSubjects(classId || undefined);
+
+  const availableSubjects = useMemo(() => {
+    if (classSubjects.length === 0) return subjects;
+
+    const assigned = userRole === 'professor'
+      ? classSubjects.filter((cs) => cs.teacher_id === currentUser?.id)
+      : classSubjects;
+
+    const assignedIds = new Set(assigned.map((cs) => cs.subject_id));
+    return subjects.filter((s) => assignedIds.has(s.id));
+  }, [subjects, classSubjects, userRole, currentUser?.id]);
 
   // Query para calendário letivo (períodos + exceções), usada só pro aviso não-bloqueante abaixo
   const { data: periods = [] } = useQuery({
@@ -451,13 +472,21 @@ export default function Chamada() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {subjects.map((subject) => (
+                        {availableSubjects.map((subject) => (
                           <SelectItem key={subject.id} value={subject.id}>
                             {subject.name} {subject.code && `(${subject.code})`}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                    {classId && availableSubjects.length === 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        Nenhuma disciplina atribuída a você nesta turma.{' '}
+                        <Link to="/app/academico/curriculo" className="underline">
+                          Ver currículo
+                        </Link>
+                      </p>
+                    )}
                   </FormItem>
                 )}
               />

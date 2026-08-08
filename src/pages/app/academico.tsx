@@ -82,18 +82,21 @@ export default function Academico() {
           </CardContent>
         </Card>
 
-        <Card className="opacity-50">
+        <Card>
           <CardHeader>
             <div className="flex items-center space-x-3">
               <IconBadge icon={BookOpen} tone="success" />
               <div>
                 <CardTitle className="text-xl">Currículo</CardTitle>
-                <CardDescription>Gestão de currículo e conteúdos</CardDescription>
+                <CardDescription>Disciplinas e professores por turma</CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">Em desenvolvimento...</p>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">Defina quais disciplinas cada turma tem e quem leciona cada uma</p>
+            <Button asChild>
+              <Link to="/app/academico/curriculo">Abrir Currículo</Link>
+            </Button>
           </CardContent>
         </Card>
 

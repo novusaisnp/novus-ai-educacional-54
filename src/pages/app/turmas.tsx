@@ -13,11 +13,16 @@ import { ClassInsert, ClassUpdate } from '@/integrations/supabase/db-types';
 import { useOrganization } from '@/hooks/useOrganization';
 import { SubmodalTurmas } from '@/features/secretaria/turmas/SubmodalTurmas';
 import { ModalMestre } from '@/features/secretaria/hub/ModalMestre';
+import type { Database } from '@/integrations/supabase/types';
+
+type ClassWithEnrollmentCount = Database['public']['Tables']['classes']['Row'] & {
+  enrollments: { count: number }[];
+};
 
 export default function Turmas() {
   const [searchParams] = useSearchParams();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [editingClass, setEditingClass] = useState<any>(null);
+  const [editingClass, setEditingClass] = useState<ClassWithEnrollmentCount | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(searchParams.get('modal') === 'turmas');
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -84,7 +89,7 @@ export default function Turmas() {
     },
   });
 
-  const handleEdit = (classItem: any) => {
+  const handleEdit = (classItem: ClassWithEnrollmentCount) => {
     setEditingClass(classItem);
     setIsCreateOpen(true);
   };

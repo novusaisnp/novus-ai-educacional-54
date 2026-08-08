@@ -8,7 +8,7 @@ global.fetch = vi.fn()
 global.caches = {
   match: vi.fn(),
   open: vi.fn()
-} as any
+} as unknown as CacheStorage
 
 // Mock navigator APIs
 Object.defineProperty(navigator, 'serviceWorker', {
@@ -74,7 +74,7 @@ describe('PWA Diagnostics', () => {
       }
 
       vi.mocked(navigator.serviceWorker.getRegistration).mockResolvedValue(
-        mockRegistration as any
+        mockRegistration as unknown as ServiceWorkerRegistration
       )
 
       const registration = await navigator.serviceWorker.getRegistration('/portal/')

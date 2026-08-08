@@ -222,7 +222,7 @@ export const useBIAlertas = () => {
 
       // Contar alertas por categoria
       const alertsByCategory = (alerts || []).reduce((acc, alert) => {
-        const category = (alert.payload as any)?.category || 'outros';
+        const category = (alert.payload as { category?: string } | null)?.category || 'outros';
         acc[category] = (acc[category] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);

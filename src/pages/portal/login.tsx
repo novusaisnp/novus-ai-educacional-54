@@ -79,7 +79,7 @@ export default function PortalLogin() {
       });
 
       navigate('/portal/dashboard');
-    } catch (error: any) {
+    } catch {
       await logAuditSafe('portal_auth', {
         outcome: 'error',
         reason: 'system_error',

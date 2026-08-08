@@ -42,7 +42,7 @@ import {
 interface NavItem {
   title: string
   url: string
-  icon?: React.ComponentType<any>
+  icon?: React.ComponentType<{ className?: string }>
   isActive?: boolean
   items?: NavItem[]
 }

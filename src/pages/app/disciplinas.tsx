@@ -15,6 +15,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { SubjectInsert, SubjectUpdate } from '@/integrations/supabase/db-types';
+import type { Database } from '@/integrations/supabase/types';
+
+type Subject = Database['public']['Tables']['subjects']['Row'];
 import { useOrganization } from '@/hooks/useOrganization';
 import { SubmodalDisciplinas } from '@/features/secretaria/disciplinas/SubmodalDisciplinas';
 import { ModalMestre } from '@/features/secretaria/hub/ModalMestre';
@@ -32,7 +35,7 @@ export default function Disciplinas() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(searchParams.get('modal') === 'disciplinas');
-  const [editingSubject, setEditingSubject] = useState<any>(null);
+  const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -167,7 +170,7 @@ export default function Disciplinas() {
     subjectMutation.mutate(data);
   };
 
-  const handleEdit = (subject: any) => {
+  const handleEdit = (subject: Subject) => {
     setEditingSubject(subject);
     form.reset({
       name: subject.name,

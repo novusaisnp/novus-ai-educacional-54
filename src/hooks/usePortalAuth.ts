@@ -2,13 +2,16 @@ import { useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import type { Database } from '@/integrations/supabase/types';
+
+type Guardian = Database['public']['Tables']['guardians']['Row'];
 
 interface UsePortalAuthReturn {
   session: Session | null;
   user: User | null;
   loading: boolean;
   isGuardian: boolean;
-  guardian: any | null;
+  guardian: Guardian | null;
 }
 
 export function usePortalAuth(): UsePortalAuthReturn {

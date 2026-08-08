@@ -19,7 +19,7 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
-import { useAssessments, useAssessmentMutations } from '@/hooks/useAssessments';
+import { useAssessments, useAssessmentMutations, Assessment } from '@/hooks/useAssessments';
 import { useClasses, useSubjects, useAcademicTerms } from '@/hooks/useAppQueries';
 import { useAssessmentFeedback } from '@/hooks/useAI';
 import { useOrganization } from '@/hooks/useOrganization';
@@ -53,16 +53,23 @@ const assessmentSchema = z.object({
 
 type AssessmentFormData = z.infer<typeof assessmentSchema>;
 
+interface AIFeedback {
+  grammar_score?: number;
+  coherence_score?: number;
+  overall_feedback?: string;
+  suggestions?: string[];
+}
+
 export default function Avaliacoes() {
   const searchParams = new URLSearchParams(window.location.search);
   const openModal = searchParams.get('modal') === 'avaliacao';
   const action = searchParams.get('action');
 
   const [isModalOpen, setIsModalOpen] = useState(openModal);
-  const [editingAssessment, setEditingAssessment] = useState<any>(null);
+  const [editingAssessment, setEditingAssessment] = useState<Assessment | null>(null);
   const [aiModalOpen, setAiModalOpen] = useState(false);
-  const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
-  const [feedbackData, setFeedbackData] = useState<any>(null);
+  const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
+  const [feedbackData, setFeedbackData] = useState<AIFeedback | null>(null);
   const [filters, setFilters] = useState({
     classId: '',
     subjectId: '',
@@ -132,7 +139,7 @@ export default function Avaliacoes() {
     }
   };
 
-  const handleEdit = (assessment: any) => {
+  const handleEdit = (assessment: Assessment) => {
     setEditingAssessment(assessment);
     form.reset({
       title: assessment.title,
@@ -141,7 +148,7 @@ export default function Avaliacoes() {
       class_id: assessment.class_id,
       subject_id: assessment.subject_id,
       term_id: assessment.term_id ?? '',
-      assessment_type: assessment.assessment_type ?? 'regular',
+      assessment_type: (assessment.assessment_type as AssessmentFormData['assessment_type']) ?? 'regular',
       recovers_term_id: assessment.recovers_term_id ?? undefined,
     });
     setIsModalOpen(true);
@@ -160,7 +167,7 @@ export default function Avaliacoes() {
     });
   };
 
-  const handleAiCorrection = async (assessment: any) => {
+  const handleAiCorrection = async (assessment: Assessment) => {
     if (!orgData?.organization_id) {
       safeToast({
         variant: 'destructive',

@@ -252,7 +252,7 @@ export default function PortalDemandas() {
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="font-medium">
-                          {(request.payload as any)?.subject || 'Sem assunto'}
+                          {(request.payload as { subject?: string } | null)?.subject || 'Sem assunto'}
                         </h3>
                         <Badge variant={getStatusVariant(request.status)}>
                           {getStatusIcon(request.status)}
@@ -260,7 +260,7 @@ export default function PortalDemandas() {
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground mb-2">
-                        {(request.payload as any)?.description || 'Sem descrição'}
+                        {(request.payload as { description?: string } | null)?.description || 'Sem descrição'}
                       </p>
                       <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                         <span>

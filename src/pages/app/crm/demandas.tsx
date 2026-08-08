@@ -213,7 +213,7 @@ export default function CRMDemandas() {
     const validTabs = ["todas", "financeiro", "financeiro-ia", "documentos", "reclamacao", "outros"] as const;
     
     // Verificar se é uma aba válida
-    if (!validTabs.includes(value as any)) return;
+    if (!validTabs.includes(value as (typeof validTabs)[number])) return;
     
     // Guard: só permite acesso ao Financeiro IA se tiver permissão
     if (value === "financeiro-ia" && !canUseFinanceiroIA) {

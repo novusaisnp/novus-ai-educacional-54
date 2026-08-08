@@ -30,6 +30,14 @@ const enrollmentSchema = z.object({
 
 type EnrollmentFormData = z.infer<typeof enrollmentSchema>;
 
+interface EnrollmentRow {
+  id: string;
+  student_id: string;
+  class_id: string;
+  status: string;
+  enrollment_date: string | null;
+}
+
 export default function Matriculas() {
   const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
@@ -37,7 +45,7 @@ export default function Matriculas() {
   const [classFilter, setClassFilter] = useState('');
   const [yearFilter, setYearFilter] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [editingEnrollment, setEditingEnrollment] = useState<any>(null);
+  const [editingEnrollment, setEditingEnrollment] = useState<EnrollmentRow | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(searchParams.get('modal') === 'matriculas');
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -242,12 +250,12 @@ export default function Matriculas() {
     enrollmentMutation.mutate(data);
   };
 
-  const handleEdit = (enrollment: any) => {
+  const handleEdit = (enrollment: EnrollmentRow) => {
     setEditingEnrollment(enrollment);
     form.reset({
       student_id: enrollment.student_id,
       class_id: enrollment.class_id,
-      status: enrollment.status,
+      status: enrollment.status as EnrollmentFormData['status'],
       enrollment_date: enrollment.enrollment_date || '',
     });
     setIsCreateOpen(true);

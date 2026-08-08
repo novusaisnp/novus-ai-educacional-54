@@ -121,8 +121,8 @@ export default function ConselhoClasse() {
       const [bucket, ...pathParts] = doc.file_path.split('/');
       const url = await getSignedUrl(bucket, pathParts.join('/'), 300);
       window.open(url, '_blank');
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Erro ao baixar ata', description: error.message });
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Erro ao baixar ata', description: error instanceof Error ? error.message : String(error) });
     }
   }, [council?.document_id, toast]);
 

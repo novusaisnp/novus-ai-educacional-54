@@ -5,6 +5,7 @@ import { usePortalAuth } from './usePortalAuth';
 import { logAudit } from '@/lib/audit/logAudit';
 import { logger } from '@/lib/logger';
 import { useOrganization } from './useOrganization';
+import type { Json } from '@/integrations/supabase/types';
 
 export const usePortalData = () => {
   const { guardian } = usePortalAuth();
@@ -75,7 +76,7 @@ export const usePortalData = () => {
 
   // Create interaction mutation
   const createInteractionMutation = useMutation({
-    mutationFn: async (data: { channel: string; summary: string; payload?: any }) => {
+    mutationFn: async (data: { channel: string; summary: string; payload?: Json }) => {
       if (!guardian?.id || !orgId) throw new Error('Guardian ou organização não encontrada');
 
       const { error } = await supabase
@@ -118,7 +119,7 @@ export const usePortalData = () => {
 
   // Create request mutation
   const createRequestMutation = useMutation({
-    mutationFn: async (data: { request_type: string; payload: any }) => {
+    mutationFn: async (data: { request_type: string; payload: Json }) => {
       if (!guardian?.id || !orgId) throw new Error('Guardian ou organização não encontrada');
 
       const { error } = await supabase

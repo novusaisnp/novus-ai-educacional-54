@@ -99,8 +99,8 @@ export default function Transferencias() {
       const [bucket, ...pathParts] = doc.file_path.split('/');
       const url = await getSignedUrl(bucket, pathParts.join('/'), 300);
       window.open(url, '_blank');
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Erro ao baixar guia', description: error.message });
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Erro ao baixar guia', description: error instanceof Error ? error.message : String(error) });
     }
   }, [toast]);
 

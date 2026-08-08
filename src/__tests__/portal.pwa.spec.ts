@@ -35,9 +35,14 @@ Object.defineProperty(window, 'matchMedia', {
 })
 
 // Mock PWA Manager
+interface MockInstallPrompt {
+  prompt: () => void
+  userChoice: Promise<{ outcome: string }>
+}
+
 class MockPWAManager {
   private isRegistered = false
-  private installPrompt: any = null
+  private installPrompt: MockInstallPrompt | null = null
 
   async registerServiceWorker(): Promise<boolean> {
     try {
@@ -103,7 +108,7 @@ describe('Portal PWA Tests', () => {
       scope: '/portal/',
       update: vi.fn(),
       addEventListener: vi.fn()
-    } as any)
+    } as unknown as ServiceWorkerRegistration)
 
     // Test service worker registration
     const registered = await pwaManager.registerServiceWorker()
@@ -126,7 +131,7 @@ describe('Portal PWA Tests', () => {
         put: vi.fn(),
         addAll: vi.fn()
       })
-    } as any
+    } as unknown as CacheStorage
 
     // Simulate service worker fetch handler offline behavior
     const createOfflineResponse = () => {

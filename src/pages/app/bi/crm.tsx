@@ -62,7 +62,7 @@ export default function BICRM() {
   ];
 
   // Dados para gráficos baseados nos dados reais
-  const leadsByMonth = crmData?.leadsByMonth.reduce((acc: any[], curr) => {
+  const leadsByMonth = crmData?.leadsByMonth.reduce((acc: Array<{ month: string; leads: number }>, curr) => {
     const month = new Date(curr.visit_date).getMonth();
     const monthName = new Date(curr.visit_date).toLocaleDateString('pt-BR', { month: 'short' });
     
@@ -78,7 +78,7 @@ export default function BICRM() {
     return acc;
   }, []) || [];
 
-  const requestsByStatus = crmData?.requestsByStatus.reduce((acc: any[], curr) => {
+  const requestsByStatus = crmData?.requestsByStatus.reduce((acc: Array<{ status: string; count: number }>, curr) => {
     const existing = acc.find(item => item.status === curr.status);
     if (existing) {
       existing.count += 1;
@@ -91,7 +91,7 @@ export default function BICRM() {
     return acc;
   }, []) || [];
 
-  const interactionsByChannel = crmData?.interactionsByChannel.reduce((acc: any[], curr) => {
+  const interactionsByChannel = crmData?.interactionsByChannel.reduce((acc: Array<{ channel: string; count: number; color: string }>, curr) => {
     const existing = acc.find(item => item.channel === curr.channel);
     if (existing) {
       existing.count += 1;

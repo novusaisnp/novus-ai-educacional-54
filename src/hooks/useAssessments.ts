@@ -5,7 +5,7 @@ import { useOrganization } from '@/hooks/useOrganization';
 
 export type AssessmentType = 'regular' | 'recuperacao';
 
-interface Assessment {
+export interface Assessment {
   id: string;
   title: string;
   date: string;
@@ -13,7 +13,7 @@ interface Assessment {
   class_id: string;
   subject_id: string;
   term_id: string | null;
-  assessment_type: AssessmentType;
+  assessment_type: string;
   recovers_term_id: string | null;
   organization_id: string;
   created_at: string;

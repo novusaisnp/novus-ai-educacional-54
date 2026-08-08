@@ -88,7 +88,7 @@ describe('PWAProvider', () => {
     )
 
     // Simulate beforeinstallprompt event
-    const mockEvent = new Event('beforeinstallprompt') as any
+    const mockEvent = new Event('beforeinstallprompt')
     mockEvent.preventDefault = vi.fn()
     
     fireEvent(window, mockEvent)

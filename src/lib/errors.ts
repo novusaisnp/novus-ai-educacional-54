@@ -10,7 +10,7 @@ export interface ErrorWithCode extends Error {
 export interface ErrorHandlerOptions {
   showToast?: boolean;
   fallbackMessage?: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 export class ErrorHandler {

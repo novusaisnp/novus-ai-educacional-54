@@ -4,6 +4,7 @@ import { logger } from "@/lib/logger";
 import { logAudit } from "@/lib/audit/logAudit";
 import { buildPortalLink, DeepLink } from "./deeplinks";
 import type { NotificationQueueInsert, NotificationDeliveriesInsert } from "@/integrations/supabase/db-types";
+import type { Json } from "@/integrations/supabase/types";
 
 // Tipos simples para uso no app
 export type NotificationChannel = "email" | "whatsapp";
@@ -13,15 +14,15 @@ export type EnqueueArgs = {
   channel: NotificationChannel;
   event_type: string;
   recipient: string; // email ou E.164
-  payload: Record<string, any>;
+  payload: Record<string, Json>;
   template_id?: string;
 };
 
 // Util para construir link do Portal e injetar em payload
 export function withDeepLink(
-  payload: Record<string, any>,
+  payload: Record<string, Json>,
   link: DeepLink
-): Record<string, any> {
+): Record<string, Json> {
   return { ...payload, link: buildPortalLink(link) };
 }
 
@@ -53,7 +54,7 @@ async function insertInteractionIfPossible(args: {
   performed_by?: string | null;
   entity_type?: string;
   entity_id?: string;
-  payload?: Record<string, any>;
+  payload?: Record<string, Json>;
 }) {
   const { organization_id, channel, summary, performed_by, entity_type, entity_id, payload } = args;
   if (!performed_by) return;
@@ -62,8 +63,8 @@ async function insertInteractionIfPossible(args: {
     organization_id,
     channel,
     direction: "outbound",
-    entity_type: entity_type ?? payload?.owner_type ?? "guardian",
-    entity_id: entity_id ?? payload?.owner_id ?? null,
+    entity_type: entity_type ?? (payload?.owner_type as string | undefined) ?? "guardian",
+    entity_id: entity_id ?? (payload?.owner_id as string | undefined) ?? null,
     summary,
     performed_by,
     payload: payload ?? {},

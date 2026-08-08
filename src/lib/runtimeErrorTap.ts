@@ -3,13 +3,14 @@ import { logger } from '@/lib/logger';
 export function tapRuntimeErrors() {
   if (typeof window === 'undefined') return;
   
-  const once = (type: 'error' | 'unhandledrejection', ev: any) => {
+  const once = (type: 'error' | 'unhandledrejection', ev: ErrorEvent | PromiseRejectionEvent) => {
     try {
-      const msg = type === 'error' ? ev?.error?.message || ev?.message : ev?.reason?.message || String(ev?.reason);
-      const stack = type === 'error' ? ev?.error?.stack : ev?.reason?.stack;
+      const err = type === 'error' ? (ev as ErrorEvent).error : (ev as PromiseRejectionEvent).reason;
+      const msg = err?.message || (type === 'error' ? (ev as ErrorEvent).message : String(err));
+      const stack = err?.stack;
       logger.error('[RUNTIME]', { type, msg, stack });
       console.error('[RUNTIME]', type, msg, stack);
-    } catch {}
+    } catch { /* no-op */ }
   };
   
   window.addEventListener('error', (e) => once('error', e));

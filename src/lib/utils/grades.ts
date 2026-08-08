@@ -26,7 +26,18 @@ export const chunkArray = <T>(array: T[], chunkSize: number): T[][] => {
   return chunks;
 };
 
-export const buildGradesMap = (grades: any[]): Record<string, number | undefined> => {
+interface GradeRow {
+  student_id: string;
+  assessment_id: string;
+  grade: number | null;
+}
+
+interface AssessmentWeight {
+  id: string;
+  weight: number;
+}
+
+export const buildGradesMap = (grades: GradeRow[]): Record<string, number | undefined> => {
   const map: Record<string, number | undefined> = {};
   
   grades.forEach(grade => {
@@ -39,7 +50,7 @@ export const buildGradesMap = (grades: any[]): Record<string, number | undefined
 
 export const calculateWeightedAverage = (
   studentId: string, 
-  assessments: any[], 
+  assessments: AssessmentWeight[],
   gradesMap: Record<string, number | undefined>
 ): number | null => {
   let totalWeightedGrades = 0;

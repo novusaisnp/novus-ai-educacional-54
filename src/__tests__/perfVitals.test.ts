@@ -1,26 +1,31 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+type WebVitalMetric = { name: string; value: number; id: string }
+type WebVitalCallback = (cb: (metric: WebVitalMetric) => void) => void
+
 vi.mock('web-vitals', () => {
   return {
-    onLCP: (cb: any) => cb({ name: 'LCP', value: 2200, id: 'x' }),
-    onCLS: (cb: any) => cb({ name: 'CLS', value: 0.08, id: 'y' }),
-    onINP: (cb: any) => cb({ name: 'INP', value: 180, id: 'z' }),
-    onFCP: (cb: any) => cb({ name: 'FCP', value: 1500, id: 'a' }),
-    onTTFB: (cb: any) => cb({ name: 'TTFB', value: 700, id: 'b' }),
+    onLCP: ((cb) => cb({ name: 'LCP', value: 2200, id: 'x' })) as WebVitalCallback,
+    onCLS: ((cb) => cb({ name: 'CLS', value: 0.08, id: 'y' })) as WebVitalCallback,
+    onINP: ((cb) => cb({ name: 'INP', value: 180, id: 'z' })) as WebVitalCallback,
+    onFCP: ((cb) => cb({ name: 'FCP', value: 1500, id: 'a' })) as WebVitalCallback,
+    onTTFB: ((cb) => cb({ name: 'TTFB', value: 700, id: 'b' })) as WebVitalCallback,
   }
 })
 
 vi.stubGlobal('navigator', { userAgent: 'UA', onLine: true })
-vi.stubGlobal('document', { visibilityState: 'visible', referrer: '' } as any)
-vi.stubGlobal('window', { location: { pathname: '/teste' }, addEventListener: vi.fn() } as any)
+vi.stubGlobal('document', { visibilityState: 'visible', referrer: '' } as unknown as Document)
+vi.stubGlobal('window', { location: { pathname: '/teste' }, addEventListener: vi.fn() } as unknown as Window)
 
 import { initPerfVitals } from '@/utils/perfVitals'
 
+type WindowWithPerfInit = Window & { __NOVUS_PERF_INIT__?: boolean }
+
 describe('perf vitals', () => {
   beforeEach(() => {
-    ;(window as any).__NOVUS_PERF_INIT__ = undefined
-    ;(window as any).__NOVUS_PERF__ = undefined
+    (window as WindowWithPerfInit).__NOVUS_PERF_INIT__ = undefined
+    window.__NOVUS_PERF__ = undefined
   })
 
   it('envia auditoria com métricas', () => {

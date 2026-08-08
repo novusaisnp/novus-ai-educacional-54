@@ -1,6 +1,7 @@
 
 import { logAudit } from '@/lib/audit';
 import { logger } from '@/lib/logger';
+import type { Json } from '@/integrations/supabase/types';
 
 // Lista de campos PII que devem ser removidos (comparação por nome exato de campo)
 const PII_FIELDS = new Set([
@@ -58,13 +59,13 @@ export async function logAuditSafe(
     await logAudit({
       table_name: 'ui_events',
       action,
-      diff: cleanPayload,
+      diff: cleanPayload as Record<string, Json>,
       organization_id: organizationId,
     });
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Failed to log audit safely', {
       action,
-      error: error?.message
+      error: error instanceof Error ? error.message : String(error)
     });
   }
 }

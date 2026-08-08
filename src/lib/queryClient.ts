@@ -1,13 +1,21 @@
 import { QueryClient } from '@tanstack/react-query'
 import { logger } from '@/lib/logger'
 
+// Erros do PostgREST/Supabase chegam com code/details além de message — não são
+// Error puro, mas também não têm shape garantido, daí os campos opcionais.
+interface QueryError {
+  message?: string
+  code?: string
+  details?: string
+}
+
 // Configure TanStack Query v5 with optimized settings for pre-launch
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000,      // 5 minutes - conforme especificação
       gcTime: 10 * 60 * 1000,       // 10 minutes - conforme especificação
-      retry: (failureCount, error: any) => {
+      retry: (failureCount, error: QueryError) => {
         // Log failed queries for monitoring
         logger.warn('Query retry attempt', { 
           failureCount, 
@@ -27,7 +35,7 @@ export const queryClient = new QueryClient({
     },
     mutations: {
       retry: false, // Don't retry mutations by default
-      onError: (error: any) => {
+      onError: (error: QueryError) => {
         logger.error('Mutation failed', {
           error: error?.message,
           code: error?.code,
@@ -40,7 +48,7 @@ export const queryClient = new QueryClient({
 
 // Add global error handling
 queryClient.setMutationDefaults(['default'], {
-  onError: (error: any) => {
+  onError: (error: QueryError) => {
     logger.error('Global mutation error', {
       error: error?.message,
       code: error?.code

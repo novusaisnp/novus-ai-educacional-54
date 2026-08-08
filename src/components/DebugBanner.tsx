@@ -16,7 +16,7 @@ export default function DebugBanner() {
         const { supabase } = await import("@/integrations/supabase/client")
         const { data } = await supabase.auth.getSession()
         setUserId(data.session?.user?.id ?? null)
-      } catch {}
+      } catch { /* no-op */ }
     })()
   }, [])
 

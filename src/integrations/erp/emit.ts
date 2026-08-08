@@ -5,7 +5,7 @@
  * Gerencia logs discretos e controle de erros
  */
 
-import { erpClient } from './client';
+import { erpClient, type ERPClientData, type CreateReceivableInput, type ERPClientResponse } from './client';
 import { getERPConfig } from '@/lib/featureFlags';
 import { toast } from '@/hooks/use-toast';
 
@@ -13,14 +13,14 @@ export interface ERPResult {
   ok: boolean;
   skipped?: boolean;
   mock?: boolean;
-  data?: any;
+  data?: unknown;
   error?: string;
 }
 
 export async function withERP(
   orgId: string,
   fnName: keyof typeof erpClient,
-  args: any[]
+  args: unknown[]
 ): Promise<ERPResult> {
   try {
     const config = await getERPConfig(orgId);
@@ -32,7 +32,7 @@ export async function withERP(
     }
 
     // Executar função do cliente ERP
-    const clientMethod = erpClient[fnName] as Function;
+    const clientMethod = erpClient[fnName] as (...args: unknown[]) => Promise<ERPClientResponse>;
     if (!clientMethod) {
       console.error(`[ERP] Método ${String(fnName)} não encontrado`);
       return { ok: false, error: `Método ${String(fnName)} não implementado` };
@@ -67,11 +67,11 @@ export async function withERP(
 
 // Helpers específicos para eventos comuns
 export const erpEmit = {
-  async upsertClient(orgId: string, clientData: any) {
+  async upsertClient(orgId: string, clientData: ERPClientData) {
     return withERP(orgId, 'upsertClientByCPF', [clientData]);
   },
 
-  async createReceivable(orgId: string, receivableData: any) {
+  async createReceivable(orgId: string, receivableData: CreateReceivableInput) {
     return withERP(orgId, 'createReceivable', [receivableData]);
   },
 

@@ -3,10 +3,10 @@
 export interface CsvColumn {
   key: string;
   label: string;
-  format?: (value: any) => string;
+  format?: (value: unknown) => string;
 }
 
-export const toCsv = (data: Record<string, any>[], columns: CsvColumn[]): string => {
+export const toCsv = (data: Record<string, unknown>[], columns: CsvColumn[]): string => {
   // Cabeçalho
   const headers = columns.map(col => col.label).join(',');
   

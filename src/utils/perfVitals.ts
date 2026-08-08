@@ -77,7 +77,7 @@ function enqueue(payload: any) {
     const arr = raw ? JSON.parse(raw) : []
     arr.push({ ...payload, ts: nowISO() })
     localStorage.setItem(QUEUE_KEY, JSON.stringify(arr))
-  } catch {}
+  } catch { /* no-op */ }
 }
 
 function flushQueue(send: (e: string, p: any) => void) {
@@ -87,7 +87,7 @@ function flushQueue(send: (e: string, p: any) => void) {
     const arr = JSON.parse(raw)
     for (const item of arr) send('perf_vitals', item)
     localStorage.removeItem(QUEUE_KEY)
-  } catch {}
+  } catch { /* no-op */ }
 }
 
 function shouldSample(sampleRate: number) {

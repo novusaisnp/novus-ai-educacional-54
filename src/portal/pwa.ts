@@ -94,8 +94,10 @@ class PWAManager {
   }
 
   isInstalled(): boolean {
+    // `standalone` é propriedade não-padrão do Safari/iOS, ausente no lib.dom Navigator.
+    const nav = window.navigator as Navigator & { standalone?: boolean };
     return window.matchMedia('(display-mode: standalone)').matches ||
-           (window.navigator as any).standalone === true;
+           nav.standalone === true;
   }
 
   private notifyUpdateAvailable(): void {

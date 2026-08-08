@@ -6,7 +6,7 @@ interface LogEntry {
   level: LogLevel;
   message: string;
   timestamp: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
   userId?: string;
   organizationId?: string;
 }
@@ -14,7 +14,7 @@ interface LogEntry {
 class Logger {
   private isDevelopment = process.env.NODE_ENV === 'development';
 
-  private createLogEntry(level: LogLevel, message: string, context?: Record<string, any>): LogEntry {
+  private createLogEntry(level: LogLevel, message: string, context?: Record<string, unknown>): LogEntry {
     return {
       level,
       message,
@@ -33,7 +33,7 @@ class Logger {
     return `[${entry.timestamp}] ${entry.level.toUpperCase()}: ${entry.message}${contextStr}`;
   }
 
-  debug(message: string, context?: Record<string, any>): void {
+  debug(message: string, context?: Record<string, unknown>): void {
     if (!this.shouldLog('debug')) return;
     const entry = this.createLogEntry('debug', message, context);
     if (this.isDevelopment) {
@@ -41,7 +41,7 @@ class Logger {
     }
   }
 
-  info(message: string, context?: Record<string, any>): void {
+  info(message: string, context?: Record<string, unknown>): void {
     if (!this.shouldLog('info')) return;
     const entry = this.createLogEntry('info', message, context);
     if (this.isDevelopment) {
@@ -49,13 +49,13 @@ class Logger {
     }
   }
 
-  warn(message: string, context?: Record<string, any>): void {
+  warn(message: string, context?: Record<string, unknown>): void {
     if (!this.shouldLog('warn')) return;
     const entry = this.createLogEntry('warn', message, context);
     console.warn(this.formatLog(entry));
   }
 
-  error(message: string, context?: Record<string, any>): void {
+  error(message: string, context?: Record<string, unknown>): void {
     if (!this.shouldLog('error')) return;
     const entry = this.createLogEntry('error', message, context);
     console.error(this.formatLog(entry));

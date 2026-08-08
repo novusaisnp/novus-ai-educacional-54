@@ -58,7 +58,7 @@ function enqueue(event: string, payload: any) {
     const arr = raw ? JSON.parse(raw) : []
     arr.push({ event, payload, ts: nowISO() })
     localStorage.setItem(QUEUE_KEY, JSON.stringify(arr))
-  } catch {}
+  } catch { /* no-op */ }
 }
 
 function flushQueue() {
@@ -68,7 +68,7 @@ function flushQueue() {
     const arr = JSON.parse(raw)
     for (const item of arr) logAuditSafe(item.event, item.payload)
     localStorage.removeItem(QUEUE_KEY)
-  } catch {}
+  } catch { /* no-op */ }
 }
 
 // Store simples para última sessão (diagnostics) e para limitar volume
@@ -228,7 +228,7 @@ export function initAssetAndUnhandledCapture() {
       if (r instanceof Error) reason = r.message?.slice(0, 180)
       else if (typeof r === 'string') reason = r.slice(0, 180)
       else reason = JSON.stringify(r).slice(0, 180)
-    } catch {}
+    } catch { /* no-op */ }
     const payload: UnhandledPayload = {
       kind: 'unhandled_rejection',
       reason,

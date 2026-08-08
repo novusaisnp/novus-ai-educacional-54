@@ -69,10 +69,12 @@ export default function CurriculoPage() {
 
   const handleChangeTeacher = (subjectId: string, teacherId: string) => {
     if (!classId) return;
+    const assignment = assignments.find((a) => a.subject_id === subjectId);
     upsertAssignment.mutate({
       classId,
       subjectId,
       teacherId: teacherId && teacherId !== NO_TEACHER ? teacherId : null,
+      timeSlotId: assignment?.time_slot_id ?? null,
     });
   };
 

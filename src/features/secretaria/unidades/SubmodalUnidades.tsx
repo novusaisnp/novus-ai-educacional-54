@@ -44,6 +44,7 @@ const unidadeSchema = z.object({
 });
 
 type UnidadeFormData = z.infer<typeof unidadeSchema>;
+type UnidadeAddress = z.infer<typeof addressSchema>;
 
 interface SubmodalUnidadesProps {
   isOpen: boolean;
@@ -97,7 +98,7 @@ export function SubmodalUnidades({ isOpen, onClose, editingId }: SubmodalUnidade
   // Preencher form quando houver dados para edição
   React.useEffect(() => {
     if (editingUnit && editingId) {
-      const address = editingUnit.address as any;
+      const address = editingUnit.address as UnidadeAddress | null;
       form.reset({
         name: editingUnit.name,
         code: editingUnit.code || '',
@@ -121,7 +122,7 @@ export function SubmodalUnidades({ isOpen, onClose, editingId }: SubmodalUnidade
           phone: data.phone || null,
           email: data.email || null,
           active: data.active,
-          address: data.address as any || null,
+          address: data.address || null,
           organization_id: organization.organization_id,
         });
 
@@ -153,7 +154,7 @@ export function SubmodalUnidades({ isOpen, onClose, editingId }: SubmodalUnidade
           phone: data.phone || null,
           email: data.email || null,
           active: data.active,
-          address: data.address as any || null,
+          address: data.address || null,
         })
         .eq('id', editingId)
         .eq('organization_id', organization.organization_id);

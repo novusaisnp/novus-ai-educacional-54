@@ -6,6 +6,35 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useSearchParams } from 'react-router-dom';
 import { useOrganization } from '@/hooks/useOrganization';
 import { SecretariaModalContext, ModalType } from '../types';
+import {
+  ClassRow,
+  DocumentRow,
+  EnrollmentRow,
+  GuardianRow,
+  ReEnrollmentRow,
+  RequestRow,
+  StudentRow,
+  SubjectRow,
+  WaitlistApplicationRow,
+} from '@/integrations/supabase/db-types';
+
+interface EditingStates {
+  alunos: StudentRow | null;
+  turmas: ClassRow | null;
+  disciplinas: SubjectRow | null;
+  matriculas: EnrollmentRow | null;
+  unidades: string | null;
+  segmentos: string | null;
+  series: string | null;
+  periodos: string | null;
+  responsaveis: GuardianRow | null;
+  documentos: DocumentRow | null;
+  visitantes: string | null;
+  reservas: WaitlistApplicationRow | null;
+  solicitacoes: RequestRow | null;
+  'ex-alunos': StudentRow | null;
+  rematricula: ReEnrollmentRow | null;
+}
 
 // Lazy imports dos submodais
 const SubmodalAlunos = React.lazy(() => 
@@ -58,13 +87,13 @@ interface ModalMestreProps {
   isOpen: boolean;
   onClose: () => void;
   defaultTab?: ModalType;
-  editingItem?: any;
+  editingItem?: EditingStates[ModalType];
 }
 
 export function ModalMestre({ isOpen, onClose, defaultTab, editingItem }: ModalMestreProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<ModalType>(defaultTab || 'alunos');
-  const [editingStates, setEditingStates] = useState<Record<ModalType, any>>({
+  const [editingStates, setEditingStates] = useState<EditingStates>({
     alunos: null,
     turmas: null,
     disciplinas: null,
@@ -212,7 +241,7 @@ export function ModalMestre({ isOpen, onClose, defaultTab, editingItem }: ModalM
                     <SubmodalAlunos
                       context={context}
                       editingStudent={editingStates.alunos}
-                      onEditingChange={(item: any) => {
+                      onEditingChange={(item) => {
                         setEditingStates(prev => ({
                           ...prev,
                           alunos: item,
@@ -224,7 +253,7 @@ export function ModalMestre({ isOpen, onClose, defaultTab, editingItem }: ModalM
                     <SubmodalTurmas
                       context={context}
                       editingClass={editingStates.turmas}
-                      onEditingChange={(item: any) => {
+                      onEditingChange={(item) => {
                         setEditingStates(prev => ({
                           ...prev,
                           turmas: item,
@@ -236,7 +265,7 @@ export function ModalMestre({ isOpen, onClose, defaultTab, editingItem }: ModalM
                     <SubmodalDisciplinas
                       context={context}
                       editingSubject={editingStates.disciplinas}
-                      onEditingChange={(item: any) => {
+                      onEditingChange={(item) => {
                         setEditingStates(prev => ({
                           ...prev,
                           disciplinas: item,
@@ -248,7 +277,7 @@ export function ModalMestre({ isOpen, onClose, defaultTab, editingItem }: ModalM
                     <SubmodalMatriculas
                       context={context}
                       editingEnrollment={editingStates.matriculas}
-                      onEditingChange={(item: any) => {
+                      onEditingChange={(item) => {
                         setEditingStates(prev => ({
                           ...prev,
                           matriculas: item,
@@ -295,7 +324,7 @@ export function ModalMestre({ isOpen, onClose, defaultTab, editingItem }: ModalM
                     <SubmodalResponsaveis
                       context={context}
                       editingGuardian={editingStates.responsaveis}
-                      onEditingChange={(item: any) => {
+                      onEditingChange={(item) => {
                         setEditingStates(prev => ({
                           ...prev,
                           responsaveis: item,
@@ -307,7 +336,7 @@ export function ModalMestre({ isOpen, onClose, defaultTab, editingItem }: ModalM
                     <SubmodalDocumentos
                       context={context}
                       editingDocument={editingStates.documentos}
-                      onEditingChange={(item: any) => {
+                      onEditingChange={(item) => {
                         setEditingStates(prev => ({
                           ...prev,
                           documentos: item,
@@ -319,7 +348,7 @@ export function ModalMestre({ isOpen, onClose, defaultTab, editingItem }: ModalM
                     <SubmodalReservas
                       context={context}
                       editingReserva={editingStates.reservas}
-                      onEditingChange={(item: any) => {
+                      onEditingChange={(item) => {
                         setEditingStates(prev => ({
                           ...prev,
                           reservas: item,
@@ -331,7 +360,7 @@ export function ModalMestre({ isOpen, onClose, defaultTab, editingItem }: ModalM
                     <SubmodalSolicitacoes
                       context={context}
                       editingSolicitacao={editingStates.solicitacoes}
-                      onEditingChange={(item: any) => {
+                      onEditingChange={(item) => {
                         setEditingStates(prev => ({
                           ...prev,
                           solicitacoes: item,
@@ -343,7 +372,7 @@ export function ModalMestre({ isOpen, onClose, defaultTab, editingItem }: ModalM
                     <SubmodalExAlunos
                       context={context}
                       editingStudent={editingStates['ex-alunos']}
-                      onEditingChange={(item: any) => {
+                      onEditingChange={(item) => {
                         setEditingStates(prev => ({
                           ...prev,
                           'ex-alunos': item,
@@ -355,7 +384,7 @@ export function ModalMestre({ isOpen, onClose, defaultTab, editingItem }: ModalM
                     <SubmodalRematricula
                       context={context}
                       editingReenrollment={editingStates.rematricula}
-                      onEditingChange={(item: any) => {
+                      onEditingChange={(item) => {
                         setEditingStates(prev => ({
                           ...prev,
                           rematricula: item,

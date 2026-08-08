@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -83,8 +83,9 @@ const handler = async (req: Request): Promise<Response> => {
           });
         }
 
-      } catch (orgError: any) {
-        console.error(`Erro ao processar alertas para org ${org.id}:`, orgError.message);
+      } catch (orgError) {
+        const message = orgError instanceof Error ? orgError.message : String(orgError);
+        console.error(`Erro ao processar alertas para org ${org.id}:`, message);
       }
     }
 
@@ -108,11 +109,11 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Erro na geração de alertas operacionais:', error);
     return new Response(
-      JSON.stringify({ 
-        error: error.message,
+      JSON.stringify({
+        error: error instanceof Error ? error.message : 'unknown_error',
         details: 'Erro interno na geração de alertas'
       }),
       {
@@ -127,7 +128,7 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 async function processInadimplenciaAlerts(
-  supabase: any, 
+  supabase: SupabaseClient, 
   orgId: string, 
   thresholds: AlertThresholds
 ): Promise<number> {
@@ -166,15 +167,15 @@ async function processInadimplenciaAlerts(
 
       return overdue.length;
     }
-  } catch (error: any) {
-    console.error(`Erro ao processar inadimplência para org ${orgId}:`, error.message);
+  } catch (error) {
+    console.error(`Erro ao processar inadimplência para org ${orgId}:`, error instanceof Error ? error.message : error);
   }
 
   return 0;
 }
 
 async function processRiscoEvasaoAlerts(
-  supabase: any, 
+  supabase: SupabaseClient, 
   orgId: string, 
   thresholds: AlertThresholds
 ): Promise<number> {
@@ -212,15 +213,15 @@ async function processRiscoEvasaoAlerts(
       return riskData.length;
     }
 
-  } catch (error: any) {
-    console.error(`Erro ao processar risco de evasão para org ${orgId}:`, error.message);
+  } catch (error) {
+    console.error(`Erro ao processar risco de evasão para org ${orgId}:`, error instanceof Error ? error.message : error);
   }
   
   return 0;
 }
 
 async function processSLADemandas(
-  supabase: any, 
+  supabase: SupabaseClient, 
   orgId: string, 
   thresholds: AlertThresholds
 ): Promise<number> {
@@ -262,8 +263,8 @@ async function processSLADemandas(
       return overdueRequests.length;
     }
 
-  } catch (error: any) {
-    console.error(`Erro ao processar SLA de demandas para org ${orgId}:`, error.message);
+  } catch (error) {
+    console.error(`Erro ao processar SLA de demandas para org ${orgId}:`, error instanceof Error ? error.message : error);
   }
   
   return 0;

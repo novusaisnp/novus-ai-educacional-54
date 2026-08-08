@@ -95,8 +95,8 @@ const handler = async (req: Request): Promise<Response> => {
                 },
               });
 
-            } catch (scopeError: any) {
-              console.error(`Erro ao processar scope ${scope} para org ${org.id}:`, scopeError.message);
+            } catch (scopeError) {
+              console.error(`Erro ao processar scope ${scope} para org ${org.id}:`, scopeError instanceof Error ? scopeError.message : scopeError);
             }
           }
         }
@@ -136,8 +136,8 @@ const handler = async (req: Request): Promise<Response> => {
           }
         }
 
-      } catch (orgError: any) {
-        console.error(`Erro ao processar org ${org.id}:`, orgError.message);
+      } catch (orgError) {
+        console.error(`Erro ao processar org ${org.id}:`, orgError instanceof Error ? orgError.message : orgError);
       }
     }
 
@@ -162,11 +162,11 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Erro no scheduler de relatórios:', error);
     return new Response(
-      JSON.stringify({ 
-        error: error.message,
+      JSON.stringify({
+        error: error instanceof Error ? error.message : 'unknown_error',
         details: 'Erro interno no scheduler'
       }),
       {

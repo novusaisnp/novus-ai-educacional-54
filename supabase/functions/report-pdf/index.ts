@@ -6,11 +6,33 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface ReportFilters {
+  startDate?: string;
+  endDate?: string;
+  [key: string]: unknown;
+}
+
+// DTO heterogêneo: cada report_type popula um subconjunto diferente destes
+// campos (academico usa id/first_name/.../status/created_at, crm usa
+// full_name/phone/email/visit_date/purpose) — todos opcionais de propósito.
+interface ReportDataRow {
+  id?: string;
+  first_name?: string;
+  last_name?: string;
+  status?: string;
+  created_at?: string;
+  full_name?: string;
+  phone?: string;
+  email?: string;
+  visit_date?: string;
+  purpose?: string;
+}
+
 interface ReportRequest {
   organization_id: string;
   report_type: 'academico' | 'financeiro' | 'crm';
-  filters: Record<string, any>;
-  data: any[];
+  filters: ReportFilters;
+  data: ReportDataRow[];
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -94,11 +116,11 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Erro na geração do PDF:', error);
     return new Response(
-      JSON.stringify({ 
-        error: error.message,
+      JSON.stringify({
+        error: error instanceof Error ? error.message : 'unknown_error',
         details: 'Erro interno na geração do PDF'
       }),
       {
@@ -112,7 +134,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 };
 
-function generateReportHTML(reportType: string, data: any[], filters: Record<string, any>): string {
+function generateReportHTML(reportType: string, data: ReportDataRow[], filters: ReportFilters): string {
   const currentDate = new Date().toLocaleDateString('pt-BR');
   
   let title = '';
@@ -169,7 +191,7 @@ function generateReportHTML(reportType: string, data: any[], filters: Record<str
   `;
 }
 
-function generateAcademicoContent(data: any[], filters: Record<string, any>): string {
+function generateAcademicoContent(data: ReportDataRow[], filters: ReportFilters): string {
   return `
     <div class="summary">
       <h2>Resumo Acadêmico</h2>
@@ -201,7 +223,7 @@ function generateAcademicoContent(data: any[], filters: Record<string, any>): st
   `;
 }
 
-function generateFinanceiroContent(data: any[], filters: Record<string, any>): string {
+function generateFinanceiroContent(data: ReportDataRow[], filters: ReportFilters): string {
   return `
     <div class="summary">
       <h2>Resumo Financeiro</h2>
@@ -212,7 +234,7 @@ function generateFinanceiroContent(data: any[], filters: Record<string, any>): s
   `;
 }
 
-function generateCRMContent(data: any[], filters: Record<string, any>): string {
+function generateCRMContent(data: ReportDataRow[], filters: ReportFilters): string {
   return `
     <div class="summary">
       <h2>Resumo CRM</h2>

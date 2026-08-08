@@ -14,7 +14,7 @@ type QueueItem = {
   channel: "email" | "whatsapp";
   event_type: string;
   recipient: string;
-  payload: Record<string, any>;
+  payload: Record<string, unknown>;
   template_id: string | null;
   status: "queued" | "sending" | "sent" | "failed" | "skipped";
   error: string | null;
@@ -49,7 +49,7 @@ const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 const nowIso = () => new Date().toISOString();
 
-function mergeTemplate(text: string, payload: Record<string, any>): string {
+function mergeTemplate(text: string, payload: Record<string, unknown>): string {
   return text.replace(/\{\{(\w+)\}\}/g, (_, key) => {
     const v = payload?.[key];
     return v !== undefined && v !== null ? String(v) : "";
@@ -94,7 +94,7 @@ async function getActiveTemplateFor(item: QueueItem): Promise<Template | null> {
   return (data?.[0] as Template) || null;
 }
 
-async function checkConsent(orgId: string, channel: "email" | "whatsapp", payload: Record<string, any>): Promise<boolean> {
+async function checkConsent(orgId: string, channel: "email" | "whatsapp", payload: Record<string, unknown>): Promise<boolean> {
   // Espera-se que o produtor informe owner_type e owner_id no payload para validação LGPD.
   const owner_type = payload?.owner_type as "guardian" | "staff" | undefined;
   const owner_id = payload?.owner_id as string | undefined;
@@ -122,7 +122,7 @@ async function checkConsent(orgId: string, channel: "email" | "whatsapp", payloa
   return Boolean((data as { allowed: boolean }).allowed);
 }
 
-async function insertDelivery(orgId: string, queueId: string, status: string, details?: Record<string, any>, providerMsgId?: string) {
+async function insertDelivery(orgId: string, queueId: string, status: string, details?: Record<string, unknown>, providerMsgId?: string) {
   await supabase.from("notification_deliveries").insert({
     organization_id: orgId,
     queue_id: queueId,
@@ -147,7 +147,7 @@ async function createInteraction(opts: {
   entity_type?: string;
   entity_id?: string;
   performed_by?: string;
-  payload?: Record<string, any>;
+  payload?: Record<string, unknown>;
 }) {
   const {
     organization_id, channel, summary, entity_type, entity_id, performed_by, payload
@@ -170,7 +170,7 @@ async function createInteraction(opts: {
   });
 }
 
-async function logAudit(orgId: string, action: string, table: string, diff: Record<string, any>) {
+async function logAudit(orgId: string, action: string, table: string, diff: Record<string, unknown>) {
   await supabase.from("audit_logs").insert({
     organization_id: orgId,
     table_name: table,
@@ -220,9 +220,9 @@ async function processItem(item: QueueItem) {
       organization_id: item.organization_id,
       channel: item.channel,
       summary: `Notificação não enviada (consentimento negado) — ${item.event_type}`,
-      performed_by: item.payload?.performed_by ?? null,
-      entity_type: item.payload?.entity_type,
-      entity_id: item.payload?.entity_id,
+      performed_by: item.payload?.performed_by as string | undefined,
+      entity_type: item.payload?.entity_type as string | undefined,
+      entity_id: item.payload?.entity_id as string | undefined,
       payload: { queue_id: item.id, recipient: item.recipient },
     });
     return;
@@ -243,7 +243,7 @@ async function processItem(item: QueueItem) {
       if (!resend) {
         throw new Error("provider_ausente_email");
       }
-      const emailResp: any = await sendEmail(item.recipient, subject, html);
+      const emailResp = await sendEmail(item.recipient, subject, html);
       const providerMessageId = emailResp?.data?.id ?? emailResp?.id ?? null;
 
       await insertDelivery(item.organization_id, item.id, "sent", { provider: "resend" }, providerMessageId || undefined);
@@ -258,7 +258,7 @@ async function processItem(item: QueueItem) {
       if (!whatsappApiUrl || !whatsappApiToken) {
         throw new Error("provider_ausente_whatsapp");
       }
-      const waResp: any = await sendWhatsapp(item.recipient, text);
+      const waResp = await sendWhatsapp(item.recipient, text);
       const providerMessageId = waResp?.message_id ?? waResp?.id ?? null;
 
       await insertDelivery(item.organization_id, item.id, "sent", { provider: "whatsapp" }, providerMessageId || undefined);
@@ -271,8 +271,8 @@ async function processItem(item: QueueItem) {
 
     // Canal desconhecido
     throw new Error(`canal_desconhecido_${item.channel}`);
-  } catch (err: any) {
-    const message = String(err?.message || err || "erro_desconhecido");
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err ?? "erro_desconhecido");
 
     if (message.startsWith("provider_ausente")) {
       // Sem provider: marcar skipped + interaction + audit
@@ -285,9 +285,9 @@ async function processItem(item: QueueItem) {
         organization_id: item.organization_id,
         channel: item.channel,
         summary: `Notificação não enviada (provider ausente) — ${item.event_type}`,
-        performed_by: item.payload?.performed_by ?? null,
-        entity_type: item.payload?.entity_type,
-        entity_id: item.payload?.entity_id,
+        performed_by: item.payload?.performed_by as string | undefined,
+        entity_type: item.payload?.entity_type as string | undefined,
+        entity_id: item.payload?.entity_id as string | undefined,
         payload: { queue_id: item.id, recipient: item.recipient },
       });
       return;
@@ -342,8 +342,9 @@ Deno.serve(async (req) => {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
-  } catch (e: any) {
-    return new Response(JSON.stringify({ error: e?.message || "unknown_error" }), {
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "unknown_error";
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });

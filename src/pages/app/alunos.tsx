@@ -47,7 +47,13 @@ export default function Alunos() {
   const navigate = useNavigate();
   const riskAnalysis = useRiskAnalysis();
   const { canAccess, getAccessStatus } = useIAAccess();
-  const { avatar: selectedStudentAvatar, uploadAvatarMutation } = useDocuments(selectedStudent?.id);
+  const {
+    avatar: selectedStudentAvatar,
+    attachments: selectedStudentAttachments,
+    uploadAvatarMutation,
+    uploadDocMutation,
+    deleteDocMutation,
+  } = useDocuments(selectedStudent?.id);
 
   // Hook para obter organização do usuário
   const { data: orgData, isLoading: isLoadingOrg } = useOrganization();
@@ -493,10 +499,10 @@ export default function Alunos() {
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Documentos</h3>
                 <StudentAttachments
-                  attachments={[]}
-                  onUpload={() => {}}
-                  onDelete={() => {}}
-                  isUploading={false}
+                  attachments={selectedStudentAttachments}
+                  onUpload={(file) => uploadDocMutation.mutate(file)}
+                  onDelete={(doc) => deleteDocMutation.mutate(doc)}
+                  isUploading={uploadDocMutation.isPending}
                 />
               </div>
             </div>

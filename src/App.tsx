@@ -39,6 +39,7 @@ import ResultadosPeriodoPage from '@/pages/app/academico/resultados-periodo';
 import ConselhoClassePage from '@/pages/app/academico/conselho-classe';
 import CurriculoPage from '@/pages/app/academico/curriculo';
 import PeiCoordenacaoPage from '@/pages/app/academico/pei-coordenacao';
+import BoletinsPage from '@/pages/app/academico/boletins';
 
 import PedagogicoPage from '@/pages/app/pedagogico';
 import EventosPage from '@/pages/app/eventos';
@@ -159,6 +160,7 @@ function App() {
                 <Route path="academico/conselho-classe" element={<ConselhoClassePage />} />
                 <Route path="academico/curriculo" element={<CurriculoPage />} />
                 <Route path="academico/pei-coordenacao" element={<PeiCoordenacaoPage />} />
+                <Route path="academico/boletins" element={<BoletinsPage />} />
                 <Route path="academico/alunos" element={<AlunosPage />} />
                 
                 <Route path="pedagogico" element={<PedagogicoPage />} />

@@ -60,6 +60,9 @@ export default function Academico() {
               <Button variant="outline" asChild>
                 <Link to="/app/academico/resultados-periodo">Resultados do Período</Link>
               </Button>
+              <Button variant="outline" asChild>
+                <Link to="/app/academico/boletins">Boletim/Histórico</Link>
+              </Button>
             </div>
           </CardContent>
         </Card>

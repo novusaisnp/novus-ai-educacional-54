@@ -16,6 +16,12 @@ import { ConverterReservaDialog } from '@/features/secretaria/reservas/Converter
 import { IconBadge } from '@/components/IconBadge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import type { WaitlistApplicationRow } from '@/integrations/supabase/db-types';
+
+type ApplicationWithJoins = WaitlistApplicationRow & {
+  segments: { name: string } | null;
+  series: { name: string } | null;
+};
 
 const STATUS_OPTIONS = [
   { value: 'pendente', label: 'Pendente', variant: 'secondary' as const },
@@ -32,8 +38,8 @@ export default function SecretariaReservas() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingApplication, setEditingApplication] = useState<any | null>(null);
-  const [converterApplication, setConverterApplication] = useState<any | null>(null);
+  const [editingApplication, setEditingApplication] = useState<ApplicationWithJoins | null>(null);
+  const [converterApplication, setConverterApplication] = useState<ApplicationWithJoins | null>(null);
 
   // Verificar se deve abrir o modal baseado na URL
   useState(() => {
@@ -131,7 +137,7 @@ export default function SecretariaReservas() {
     setIsModalOpen(true);
   };
 
-  const handleEdit = (application: any) => {
+  const handleEdit = (application: ApplicationWithJoins) => {
     setEditingApplication(application);
     setIsModalOpen(true);
   };
@@ -142,7 +148,7 @@ export default function SecretariaReservas() {
     queryClient.invalidateQueries({ queryKey: ['waitlist_applications'] });
   };
 
-  const handleConvertToEnrollment = (application: any) => {
+  const handleConvertToEnrollment = (application: ApplicationWithJoins) => {
     setConverterApplication(application);
   };
 

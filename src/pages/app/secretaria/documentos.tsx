@@ -91,11 +91,11 @@ export default function SecretariaDocumentos() {
       if (data?.signedUrl) {
         window.open(data.signedUrl, '_blank');
       }
-    } catch (error: any) {
+    } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Erro ao visualizar documento',
-        description: error.message,
+        description: (error as Error).message,
       });
     }
   };
@@ -114,11 +114,11 @@ export default function SecretariaDocumentos() {
         link.click();
         document.body.removeChild(link);
       }
-    } catch (error: any) {
+    } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Erro ao baixar documento',
-        description: error.message,
+        description: (error as Error).message,
       });
     }
   };

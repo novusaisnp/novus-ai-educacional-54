@@ -62,7 +62,7 @@ export default function BIAcademico() {
   ];
 
   // Dados para gráficos
-  const attendanceByMonth = academicData?.attendance.reduce((acc: any[], curr) => {
+  const attendanceByMonth = academicData?.attendance.reduce((acc: { month: string; presente: number; total: number }[], curr) => {
     const month = new Date(curr.date).getMonth();
     const monthName = new Date(curr.date).toLocaleDateString('pt-BR', { month: 'short' });
     

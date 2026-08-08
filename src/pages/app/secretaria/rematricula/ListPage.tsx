@@ -14,6 +14,13 @@ import { RotateCcw, Search, Plus, Trash2, CheckCircle, Check, Users } from 'luci
 import { ModalMestre } from '@/features/secretaria/hub/ModalMestre';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import type { ReEnrollmentRow } from '@/integrations/supabase/db-types';
+
+type RematriculaWithJoins = ReEnrollmentRow & {
+  students: { first_name: string; last_name: string } | null;
+  current_class: { name: string; grade: string | null; year: number } | null;
+  target_class: { name: string; grade: string | null; year: number } | null;
+};
 
 const STATUS_OPTIONS = [
   { value: 'pendente', label: 'Pendente', variant: 'secondary' as const },
@@ -96,7 +103,7 @@ export default function SecretariaRematriculaListPage() {
   });
 
   const finalizeRematricula = useMutation({
-    mutationFn: async (rematricula: any) => {
+    mutationFn: async (rematricula: RematriculaWithJoins) => {
       if (!rematricula.target_class_id) {
         throw new Error('Esta solicitação não tem turma de destino definida.');
       }
@@ -143,7 +150,7 @@ export default function SecretariaRematriculaListPage() {
     queryClient.invalidateQueries({ queryKey: ['re_enrollments'] });
   };
 
-  const filteredRematriculas = rematriculas.filter((rematricula: any) => {
+  const filteredRematriculas = rematriculas.filter((rematricula: RematriculaWithJoins) => {
     const studentName = `${rematricula.students?.first_name ?? ''} ${rematricula.students?.last_name ?? ''}`.trim();
     const matchesSearch = studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (rematricula.guardian_name && rematricula.guardian_name.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -250,7 +257,7 @@ export default function SecretariaRematriculaListPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredRematriculas.map((rematricula: any) => {
+                {filteredRematriculas.map((rematricula: RematriculaWithJoins) => {
                   const statusBadge = getStatusBadge(rematricula.status);
                   const studentName = `${rematricula.students?.first_name ?? ''} ${rematricula.students?.last_name ?? ''}`.trim();
                   return (

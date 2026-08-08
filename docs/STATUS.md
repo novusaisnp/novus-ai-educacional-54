@@ -2,6 +2,16 @@
 
 **Última atualização: 2026-08-08.** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
 
+## 🔖 Checkpoint de sessão (2026-08-08 — verificação visual de fast-follow)
+
+**Continuação da sessão de lint.** Usuário pediu para "seguir com roadmap do educacional" após lint zerada (0 erros). Perguntado qual frente atacar — escolheu **Fast-follow: `notas.tsx` filtering** (mesmo que o STATUS.md tivesse contradições sobre o status, o código de fato estava implementado). Tarefa: verificar ao vivo no navegador que o filtro curricular em `notas.tsx` funciona como em `chamada.tsx`.
+
+**Verificação realizada**: dev server (`bun run dev`) iniciado, Chrome aberto em `localhost:8080` (já autenticado como admin). Navegado para `/app/academico/notas`, selecionada turma "TESTE Contrato Turma A" → dropdown de Disciplinas mostrou só "Disciplica TESTE" (antes exibiria todas). Comparação com `/app/academico/chamada`: mesma turma selecionada → dropdown de Disciplinas mostrou "Disciplica TESTE (dt)" — **filtro curricular implementado e funcionando identicamente em ambas as telas**. `useClassSubjects(classId)` filtra disciplinas por turma, com fallback pra lista completa quando turma sem atribuições.
+
+**Gap do STATUS.md resolvido**: item 1b do checkpoint "continuação" tinha redação ambígua ("Fast-follow aplicado") mas o código de fato estava implementado em ambas as telas; verificação visual confirma funcionamento correto. Linha 45 do STATUS.md ("não foi tocado") estava desatualizada — o fast-follow foi de fato implementado numa sessão anterior (antes do checkpoint de continuação).
+
+**Estado do repo**: working tree limpo, nenhuma mudança de código necessária (só verificação/observação). Fast-follow é 100% concluído e testado ao vivo.
+
 ## 🔖 Checkpoint de sessão (2026-08-08, dívida de lint zerada — leia isto primeiro)
 
 Continuação direta da sessão anterior (mesmo dia) — usuário pediu para seguir atacando a dívida de lint (93 erros restantes, ver checkpoint anterior). Fechado por completo nesta sessão: **93 → 0 erros**, em 5 commits `fix:` separados, `typecheck`/`test` (47/47) limpos a cada um. Restam só 12 warnings (não fazem parte do escopo — `react-refresh/only-export-components` em 7 primitivos shadcn/ui + 2 `exhaustive-deps` + 1 `eslint-disable` não usado em `notas.tsx`).

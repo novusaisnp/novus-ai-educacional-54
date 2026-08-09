@@ -154,7 +154,7 @@ export async function signEnrollmentContract(input: SignEnrollmentContractInput)
       numeroDocumento,
       valorOriginal: input.monthlyFeeAmount,
       dataVencimento: dueDate,
-      situacao: 'ABERTA',
+      status: 'PENDENTE',
       observacoes: `1ª mensalidade - Matrícula ${input.studentName} - Turma ${input.className}`,
       clienteCpfCnpj: input.guardianCpf || undefined,
       recorrente: true,

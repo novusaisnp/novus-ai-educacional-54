@@ -16,14 +16,9 @@ interface CreateReceivableInput {
   numeroDocumento: string;
   valorOriginal: number;
   dataVencimento: string; // YYYY-MM-DD
-  situacao?: string;
+  status?: string;
   observacoes?: string;
   clienteCpfCnpj?: string;
-  // Campos de forward-compatibility: o `syncFinanceiro` do novusai-erp ainda não
-  // mapeia `recorrente`/`periodicidade` no insert de `contas_receber` (bug
-  // conhecido, ver docs/STATUS.md) — enviar esses campos hoje é inofensivo
-  // (chave extra de JSON ignorada) e evita qualquer mudança de código deste lado
-  // quando o bug for corrigido do lado do ERP.
   recorrente?: boolean;
   periodicidade?: string;
 }
@@ -118,7 +113,14 @@ class ERPClient {
     if (!this.config.events.clientUpsert) {
       return { ok: true, skipped: true, mock: this.config.mock };
     }
-    return this.sendSyncEvent('clientes', { ...data });
+    // Nomes de coluna reais em `clientes` no ERP são em português (nome/telefone),
+    // não os campos em inglês da interface local — traduzir na borda.
+    return this.sendSyncEvent('clientes', {
+      cpf: data.cpf,
+      nome: data.name,
+      email: data.email,
+      telefone: data.phone,
+    });
   }
 
   async createReceivable(data: CreateReceivableInput): Promise<ERPClientResponse> {
@@ -129,7 +131,7 @@ class ERPClient {
       numero_documento: data.numeroDocumento,
       valor_original: data.valorOriginal,
       data_vencimento: data.dataVencimento,
-      situacao: data.situacao || 'ABERTA',
+      status: data.status || 'PENDENTE',
       observacoes: data.observacoes,
       cliente_cpf_cnpj: data.clienteCpfCnpj,
       recorrente: data.recorrente,

@@ -1,6 +1,46 @@
 # STATUS — novus-educacional
 
-**Última atualização: 2026-08-09 (varredura de UI/UX — modais/telas sem concluir, achados registrados, nada corrigido ainda).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+**Última atualização: 2026-08-09 (integração ERP funcional de ponta a ponta + fix de segurança em profiles + multi-unidade).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+
+## 🔖 Checkpoint de sessão (2026-08-09 — integração ERP real + fix de segurança + multi-unidade)
+
+**Contexto**: sessão começada no repo-mãe (`NovusSaaS`) pedindo pra conectar ERP↔Educacional de verdade. A
+maior parte do fix de Porta 1 (título/cliente) foi feita no repo irmão `novusai-erp` — ver `docs/STATUS.md`
+de lá pro detalhe completo; aqui só o que mudou neste repo.
+
+1. **Payload de sync alinhado com o contrato real do ERP**: `src/integrations/erp/client.ts` mandava
+   `situacao`/`name`/`phone` — o ERP nunca teve essas chaves (usa `status`/`nome`/`telefone`). Corrigido nos
+   dois pontos de emissão (`client.ts`, `signEnrollmentContract.ts`). Sem essa mudança, nenhum
+   cliente/título chegava no ERP mesmo com o lado ERP corrigido.
+2. **Falha de segurança achada e corrigida**: policy `"Users can update own profile"` fazia
+   `FOR UPDATE USING (id = auth.uid())` **sem `WITH CHECK`** — e um `WITH CHECK` normal não resolveria
+   mesmo (`current_org_id()` lê o valor *novo* da própria linha durante a checagem, comparação consigo
+   mesma). Qualquer staff autenticado podia se promover a admin ou pular pra outra organização via update
+   direto do client. Trigger `BEFORE UPDATE` (`prevent_self_privilege_escalation`) compara `OLD`/`NEW` de
+   verdade — só bloqueia quando é o próprio dono da linha mudando `organization_id`/`role`. Testado ao vivo
+   contra produção (update malicioso simulado, bloqueado, nada persistiu).
+3. **Multi-unidade (CEO/staff com acesso a mais de um CNPJ)**: `user_organizations` (many-to-many, aditivo —
+   `profiles.organization_id`/`current_org_id()` continuam sendo "unidade ativa agora", usados por quase
+   toda RLS, intocados) + RPC `switch_active_organization` (só reatribui pra um vínculo que já existe,
+   nunca update livre — tem sua própria válvula de escape na trigger do item 2, via GUC de transação que
+   não vaza entre requests, testado). `create-staff-user`: e-mail já cadastrado deixava tudo em erro 409;
+   agora vira "adicionar vínculo com esta unidade" (a pessoa já foi validada como colaborador ativo *desta*
+   empresa pelo gate de CPF que já existia). Login ganha seletor de unidade (`select-org.tsx`) só quando há
+   mais de 1 vínculo — com 1 só, comportamento idêntico a antes.
+4. **Não testado ao vivo**: fluxo de convite pra pessoa que já tem conta em outra unidade — exigiria uma
+   2ª organização real + disparo de e-mail de convite de verdade, não reproduzido nesta sessão (só revisão
+   de código).
+5. **Investigado e descartado como bug real**: "colaborador form falha silenciosamente ao salvar" (reportado
+   em sessão anterior) — tratamento de erro no ERP está correto de ponta a ponta; explicação mais provável é
+   a conta de teste sem `empresa_representada_id` em `user_roles` (dado, não código). Achado cosmético
+   separado, não corrigido: `ColaboradorFormModal.tsx:32,477` no `novusai-erp` usa o `loading` da listagem
+   como label do botão de salvar.
+
+**Verificação**: `bun run typecheck` 0 erros, `bun run test` 47/47. `types.ts` regenerado do schema real
+duas vezes (após cada migration nova). Migrations aplicadas via `supabase db query --file` direto — `db
+push` neste projeto está com o histórico de migrations quebrado (nomes de arquivo antigos fora do padrão
+`<timestamp>_nome.sql`, `db push` tenta reaplicar tudo do zero e falha em "already exists"); não foi
+corrigido, workaround documentado, não é bug desta sessão.
 
 ## 🔖 Checkpoint de sessão (2026-08-09 — varredura de UI/UX: modais sem concluir, levantamento puro)
 

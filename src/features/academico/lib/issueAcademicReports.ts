@@ -1,16 +1,20 @@
 import { supabase } from '@/integrations/supabase/client';
+import { getEmpresaLogoUrl } from '@/integrations/erp/getEmpresaLogo';
 import { generateBoletimPdf, type BoletimAttendanceRow, type BoletimSubjectRow } from './generateBoletimPdf';
 import { generateHistoricoPdf, type HistoricoTermGroup } from './generateHistoricoPdf';
 
 const DEFAULT_MINIMUM_PASSING_AVERAGE = 6.0;
 
 // Logo é decoração — nunca deve travar a emissão do boletim/histórico. Mesmo
-// espírito de fetchLogoBytesSafely em signEnrollmentContract.ts, mas sem a
-// prioridade de logo do ERP (fora de escopo desta fatia: só organizations.logo_url).
-async function fetchLogoBytesSafely(logoUrl: string | null | undefined): Promise<Uint8Array | null> {
-  if (!logoUrl) return null;
+// padrão de signEnrollmentContract.ts: prioridade pra logo real do ERP (mesma
+// identidade visual cadastrada na empresa representada), cai pro
+// `organizations.logo_url` (fallback) se a integração ERP não estiver
+// configurada pra esta organização ou a chamada falhar.
+async function fetchLogoBytesSafely(orgId: string, fallbackLogoUrl?: string | null): Promise<Uint8Array | null> {
+  const urlToTry = (await getEmpresaLogoUrl(orgId)) || fallbackLogoUrl || null;
+  if (!urlToTry) return null;
   try {
-    const response = await fetch(logoUrl);
+    const response = await fetch(urlToTry);
     if (!response.ok) return null;
     return new Uint8Array(await response.arrayBuffer());
   } catch {
@@ -193,7 +197,7 @@ export async function issueBoletim(input: IssueBoletimInput): Promise<IssueRepor
     JSON.stringify({ studentId: input.studentId, termId: input.termId, classId: input.classId, subjects, attendance })
   );
 
-  const logoBytes = await fetchLogoBytesSafely(input.logoUrl);
+  const logoBytes = await fetchLogoBytesSafely(input.orgId, input.logoUrl);
   const pdfBytes = await generateBoletimPdf({
     organizationName: input.organizationName,
     logoBytes,
@@ -313,7 +317,7 @@ export async function issueHistorico(input: IssueHistoricoInput): Promise<IssueR
   const issuedAt = new Date().toISOString();
   const contentHash = await hashContent(JSON.stringify({ studentId: input.studentId, termGroups }));
 
-  const logoBytes = await fetchLogoBytesSafely(input.logoUrl);
+  const logoBytes = await fetchLogoBytesSafely(input.orgId, input.logoUrl);
   const pdfBytes = await generateHistoricoPdf({
     organizationName: input.organizationName,
     logoBytes,

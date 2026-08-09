@@ -17,6 +17,8 @@ export type EnrollmentRow = Database['public']['Tables']['enrollments']['Row'];
 export type EnrollmentInsert = Database['public']['Tables']['enrollments']['Insert'];
 export type EnrollmentUpdate = Database['public']['Tables']['enrollments']['Update'];
 
+export type ProfileRow = Database['public']['Tables']['profiles']['Row'];
+
 export type GuardianRow = Database['public']['Tables']['guardians']['Row'];
 export type DocumentRow = Database['public']['Tables']['documents']['Row'];
 export type WaitlistApplicationRow = Database['public']['Tables']['waitlist_applications']['Row'];

@@ -1869,7 +1869,9 @@ export type Database = {
       }
       profiles: {
         Row: {
+          cpf: string | null
           created_at: string
+          email: string | null
           full_name: string
           id: string
           organization_id: string
@@ -1877,7 +1879,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cpf?: string | null
           created_at?: string
+          email?: string | null
           full_name: string
           id: string
           organization_id: string
@@ -1885,7 +1889,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cpf?: string | null
           created_at?: string
+          email?: string | null
           full_name?: string
           id?: string
           organization_id?: string

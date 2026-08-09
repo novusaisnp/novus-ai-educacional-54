@@ -91,6 +91,7 @@ class ERPClient {
         headers: {
           'Content-Type': 'application/json',
           'x-source-system': SOURCE_SYSTEM,
+          'x-empresa-id': this.config.empresaRepresentadaId,
           'x-webhook-signature': `sha256=${signature}`,
         },
         body,

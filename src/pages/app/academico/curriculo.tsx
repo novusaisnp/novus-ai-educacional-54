@@ -17,9 +17,9 @@ import EmptyState from '@/components/EmptyState';
 const NO_TEACHER = '__none__';
 const NO_TIME_SLOT = '__none__';
 
-const DAY_NAMES = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+export const DAY_NAMES = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
-const formatTimeSlot = (slot: { day_of_week: number; start_time: string; end_time: string } | null) => {
+export const formatTimeSlot = (slot: { day_of_week: number; start_time: string; end_time: string } | null) => {
   if (!slot) return '';
   return `${DAY_NAMES[slot.day_of_week]} ${slot.start_time.slice(0, 5)}-${slot.end_time.slice(0, 5)}`;
 };

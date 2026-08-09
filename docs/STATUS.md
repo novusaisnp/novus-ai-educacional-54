@@ -1,6 +1,20 @@
 # STATUS — novus-educacional
 
-**Última atualização: 2026-08-09 (Fase 5, segunda fatia — notificação real por e-mail na justificativa de falta).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+**Última atualização: 2026-08-09 (Fase 5, terceira fatia — UI de cadastro de salas/horários).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+
+## 🔖 Checkpoint de sessão (2026-08-09 — Fase 5, terceira fatia: UI de cadastro de salas/horários)
+
+**Continuação direta** — notificação real (fatia anterior) fechada. Usuário escolheu **UI de salas/horários** entre as opções restantes. Antes disso, cogitou-se **Porta 2 (Liquidação)** — investigação achou que o sentido ERP→satélite (pull, `edu-erp-webhook`) já funciona, e o sentido push exigiria construir do zero uma tela de "registrar pagamento presencial" que não existe em lugar nenhum hoje. Usuário confirmou: pagamento sempre nasce no ERP, satélite só exibe — Porta 2 push **não é fatia real**, descartada.
+
+1. **`useAppQueries.ts`**: `useClassrooms`/`useTimeSlots` (leitura, já existentes, usados por `curriculo.tsx`/`SubmodalTurmas.tsx`) não foram tocados — `useClassroomsAdmin` novo (lista completa, inclui inativas) + mutations novas (`useUpsertClassroom`, `useCreateTimeSlot`, `useDeleteTimeSlot`).
+2. **`DAY_NAMES`/`formatTimeSlot`** (antes locais em `curriculo.tsx`) exportados pra reuso em `horarios.tsx` — sem duplicar a lista de dias.
+3. **`src/pages/app/secretaria/salas.tsx`** e **`src/pages/app/secretaria/horarios.tsx`** (novas, arquivo único cada — mesmo padrão de `curriculo.tsx`/`equipe.tsx`, tabela+Dialog inline, não o sistema `ModalMestre`). Salas: campo `active` já existente no schema virou o mecanismo de "remover" (toggle na linha, sem delete físico). Horários: delete físico direto (seguro, `class_subjects.time_slot_id` já é `ON DELETE SET NULL`).
+4. Rotas `secretaria/salas`/`secretaria/horarios` + 2 cards novos no hub (`SecretariaHub.tsx`).
+5. `bun run typecheck`/`test`(47/47)/`build` limpos. **Testado ao vivo**: sala de teste criada, toggle ativa/inativa confirmado, horário de teste criado (Segunda 08:00-09:00) e deletado, `curriculo.tsx` confirmado sem regressão (usa os mesmos hooks de leitura). Dados de teste limpos.
+
+**Gaps conscientes**:
+- Sem validação de sobreposição de horário na UI (dois `time_slots` podem se sobrepor sem aviso) — só a constraint de unicidade exata (`UNIQUE(org, day, start, end)`) impede duplicata idêntica.
+- Sala sem delete físico (só desativar) — decisão consciente, evita quebrar histórico de `classes.room_id`/`FK SET NULL` sem necessidade real.
 
 ## 🔖 Checkpoint de sessão (2026-08-09 — Fase 5, segunda fatia: notificação real por e-mail)
 

@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, GraduationCap, BookOpen, UserCheck, ExternalLink, Building, Layers, Grid3X3, Calendar, UserPlus, FileText, UserMinus, ClipboardList, HelpCircle, UserX, RotateCcw, FileSignature, ArrowRightLeft, UserCog } from 'lucide-react';
+import { Users, GraduationCap, BookOpen, UserCheck, ExternalLink, Building, Layers, Grid3X3, Calendar, UserPlus, FileText, UserMinus, ClipboardList, HelpCircle, UserX, RotateCcw, FileSignature, ArrowRightLeft, UserCog, Building2, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ModalType } from '../types';
 
@@ -66,6 +66,8 @@ export function SecretariaHub({ onOpenModal }: SecretariaHubProps) {
     { id: 'contratos' as const, title: 'Modelo de Contrato', description: 'Texto do contrato de matrícula com assinatura eletrônica', icon: FileSignature, color: 'bg-rose-50 text-rose-600 border-rose-200', singlePage: true },
     { id: 'transferencias' as const, title: 'Transferência Escolar', description: 'Guia de transferência com histórico acadêmico e assinatura eletrônica', icon: ArrowRightLeft, color: 'bg-orange-50 text-orange-600 border-orange-200', singlePage: true },
     { id: 'equipe' as const, title: 'Equipe', description: 'Convidar professores, coordenadores e secretários', icon: UserCog, color: 'bg-sky-50 text-sky-600 border-sky-200', singlePage: true },
+    { id: 'salas' as const, title: 'Salas', description: 'Ambientes físicos disponíveis para as turmas', icon: Building2, color: 'bg-lime-50 text-lime-600 border-lime-200', singlePage: true },
+    { id: 'horarios' as const, title: 'Horários', description: 'Grade de dia-da-semana × hora do currículo', icon: Clock, color: 'bg-fuchsia-50 text-fuchsia-600 border-fuchsia-200', singlePage: true },
   ];
 
   return (

@@ -68,6 +68,8 @@ import SecretariaRematricula from '@/pages/app/secretaria/rematricula/ListPage';
 import SecretariaContratoModelo from '@/pages/app/secretaria/contratos/modelo';
 import SecretariaTransferencias from '@/pages/app/secretaria/transferencias';
 import SecretariaEquipe from '@/pages/app/secretaria/equipe';
+import SecretariaSalas from '@/pages/app/secretaria/salas';
+import SecretariaHorarios from '@/pages/app/secretaria/horarios';
 
 import ConfigIntegracoesPage from '@/pages/app/config/integracoes';
 import OnboardingPage from '@/pages/app/onboarding';
@@ -185,6 +187,8 @@ function App() {
                 <Route path="secretaria/contratos/modelo" element={<SecretariaContratoModelo />} />
                 <Route path="secretaria/transferencias" element={<SecretariaTransferencias />} />
                 <Route path="secretaria/equipe" element={<SecretariaEquipe />} />
+                <Route path="secretaria/salas" element={<SecretariaSalas />} />
+                <Route path="secretaria/horarios" element={<SecretariaHorarios />} />
                 <Route path="secretaria/segmentos" element={<SecretariaSegmentsListPage />} />
                 <Route path="secretaria/segmentos/list" element={<SecretariaSegmentsListPage />} />
                 <Route path="secretaria/series" element={<SecretariaSeriesListPage />} />

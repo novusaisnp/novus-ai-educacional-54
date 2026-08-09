@@ -1,6 +1,39 @@
 # STATUS — novus-educacional
 
-**Última atualização: 2026-08-09 (Fase 5, terceira fatia — UI de cadastro de salas/horários).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+**Última atualização: 2026-08-09 (varredura de UI/UX — modais/telas sem concluir, achados registrados, nada corrigido ainda).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+
+## 🔖 Checkpoint de sessão (2026-08-09 — varredura de UI/UX: modais sem concluir, levantamento puro)
+
+**Pedido do usuário**: "dar uma passada geral na UIX educacional, ainda tem muito modal sem concluir. Faça uma varredura e encontre o que ainda não está funcionando de fato." Duas investigações em paralelo (agentes Explore, só leitura — grep + confirmação de contexto, sem propor/aplicar correção): uma ampla por stubs/dado mockado em todo `src/`, outra focada no sistema `ModalMestre`/`Submodal*` da secretaria. **Nada foi corrigido nesta sessão** — isto é só o levantamento, registrado pra decidir prioridade numa próxima sessão.
+
+### 1. Perda de dado real (usuário preenche, salva, dado some silenciosamente)
+- **`src/features/secretaria/ex-alunos/SubmodalExAlunos.tsx`**: campos `exit_reason` (linhas 252-264) e `exit_date` (266-278) existem no form e no schema Zod, mas o payload do insert/update (linhas 56-63 / 75-83) nunca os inclui. Usuário digita motivo/data da saída, recebe toast de sucesso, reabre o registro e os dois campos estão vazios. Mesmo padrão de bug já visto e corrigido antes nesta sessão-do-projeto em outros arquivos (campo capturado no `react-hook-form`, descartado no payload).
+
+### 2. Funcionalidade travada de vez, com armadilha por trás
+- **`src/pages/app/bi/financeiro.tsx` + `src/hooks/useBIData.ts:95-127`**: `useBIFinanceiro` sempre retorna `isMockData:true, isERPEnabled:false` (hardcoded, nunca consulta nada real — `logger.warn('BI Financeiro: ERP real não implementado ainda')`). A tela sempre mostra "ERP não configurado", não importa o que se configure em Integrações — usuário nunca passa desse ponto. Por trás do early-return existe um dashboard inteiro com números 100% inventados (`revenueByMonth`, cards "Crítico/Atenção/Moderado" com 8/12/25 fixos, `ExportToolbar data={[]}`) — hoje inofensivo (código inalcançável), mas é uma armadilha: quem religar isso sem trocar a fonte de dado vai passar a mostrar inadimplência fantasiosa como se fosse real. `bi/crm.tsx`/`bi/academico.tsx` usam dado real (`useBICRM`/`useBIAcademico`, `supabase.from(...)` de verdade) — só o Financeiro está quebrado.
+- **Dialog duplicado (2 overlays Radix sobrepostos)**: `SubmodalUnidades`/`SubmodalSegmentos`/`SubmodalSeries`/`SubmodalPeriodos`/`SubmodalVisitantes` cada um renderiza seu próprio `<Dialog>` (~linha 183-192 de cada), mas `ModalMestre.tsx:288-322` monta todos eles **dentro** do `<Dialog>` do próprio ModalMestre (linha 221) com `isOpen={true}`. Resultado: dois Dialog Radix ativos ao mesmo tempo, dois overlays escurecidos, dois cabeçalhos, um flutuando sobre o outro. Reproduzível hoje pelo hub `/app/secretaria` (abrir aba Unidades/Segmentos/Séries/Períodos/Visitantes) ou pelas páginas de lista dedicadas (`unidades/ListPage.tsx:175`, `segmentos/ListPage.tsx`, `series/ListPage.tsx`, `visitantes.tsx:179`). Exceção: `secretaria/periodos.tsx` usa `SubmodalPeriodos` direto, sem passar pelo `ModalMestre` — só a aba "Períodos" *dentro do hub* tem o bug, a página dedicada não.
+
+### 3. Funcionalidade ausente mas anunciada na tela
+- **`src/pages/app/bi.tsx:109-111`**: texto do card "Sobre o BI" promete "envios automáticos por e-mail" de relatório — não existe nenhuma tela de agendamento de e-mail de BI em lugar nenhum (o único toggle de e-mail existente é o de notificação genérica construído nesta sessão, `config/integracoes.tsx`, que não tem relação com relatórios BI).
+
+### 4. Seções inteiras stub (avisadas na tela via "Em desenvolvimento", mas grandes)
+- `src/pages/app/pedagogico.tsx`: 4/4 cards mortos ("Planos de Aula", "Acompanhamento", "Projetos", "Objetivos").
+- `src/pages/app/eventos.tsx`: 4/4 cards mortos ("Calendário", "Participantes", "Notificações", "Galeria").
+- `src/pages/app/academico.tsx`: 2/8 cards stub (Competências, Relatórios) — os outros 6 têm botão real funcionando.
+- `src/pages/app/crm/campanhas.tsx`: módulo inteiro "em desenvolvimento", com "Previsão de lançamento: Q2 2024" (linha 95) — data já ~2 anos vencida frente a 2026-08, passa impressão de abandono em vez de "em breve".
+
+### 5. Risco/segurança menor
+- **`SubmodalAlunos.tsx:253`**: `console.log` vaza o formulário completo (CPF/e-mail do responsável) no console do navegador — PII exposta sem necessidade.
+- **`secretaria/periodos.tsx:259-265`**: excluir período chama a mutation direto no `onClick`, sem `confirm()` — um clique errado no ícone de lixeira apaga sem aviso. Os fluxos irmãos (`unidades/ListPage.tsx:158`, `segmentos/ListPage.tsx`) pedem confirmação antes.
+
+### 6. Código morto (não visível ao usuário, mas confunde manutenção futura)
+- `onOpenModal` prop em `SecretariaHub.tsx:9,12` — declarada, recebida de `secretaria.tsx:28`, nunca chamada dentro do componente (os dois botões de cada card usam `navigate(...)` direto). Achado já citado en passant em sessão anterior, confirmado ainda procedente.
+- `ModalMestre.tsx:120` — sync de aba ativa via query param `?modal=` só reconhece 4 dos 15 valores de `ModalType` (`alunos`/`turmas`/`disciplinas`/`matriculas`) — mascarado na prática porque os callers passam `defaultTab` direto como prop, mas o efeito em si é código morto pros outros 11 módulos.
+
+### O que foi verificado e está OK (não precisa de correção)
+Os outros 9 Submodals (`Alunos`, `Turmas`, `Disciplinas`, `Matriculas`, `Responsaveis`, `Documentos`, `Reservas`, `Solicitacoes`, `Rematricula`) chamam mutation real via `useMutation`+`supabase.from(...).insert/update`, sem campo capturado-e-descartado. Todas as 15 abas do `ModalType` (`src/features/secretaria/types.ts:7`) têm `SubmodalX` implementado — nenhuma abre vazia. `ExportToolbar` (usado nos 3 BIs) tem CSV real; botão "Exportar PDF" invoca a edge function `report-pdf` de verdade (não testado em produção nesta sessão, ponto cego já documentado no `CLAUDE.md` sobre Edge Functions). Nenhum handler vazio/`alert()` disfarçado de handler encontrado em nenhum outro lugar do app além do já listado acima.
+
+**Gaps conscientes**: nada corrigido ainda — usuário vai priorizar numa próxima sessão qual dos 6 grupos entra primeiro.
 
 ## 🔖 Checkpoint de sessão (2026-08-09 — Fase 5, terceira fatia: UI de cadastro de salas/horários)
 

@@ -12,6 +12,7 @@ import RoutePerfObserver from '@/components/perf/RoutePerfObserver';
 const Index = lazy(() => import('@/pages/Index'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 const Login = lazy(() => import('@/pages/auth/login'));
+const SelectOrg = lazy(() => import('@/pages/auth/select-org'));
 const Register = lazy(() => import('@/pages/auth/register'));
 const Reset = lazy(() => import('@/pages/auth/reset'));
 const DefinirSenha = lazy(() => import('@/pages/auth/definir-senha'));
@@ -114,6 +115,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth/login" element={<Login />} />
+            <Route path="/auth/select-org" element={<SelectOrg />} />
             <Route path="/auth/register" element={<Register />} />
             <Route path="/auth/reset" element={<Reset />} />
             <Route path="/auth/definir-senha" element={<DefinirSenha />} />

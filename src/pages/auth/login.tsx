@@ -15,9 +15,21 @@ export default function Login() {
   const { toast } = useToast();
   const { user } = useSession();
 
+  const redirectAfterAuth = async (userId: string) => {
+    // Uma pessoa pode ter vínculo com mais de uma unidade (ex.: CEO multi-CNPJ) --
+    // com 1 vínculo só, segue pro dashboard igual sempre foi; com mais de 1, o
+    // seletor decide qual fica ativa antes de entrar no resto do app.
+    const { count } = await supabase
+      .from('user_organizations')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    navigate((count ?? 0) > 1 ? '/auth/select-org' : '/app/dashboard');
+  };
+
   useEffect(() => {
     if (user) {
-      navigate('/app/dashboard');
+      redirectAfterAuth(user.id);
     }
   }, [user, navigate]);
 
@@ -26,7 +38,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
@@ -41,7 +53,9 @@ export default function Login() {
         toast({
           title: 'Login realizado com sucesso'
         });
-        navigate('/app/dashboard');
+        if (data.user) {
+          await redirectAfterAuth(data.user.id);
+        }
       }
     } catch (error) {
       toast({

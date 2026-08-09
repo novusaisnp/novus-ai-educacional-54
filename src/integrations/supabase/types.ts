@@ -2670,6 +2670,38 @@ export type Database = {
           },
         ]
       }
+      user_organizations: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_organizations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       visitors: {
         Row: {
           created_at: string
@@ -3193,6 +3225,10 @@ export type Database = {
       set_request_status: {
         Args: { new_status: string; request_id: string }
         Returns: Json
+      }
+      switch_active_organization: {
+        Args: { p_organization_id: string }
+        Returns: undefined
       }
     }
     Enums: {

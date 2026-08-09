@@ -154,13 +154,45 @@ serve(async (req) => {
     })
 
     if (inviteError || !inviteRes?.user?.id) {
-      console.error('Failed to invite user:', inviteError)
       const isDuplicate =
         inviteError?.status === 422 ||
         /already.*registered|already.*exists/i.test(inviteError?.message ?? '')
+
+      // E-mail já tem conta (provavelmente staff de outra unidade, CEO multi-CNPJ
+      // é o caso real) -- checkColaboradorValidado já confirmou que este CPF é
+      // colaborador ativo NESTA empresa, então a pessoa já está autorizada aqui
+      // independente de já ter conta em outra organização. Só adiciona o vínculo,
+      // não mexe em profiles (organization_id ativo dela não muda sozinho).
       if (isDuplicate) {
-        return jsonResponse({ error: 'Este e-mail já está em uso por outro usuário' }, 409)
+        const { data: existingProfile, error: lookupError } = await adminClient
+          .from('profiles')
+          .select('id')
+          .eq('email', email)
+          .maybeSingle()
+
+        if (lookupError || !existingProfile) {
+          console.error('Failed to look up existing profile by email:', lookupError)
+          return jsonResponse({ error: 'E-mail já está em uso, mas não foi possível localizar a conta existente' }, 500)
+        }
+
+        const { error: membershipError } = await adminClient.from('user_organizations').upsert(
+          {
+            user_id: existingProfile.id,
+            organization_id: callerProfile.organization_id,
+            role,
+          },
+          { onConflict: 'user_id,organization_id' }
+        )
+
+        if (membershipError) {
+          console.error('Failed to add organization membership:', membershipError)
+          return jsonResponse({ error: 'Falha ao vincular usuário existente a esta unidade: ' + membershipError.message }, 500)
+        }
+
+        return jsonResponse({ success: true, user_id: existingProfile.id, added_membership: true }, 200)
       }
+
+      console.error('Failed to invite user:', inviteError)
       return jsonResponse({ error: 'Falha ao enviar convite: ' + (inviteError?.message ?? 'erro desconhecido') }, 500)
     }
 
@@ -176,6 +208,20 @@ serve(async (req) => {
     if (profileError) {
       console.error('Failed to upsert staff profile:', profileError)
       return jsonResponse({ error: 'Convite enviado, mas falha ao vincular perfil: ' + profileError.message }, 500)
+    }
+
+    const { error: membershipError } = await adminClient.from('user_organizations').upsert(
+      {
+        user_id: inviteRes.user.id,
+        organization_id: callerProfile.organization_id,
+        role,
+      },
+      { onConflict: 'user_id,organization_id' }
+    )
+
+    if (membershipError) {
+      console.error('Failed to insert initial organization membership:', membershipError)
+      return jsonResponse({ error: 'Convite enviado, mas falha ao vincular unidade: ' + membershipError.message }, 500)
     }
 
     return jsonResponse({ success: true, user_id: inviteRes.user.id }, 200)

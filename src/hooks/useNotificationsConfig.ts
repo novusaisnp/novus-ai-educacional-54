@@ -1,5 +1,5 @@
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useOrganization } from "@/hooks/useOrganization";
 
 export type NotificationsConfig = {
@@ -37,14 +37,22 @@ export function useNotificationsConfig() {
     }
   }, [orgId]);
 
-  const setConfig = useCallback((updater: (prev: NotificationsConfig) => NotificationsConfig) => {
-    const prev = getConfig();
-    const next = updater(prev);
-    if (!orgId) return;
-    localStorage.setItem(storageKey(orgId), JSON.stringify(next));
-  }, [orgId, getConfig]);
+  const [cfg, setCfg] = useState<NotificationsConfig>(getConfig);
 
-  const cfg = useMemo(() => getConfig(), [getConfig]);
+  // getConfig muda de identidade quando orgId muda (troca de organização) — recarrega
+  // o estado local da nova org em vez de continuar mostrando o cfg da anterior.
+  useEffect(() => {
+    setCfg(getConfig());
+  }, [getConfig]);
+
+  const setConfig = useCallback((updater: (prev: NotificationsConfig) => NotificationsConfig) => {
+    if (!orgId) return;
+    setCfg((prev) => {
+      const next = updater(prev);
+      localStorage.setItem(storageKey(orgId), JSON.stringify(next));
+      return next;
+    });
+  }, [orgId]);
 
   const isEmailEnabled = !!cfg.enabled.email;
   const isWhatsappEnabled = !!cfg.enabled.whatsapp;

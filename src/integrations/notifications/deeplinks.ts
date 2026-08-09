@@ -2,7 +2,8 @@
 export type DeepLink =
   | { type: "financeiro"; documentNumber?: string }
   | { type: "documentos"; missing?: boolean }
-  | { type: "demandas"; requestId?: string };
+  | { type: "demandas"; requestId?: string }
+  | { type: "academico" };
 
 export function buildPortalLink(link: DeepLink): string {
   switch (link.type) {
@@ -12,6 +13,8 @@ export function buildPortalLink(link: DeepLink): string {
       return `/portal/documentos${link.missing ? `?missing=true` : ""}`;
     case "demandas":
       return `/portal/demandas${link.requestId ? `?focus=${encodeURIComponent(link.requestId)}` : ""}`;
+    case "academico":
+      return "/portal/academico";
     default:
       return "/portal";
   }

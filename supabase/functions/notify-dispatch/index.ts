@@ -244,6 +244,13 @@ async function processItem(item: QueueItem) {
         throw new Error("provider_ausente_email");
       }
       const emailResp = await sendEmail(item.recipient, subject, html);
+      // O SDK do Resend não lança em erro de validação/domínio (403 etc.) -- retorna
+      // { data: null, error: {...} }. Sem checar isso, o envio ficava marcado "sent"
+      // mesmo quando a Resend recusou de verdade (achado real: domínio de teste
+      // resend.dev só entrega pro e-mail dono da conta, silenciosamente até aqui).
+      if (emailResp?.error) {
+        throw new Error(emailResp.error.message ?? JSON.stringify(emailResp.error));
+      }
       const providerMessageId = emailResp?.data?.id ?? emailResp?.id ?? null;
 
       await insertDelivery(item.organization_id, item.id, "sent", { provider: "resend" }, providerMessageId || undefined);

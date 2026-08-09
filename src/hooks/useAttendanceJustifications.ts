@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from './useOrganization';
 import { logger } from '@/lib/logger';
 import { getSignedUrl } from '@/lib/storage';
+import { enqueueNotification, withDeepLink } from '@/integrations/notifications/enqueue';
 
 export interface StaffAttendanceJustification {
   id: string;
@@ -20,7 +21,7 @@ export interface StaffAttendanceJustification {
     class: { name: string } | null;
   } | null;
   student: { first_name: string; last_name: string } | null;
-  guardian: { name: string } | null;
+  guardian: { name: string; email: string | null } | null;
   document: { file_path: string; title: string } | null;
 }
 
@@ -41,7 +42,7 @@ export const useAttendanceJustifications = () => {
           id, reason, status, review_note, created_at, reviewed_at, document_id,
           attendance:attendance_id(date, status, subject:subject_id(name), class:class_id(name)),
           student:student_id(first_name, last_name),
-          guardian:guardian_id(name),
+          guardian:guardian_id(name, email),
           document:document_id(file_path, title)
         `)
         .eq('organization_id', orgId)
@@ -61,18 +62,64 @@ export const useAttendanceJustifications = () => {
 };
 
 export const useReviewAttendanceJustification = () => {
-  const { orgId } = useOrganization();
+  const { orgId, data: orgData } = useOrganization();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { id: string; status: 'aprovada' | 'recusada'; reviewNote?: string }) => {
+    mutationFn: async (data: {
+      id: string;
+      status: 'aprovada' | 'recusada';
+      reviewNote?: string;
+      studentName: string;
+      guardianName: string;
+      guardianEmail: string | null;
+    }) => {
       const { error } = await supabase
         .from('attendance_justifications')
         .update({ status: data.status, review_note: data.reviewNote || null })
         .eq('id', data.id);
 
       if (error) throw error;
+
+      // Notificação é decoração do fluxo — nunca deve travar a revisão. Sem e-mail
+      // cadastrado do responsável, só pula (mesmo espírito de enqueue.ts).
+      if (orgId && data.guardianEmail) {
+        try {
+          const organizationName = (orgData as { organizations?: { name?: string } } | undefined)?.organizations?.name ?? '';
+          const statusLabel = data.status === 'aprovada' ? 'aprovada' : 'recusada';
+          const reviewNoteBlock = data.reviewNote ? `**Motivo:** ${data.reviewNote}` : '';
+
+          const { id: queueId } = await enqueueNotification({
+            organization_id: orgId,
+            channel: 'email',
+            event_type: 'acad.absence_justification_reviewed',
+            recipient: data.guardianEmail,
+            payload: withDeepLink(
+              {
+                student_name: data.studentName,
+                guardian_name: data.guardianName,
+                status_label: statusLabel,
+                review_note_block: reviewNoteBlock,
+                organization_name: organizationName,
+              },
+              { type: 'academico' }
+            ),
+          });
+
+          // Sem cron/scheduler rodando notify-dispatch hoje -- dispara na hora,
+          // fire-and-forget, pra não deixar o item preso em "queued" pra sempre.
+          if (queueId) {
+            supabase.functions.invoke('notify-dispatch', { body: {} }).catch((err) => {
+              logger.warn('notify-dispatch invoke failed', { message: err instanceof Error ? err.message : String(err) });
+            });
+          }
+        } catch (notifyError) {
+          logger.warn('Failed to enqueue absence justification notification', {
+            message: notifyError instanceof Error ? notifyError.message : String(notifyError),
+          });
+        }
+      }
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['attendance_justifications', orgId] });

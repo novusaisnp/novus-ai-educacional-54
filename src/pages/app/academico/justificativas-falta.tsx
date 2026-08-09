@@ -48,7 +48,14 @@ function RejectDialog({
 
   const handleReject = async () => {
     if (!justification) return;
-    await reviewJustification.mutateAsync({ id: justification.id, status: 'recusada', reviewNote });
+    await reviewJustification.mutateAsync({
+      id: justification.id,
+      status: 'recusada',
+      reviewNote,
+      studentName: justification.student ? `${justification.student.first_name} ${justification.student.last_name}` : '',
+      guardianName: justification.guardian?.name ?? '',
+      guardianEmail: justification.guardian?.email ?? null,
+    });
     setReviewNote('');
     onOpenChange(false);
   };
@@ -197,7 +204,15 @@ export default function JustificativasFaltaPage() {
                           <div className="flex justify-end gap-2">
                             <Button
                               size="sm"
-                              onClick={() => reviewJustification.mutate({ id: j.id, status: 'aprovada' })}
+                              onClick={() =>
+                                reviewJustification.mutate({
+                                  id: j.id,
+                                  status: 'aprovada',
+                                  studentName: j.student ? `${j.student.first_name} ${j.student.last_name}` : '',
+                                  guardianName: j.guardian?.name ?? '',
+                                  guardianEmail: j.guardian?.email ?? null,
+                                })
+                              }
                               disabled={reviewJustification.isPending}
                             >
                               Aprovar

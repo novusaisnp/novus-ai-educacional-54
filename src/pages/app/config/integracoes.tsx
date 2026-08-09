@@ -15,7 +15,8 @@ import { usePortalConfig } from '@/hooks/usePortalConfig';
 import { PortalSection } from '@/components/portal/PortalSection';
 import { getERPConfig, setERPConfig, maskSecret, type ERPConfig, getIAConfig, setIAConfig, type IAConfig } from '@/lib/featureFlags';
 import { erpEmit } from '@/integrations/erp/emit';
-import { Settings, Zap, Shield, Webhook, Bot } from 'lucide-react';
+import { useNotificationsConfig } from '@/hooks/useNotificationsConfig';
+import { Settings, Zap, Shield, Webhook, Bot, Bell } from 'lucide-react';
 
 const configSchema = z.object({
   enabled: z.boolean(),
@@ -44,6 +45,7 @@ type IAConfigFormData = z.infer<typeof iaConfigSchema>;
 export default function ConfigIntegracoes() {
   const { toast } = useToast();
   const { data: orgData } = useOrganization();
+  const { isEmailEnabled, setConfig: setNotificationsConfig } = useNotificationsConfig();
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [showSecrets, setShowSecrets] = useState(false);
 
@@ -188,6 +190,34 @@ export default function ConfigIntegracoes() {
           <p className="text-muted-foreground">Integrações</p>
         </div>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Bell className="h-5 w-5" />
+            <span>Notificações</span>
+          </CardTitle>
+          <CardDescription>
+            Envio de e-mails automáticos para os responsáveis (ex.: revisão de justificativa de falta).
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+            <div className="space-y-0.5">
+              <p className="text-base font-medium">E-mail</p>
+              <p className="text-sm text-muted-foreground">
+                Ativa o envio real de e-mails de notificação para esta organização.
+              </p>
+            </div>
+            <Switch
+              checked={isEmailEnabled}
+              onCheckedChange={(checked) =>
+                setNotificationsConfig((prev) => ({ ...prev, enabled: { ...prev.enabled, email: checked } }))
+              }
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">

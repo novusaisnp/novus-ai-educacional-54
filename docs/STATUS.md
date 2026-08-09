@@ -1,6 +1,25 @@
 # STATUS — novus-educacional
 
-**Última atualização: 2026-08-09 (Fase 5, primeira fatia — cadastro de equipe + gate de colaborador validado no ERP).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+**Última atualização: 2026-08-09 (Fase 5, segunda fatia — notificação real por e-mail na justificativa de falta).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+
+## 🔖 Checkpoint de sessão (2026-08-09 — Fase 5, segunda fatia: notificação real por e-mail)
+
+**Continuação direta** — cadastro de equipe (fatia anterior) fechado e pushado. Usuário escolheu **notificação real (e-mail)** como próxima fatia, restrita a e-mail (canal `push` não existe no schema/infra, fatia própria futura maior).
+
+1. **`RESEND_API_KEY` configurado** (usuário forneceu key real, setada via `supabase secrets set`) — estava confirmado ausente desde sempre (`CLAUDE.md`), bloqueando qualquer envio real.
+2. **Migration `20260809000000_notification_template_absence_justification.sql`**: seed de `notification_templates` (`event_type='acad.absence_justification_reviewed'`) por organização, mesmo padrão `INSERT...SELECT...WHERE NOT EXISTS` dos templates existentes.
+3. **`useAttendanceJustifications.ts`**: `useReviewAttendanceJustification` agora chama `enqueueNotification` de verdade após aprovar/recusar (query ganhou `guardian.email`). Sem cron/scheduler pra `notify-dispatch` (confirmado, não existe) — dispara `supabase.functions.invoke('notify-dispatch')` fire-and-forget logo após enfileirar, senão o item ficaria preso em `queued` pra sempre.
+4. **Bug real achado durante o teste ao vivo, corrigido**: `useNotificationsConfig` (`isEmailEnabled`) não era reativo — `setConfig` escrevia no `localStorage` mas não forçava re-render, então o toggle na UI (`config/integracoes.tsx`, Card novo "Notificações") parecia não fazer nada mesmo funcionando de verdade por baixo. Corrigido trocando `useMemo` por `useState`+`useEffect`.
+5. **Bug real mais sério achado durante o teste, corrigido**: `notify-dispatch` (Edge Function já existente) nunca checava `emailResp.error` do SDK do Resend — o SDK não lança em erro de validação (retorna `{data:null, error:{...}}`), então qualquer envio recusado pela Resend ficava marcado `status='sent'` no banco **silenciosamente**, mentira de sucesso. Corrigido: agora lança e cai no path `failed` já existente, com o motivo real do provedor.
+6. **Limitação real de produção descoberta**: domínio de teste da Resend (`no-reply@resend.dev`, o único configurado hoje) só entrega pro e-mail dono da própria conta Resend (`novusaisnp@gmail.com`) — qualquer outro destinatário (ex. e-mail real de um guardian) é recusado com 403 `validation_error`. **Para notificar guardians de verdade em produção, precisa verificar um domínio próprio em resend.com/domains e trocar o `from`** (hoje hardcoded em `notify-dispatch/index.ts`, sem variável de org). Não feito nesta sessão — decisão/DNS do usuário.
+7. **Verificação real, ponta a ponta**: dado de teste (attendance + attendance_justification pendente pro ISAQUE/MAXWELL) criado via SQL, toggle de e-mail ligado na UI, aprovado via clique real em `/app/academico/justificativas-falta` → `notification_queue` foi de `queued` a **`sent` (falso, achado do bug 5)** → corrigido o bug, reenviado manualmente pro e-mail dono da conta Resend → **e-mail real recebido e confirmado pelo usuário**, conteúdo do template renderizado certo (placeholders resolvidos, nome do aluno/responsável/status). Dados de teste limpos ao final.
+8. `bun run typecheck`/`test`(47/47)/`build` limpos.
+
+**Gaps conscientes**:
+- Domínio de e-mail verificado (item 6) — sem isso, notificação só "funciona" pro e-mail do dono da conta Resend, não pra guardians reais. Próxima fatia se o usuário priorizar.
+- Canal `push` — não existe no schema/infra (`notification_queue.channel` só aceita `email`/`whatsapp`), fatia própria maior (service worker, VAPID) se for priorizado.
+- Canal `whatsapp` já tem infra (`notify-dispatch` trata) mas `WHATSAPP_API_URL`/`WHATSAPP_API_TOKEN` continuam ausentes — não mexido.
+- Sem retry automático pra notificação `failed` — reenviar hoje só via SQL/manual.
 
 ## 🔖 Checkpoint de sessão (2026-08-09 — Fase 5, primeira fatia: cadastro de equipe + gate de colaborador ERP)
 

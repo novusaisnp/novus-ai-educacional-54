@@ -73,7 +73,6 @@ import SecretariaSalas from '@/pages/app/secretaria/salas';
 import SecretariaHorarios from '@/pages/app/secretaria/horarios';
 
 import ConfigIntegracoesPage from '@/pages/app/config/integracoes';
-import OnboardingPage from '@/pages/app/onboarding';
 
 import DevDiagnosticsPage from '@/pages/app/dev/diagnostics';
 import CRMHub from '@/pages/app/crm';
@@ -204,7 +203,6 @@ function App() {
                 <Route path="secretaria/rematricula/lote" element={<SecretariaRematriculaLote />} />
 
                 <Route path="config/integracoes" element={<ConfigIntegracoesPage />} />
-                <Route path="onboarding" element={<OnboardingPage />} />
                 <Route path="dev/diagnostics" element={<DevDiagnosticsPage />} />
               </Route>
             </Route>

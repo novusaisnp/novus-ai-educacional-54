@@ -1,7 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
 import { BICard } from '@/components/bi/BICard';
 import { BIHeroCard } from '@/components/bi/BIHeroCard';
 import { Users, FileText, MessageCircle } from 'lucide-react';
@@ -21,7 +19,6 @@ function getGreeting(): string {
 export default function Dashboard() {
   const { orgId, data: orgData } = useOrganization();
   const { user } = useSession();
-  const navigate = useNavigate();
 
   const firstName = (user?.user_metadata?.full_name as string | undefined)?.split(' ')[0];
   const orgName = orgData?.organizations?.name;
@@ -127,13 +124,8 @@ export default function Dashboard() {
         </div>
         
         <EmptyState
-          title="Organização não selecionada"
-          description="Selecione ou crie uma organização para visualizar os dados do dashboard"
-          action={
-            <Button onClick={() => navigate('/app/onboarding')}>
-              Criar organização
-            </Button>
-          }
+          title="Conta ainda não vinculada"
+          description="Sua conta ainda não está vinculada a nenhuma organização. Aguarde o convite do administrador da sua instituição."
         />
       </div>
     );

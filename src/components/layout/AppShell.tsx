@@ -444,7 +444,7 @@ export function AppShell() {
           <Outlet />
         </AppLayout>
         <Toaster />
-        <DebugBanner />
+        {import.meta.env.DEV && <DebugBanner />}
       </AppErrorBoundary>
     </SidebarProvider>
   );

@@ -81,11 +81,21 @@ export default function SecretariaDocumentos() {
     },
   });
 
+  // file_path grava "bucket/caminho/dentro/do/bucket" (docs/, avatars/, etc
+  // — ver src/lib/storage.ts) — bucket certo tem que vir do próprio path,
+  // nunca fixo, senão qualquer bucket que não seja "docs" (ex. avatar) dá
+  // "Object not found" mesmo com o arquivo existindo no lugar certo.
+  const splitFilePath = (filePath: string): { bucket: string; path: string } => {
+    const [bucket, ...rest] = filePath.split('/');
+    return { bucket, path: rest.join('/') };
+  };
+
   const handleView = async (filePath: string) => {
     try {
+      const { bucket, path } = splitFilePath(filePath);
       const { data, error } = await supabase.storage
-        .from('docs')
-        .createSignedUrl(filePath.replace('docs/', ''), 3600);
+        .from(bucket)
+        .createSignedUrl(path, 3600);
 
       if (error) throw error;
       if (data?.signedUrl) {
@@ -102,9 +112,10 @@ export default function SecretariaDocumentos() {
 
   const handleDownload = async (filePath: string, title: string) => {
     try {
+      const { bucket, path } = splitFilePath(filePath);
       const { data } = await supabase.storage
-        .from('docs')
-        .createSignedUrl(filePath.replace('docs/', ''), 3600);
+        .from(bucket)
+        .createSignedUrl(path, 3600);
 
       if (data?.signedUrl) {
         const link = document.createElement('a');

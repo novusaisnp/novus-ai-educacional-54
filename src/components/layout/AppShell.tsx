@@ -39,7 +39,7 @@ import DebugBanner from "@/components/DebugBanner";
 // Compartilhado entre o cartão de usuário da sidebar (desktop) e o dropdown
 // do topbar (mobile, onde a sidebar fica oculta) — mesmo fluxo de logout,
 // um só lugar pra manter.
-async function performLogout(navigate: NavigateFunction) {
+export async function performLogout(navigate: NavigateFunction) {
   try {
     await supabase.auth.signOut();
     safeToast({ title: 'Logout realizado com sucesso' });
@@ -423,8 +423,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground">
             <span>Uma solução</span>
             <img
-              src="/lovable-uploads/novus-ai-educacional-logo.png"
-              alt="NOVUS.AI Educacional"
+              src="/lovable-uploads/756ae602-1dc7-4970-aa18-8b7d0675b217.png"
+              alt="NOVUS.AI"
               className="h-4 object-contain"
             />
           </div>

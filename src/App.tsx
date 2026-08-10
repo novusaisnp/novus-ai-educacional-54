@@ -17,6 +17,7 @@ const Register = lazy(() => import('@/pages/auth/register'));
 const Reset = lazy(() => import('@/pages/auth/reset'));
 const DefinirSenha = lazy(() => import('@/pages/auth/definir-senha'));
 const Dashboard = lazy(() => import('@/pages/app/dashboard'));
+const OrgGate = lazy(() => import('@/components/auth/OrgGate'));
 
 // Portal Pages
 const PortalLogin = lazy(() => import('@/pages/portal/login'));
@@ -134,6 +135,7 @@ function App() {
             </Route>
             
             <Route path="/app" element={<ProtectedRoute />}>
+              <Route element={<OrgGate />}>
               <Route element={<AppShell />}>
                 <Route index element={<Dashboard />} />
                 <Route path="dashboard" element={<Dashboard />} />
@@ -205,8 +207,9 @@ function App() {
                 <Route path="config/integracoes" element={<ConfigIntegracoesPage />} />
                 <Route path="dev/diagnostics" element={<DevDiagnosticsPage />} />
               </Route>
+              </Route>
             </Route>
-            
+
             <Route path="*" element={<Login />} />
           </Routes>
         </Suspense>

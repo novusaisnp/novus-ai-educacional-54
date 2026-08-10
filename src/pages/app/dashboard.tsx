@@ -7,7 +7,6 @@ import { subDays } from 'date-fns';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useSession } from '@/hooks/useSession';
 import { safeQuery } from '@/lib/safeQuery';
-import EmptyState from '@/components/EmptyState';
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -109,27 +108,6 @@ export default function Dashboard() {
     },
     enabled: Boolean(orgId),
   });
-
-  // Se não há orgId, mostrar estado vazio
-  if (!orgId) {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground">
-              Visão geral do sistema educacional
-            </p>
-          </div>
-        </div>
-        
-        <EmptyState
-          title="Conta ainda não vinculada"
-          description="Sua conta ainda não está vinculada a nenhuma organização. Aguarde o convite do administrador da sua instituição."
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">

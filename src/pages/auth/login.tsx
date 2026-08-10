@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/hooks/useSession';
+import { IntroSplash, hasSeenIntro, markIntroSeen } from '@/components/IntroSplash';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -14,6 +15,12 @@ export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useSession();
+  const [showIntro, setShowIntro] = useState(() => !hasSeenIntro());
+
+  const finishIntro = () => {
+    markIntroSeen();
+    setShowIntro(false);
+  };
 
   const redirectAfterAuth = async (userId: string) => {
     // Uma pessoa pode ter vínculo com mais de uma unidade (ex.: CEO multi-CNPJ) --
@@ -69,9 +76,11 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <>
+      {showIntro && <IntroSplash onFinish={finishIntro} />}
+      <div className="min-h-screen flex">
       {/* Coluna do formulário — 1/3 da tela à ESQUERDA */}
-      <div className="w-full lg:w-1/3 flex flex-col bg-background">
+      <div className="w-full lg:w-[30%] flex flex-col bg-background">
         <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
           <div className="max-w-md w-full space-y-8">
             <div className="text-center">
@@ -138,12 +147,13 @@ export default function Login() {
 
       {/* Coluna da imagem — 2/3 da tela à DIREITA */}
       <div
-        className="hidden lg:flex lg:w-2/3 bg-cover bg-center bg-no-repeat"
+        className="hidden lg:flex lg:w-[70%] bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: 'url(/lovable-uploads/login-background.jpg)'
         }}
       >
       </div>
-    </div>
+      </div>
+    </>
   );
 }

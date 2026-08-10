@@ -1,6 +1,15 @@
 # STATUS — novus-educacional
 
-**Última atualização: 2026-08-10 (melhorias de responsividade mobile — acesso de emergência, desktop intocado).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+**Última atualização: 2026-08-10 (2 planos pendentes registrados, nenhum executado ainda).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+
+## 🔖 Checkpoint de sessão (2026-08-10 — 2 planos escritos, nenhum código mudou)
+
+**Contexto**: sessão de planejamento pura (modo Plan), rodada no repo-mãe `NovusSaaS`, movida pra cá só na hora de commitar (raiz `NovusSaaS` não é repo git). Nenhuma implementação nesta sessão — os dois arquivos abaixo são planos escritos pra sessões futuras.
+
+1. **`PLANO_reorganizar_cards_secretaria.md`** (pra executar): reorganizar os 20 cards soltos do hub `/app/secretaria` (`SecretariaHub.tsx`) em 5 grupos por assunto (Cadastros Acadêmicos, Estrutura Escolar, Atendimento, Ciclo do Aluno, Equipe) usando `Accordion` (shadcn, já existe no projeto) — decisão confirmada com o usuário via `AskUserQuestion` (accordion in-place, sem rota nova). Inclui pedido extra do usuário nesta sessão: aproveitar a mudança pra aplicar a identidade visual da skill `novus-satellite-visual-identity` nos cards (hoje é visual shadcn genérico com cores pastel arbitrárias por card). Único arquivo a mudar: `src/features/secretaria/hub/SecretariaHub.tsx` — investigação confirmou que nenhum outro arquivo (`ModalMestre.tsx`, rotas, `Submodal*`) precisa de alteração.
+2. **`cola_de_plano.md`** (pra estudar, não executar ainda): plano cross-repo mais antigo, cargo do ERP → role do satélite (sugestão auditável) + fecha gap de auditoria de privilégio nos dois repos. Verificado nesta sessão via grep (`categoria_padrao`, `role_assigned_via`, `suggestedRole`, `historico_colaboradores_cargo`) que **nada dele foi implementado ainda** — zero rastro no código real dos dois repos, só existe no arquivo do plano.
+
+**Gaps conscientes**: nenhuma mudança de código, typecheck/test não rodados (nada mudou que os afete). Fila "reorganizar cards do hub Secretaria" do checkpoint anterior (2026-08-10, responsividade mobile) agora tem plano formal — deixa de ser só um item de fila solto.
 
 ## 🔖 Checkpoint de sessão (2026-08-10 — responsividade mobile, staff area)
 

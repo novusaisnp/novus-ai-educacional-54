@@ -60,6 +60,5 @@
 4. **Compatibilidade**: Mantida com `useStudents` que já usa `v_students_safe`
 
 ---
-**Responsável pela implementação**: Sistema Lovable AI  
 **Data**: 21 de agosto de 2025  
 **Versão**: v1.0

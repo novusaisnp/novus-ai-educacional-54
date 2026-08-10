@@ -9,17 +9,6 @@ Object.defineProperty(window, 'location', {
   writable: true
 })
 
-Object.defineProperty(navigator, 'serviceWorker', {
-  value: {
-    register: vi.fn(),
-    ready: Promise.resolve({
-      scope: '/portal/',
-      update: vi.fn()
-    })
-  },
-  writable: true
-})
-
 Object.defineProperty(window, 'matchMedia', {
   value: vi.fn().mockImplementation(query => ({
     matches: query === '(display-mode: standalone)',
@@ -34,60 +23,30 @@ Object.defineProperty(window, 'matchMedia', {
   writable: true
 })
 
-// Mock PWA Manager
-interface MockInstallPrompt {
-  prompt: () => void
-  userChoice: Promise<{ outcome: string }>
+interface RegisterSWOptions {
+  immediate?: boolean
+  onNeedRefresh?: () => void
+  onRegisterError?: (error: unknown) => void
 }
 
-class MockPWAManager {
-  private isRegistered = false
-  private installPrompt: MockInstallPrompt | null = null
+// A fronteira real com o service worker é o módulo virtual gerado pelo
+// vite-plugin-pwa no build — só ele precisa ser mockado, o resto do teste
+// exercita o pwaManager de verdade (@/lib/pwa), não uma reimplementação.
+// vi.mock é hoisted pro topo do arquivo, então o mock precisa nascer dentro
+// de vi.hoisted pra não referenciar um `const` que ainda não existiria.
+const { registerSWMock } = vi.hoisted(() => ({
+  registerSWMock: vi.fn((_options?: RegisterSWOptions) => vi.fn())
+}))
 
-  async registerServiceWorker(): Promise<boolean> {
-    try {
-      const registration = await navigator.serviceWorker.register('/portal-sw.js', {
-        scope: '/portal/'
-      })
-      this.isRegistered = true
-      return true
-    } catch {
-      return false
-    }
-  }
+vi.mock('virtual:pwa-register', () => ({
+  registerSW: registerSWMock
+}))
 
-  setupInstallPrompt(): void {
-    // Simulate install prompt event
-    const mockEvent = {
-      prompt: vi.fn(),
-      userChoice: Promise.resolve({ outcome: 'accepted' })
-    }
-    this.installPrompt = mockEvent
-  }
+import { pwaManager } from '@/lib/pwa'
 
-  isInstallable(): boolean {
-    return !!this.installPrompt
-  }
-
-  isInstalled(): boolean {
-    return window.matchMedia('(display-mode: standalone)').matches
-  }
-
-  async showInstallPrompt(): Promise<boolean> {
-    if (!this.installPrompt) return false
-    
-    await this.installPrompt.prompt()
-    const choice = await this.installPrompt.userChoice
-    return choice.outcome === 'accepted'
-  }
-}
-
-describe('Portal PWA Tests', () => {
-  let pwaManager: MockPWAManager
-
+describe('PWA Manager (src/lib/pwa.ts)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    pwaManager = new MockPWAManager()
   })
 
   it('should have manifest present', () => {
@@ -100,125 +59,76 @@ describe('Portal PWA Tests', () => {
     const manifest = document.querySelector('link[rel="manifest"]')
     expect(manifest).toBeTruthy()
     expect(manifest?.getAttribute('href')).toBe('/manifest.webmanifest')
+
+    manifestLink.remove()
   })
 
-  it('should register service worker in portal routes', async () => {
-    const registerSpy = vi.mocked(navigator.serviceWorker.register)
-    registerSpy.mockResolvedValue({
-      scope: '/portal/',
-      update: vi.fn(),
-      addEventListener: vi.fn()
-    } as unknown as ServiceWorkerRegistration)
+  it('should register the service worker via registerSW when enabled', () => {
+    pwaManager.initialize(true, vi.fn())
 
-    // Test service worker registration
-    const registered = await pwaManager.registerServiceWorker()
-
-    expect(registered).toBe(true)
-    expect(registerSpy).toHaveBeenCalledWith('/portal-sw.js', {
-      scope: '/portal/'
-    })
+    expect(registerSWMock).toHaveBeenCalledWith(
+      expect.objectContaining({ immediate: true })
+    )
   })
 
-  it('should provide offline fallback for portal routes', async () => {
-    // Mock fetch to simulate offline
-    const mockFetch = vi.fn().mockRejectedValue(new Error('Network error'))
-    global.fetch = mockFetch
+  it('should not register the service worker when disabled', () => {
+    pwaManager.initialize(false, vi.fn())
 
-    // Mock caches API
-    global.caches = {
-      match: vi.fn().mockResolvedValue(null),
-      open: vi.fn().mockResolvedValue({
-        put: vi.fn(),
-        addAll: vi.fn()
-      })
-    } as unknown as CacheStorage
+    expect(registerSWMock).not.toHaveBeenCalled()
+  })
 
-    // Simulate service worker fetch handler offline behavior
-    const createOfflineResponse = () => {
-      const offlineHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head><title>Portal Offline</title></head>
-        <body>
-          <h1>Portal dos Responsáveis</h1>
-          <p>Você está offline. Conecte-se à internet para acessar o portal.</p>
-        </body>
-        </html>
-      `
-      return new Response(offlineHtml, {
-        headers: { 'Content-Type': 'text/html' }
-      })
-    }
+  it('should call the onNeedRefresh callback through registerSW', () => {
+    const onNeedRefresh = vi.fn()
+    pwaManager.initialize(true, onNeedRefresh)
 
-    const offlineResponse = createOfflineResponse()
-    expect(offlineResponse.headers.get('Content-Type')).toBe('text/html')
-    
-    const text = await offlineResponse.text()
-    expect(text).toContain('Portal dos Responsáveis')
-    expect(text).toContain('Você está offline')
+    const call = registerSWMock.mock.calls[0][0]
+    call?.onNeedRefresh?.()
+
+    expect(onNeedRefresh).toHaveBeenCalled()
+  })
+
+  it('should apply update via the function returned by registerSW', () => {
+    const updateSW = vi.fn()
+    registerSWMock.mockReturnValueOnce(updateSW)
+
+    pwaManager.initialize(true, vi.fn())
+    pwaManager.applyUpdate()
+
+    expect(updateSW).toHaveBeenCalledWith(true)
   })
 
   it('should detect PWA installation state', () => {
-    // Test standalone mode detection
     const isInstalled = pwaManager.isInstalled()
     expect(typeof isInstalled).toBe('boolean')
 
-    // Test install prompt availability
-    pwaManager.setupInstallPrompt()
-    const isInstallable = pwaManager.isInstallable()
-    expect(isInstallable).toBe(true)
+    expect(pwaManager.isInstallable()).toBe(false)
   })
 
   it('should handle install prompt correctly', async () => {
     pwaManager.setupInstallPrompt()
-    
+
+    const mockEvent = new Event('beforeinstallprompt') as Event & {
+      preventDefault: () => void
+      prompt: () => Promise<void>
+      userChoice: Promise<{ outcome: string; platform: string }>
+    }
+    mockEvent.preventDefault = vi.fn()
+    mockEvent.prompt = vi.fn().mockResolvedValue(undefined)
+    mockEvent.userChoice = Promise.resolve({ outcome: 'accepted', platform: 'web' })
+
+    window.dispatchEvent(mockEvent)
+
+    expect(pwaManager.isInstallable()).toBe(true)
+
     const installed = await pwaManager.showInstallPrompt()
     expect(installed).toBe(true)
   })
 
-  it('should preserve deep-links functionality', () => {
-    const testRoutes = [
-      '/portal/financeiro?highlight=doc123',
-      '/portal/documentos?missing=true',
-      '/portal/demandas?focus=abc123'
-    ]
-
-    testRoutes.forEach(route => {
-      // Update location
-      window.location.pathname = route.split('?')[0]
-      
-      // Verify route is in portal scope
-      expect(window.location.pathname.startsWith('/portal/')).toBe(true)
-      
-      // Verify query params would be preserved
-      if (route.includes('?')) {
-        const queryPart = route.split('?')[1]
-        expect(queryPart).toBeTruthy()
-      }
-    })
-  })
-
-  it('should only register SW when PWA is enabled', async () => {
-    const registerSpy = vi.mocked(navigator.serviceWorker.register)
-    
-    // Test with PWA disabled
-    const initializeDisabled = async (enabled: boolean) => {
-      if (!enabled) {
-        return // Skip registration
-      }
-      await pwaManager.registerServiceWorker()
-    }
-
-    await initializeDisabled(false)
-    expect(registerSpy).not.toHaveBeenCalled()
-
-    // Test with PWA enabled
-    await initializeDisabled(true)
-    expect(registerSpy).toHaveBeenCalled()
-  })
-
   it('should not cache sensitive API responses', () => {
-    // Test URLs that should NOT be cached
+    // O runtimeCaching do vite-plugin-pwa (vite.config.ts) não declara
+    // nenhuma regra pra supabase.co/api — Workbox só intercepta o que está
+    // listado, então essas URLs nunca passam por cache por omissão, não
+    // por exclusão explícita. Este teste documenta essa garantia.
     const sensitiveUrls = [
       'https://nkcadmwydfnzrnauzeyz.supabase.co/rest/v1/students',
       'https://nkcadmwydfnzrnauzeyz.supabase.co/rest/v1/guardians',
@@ -228,12 +138,11 @@ describe('Portal PWA Tests', () => {
 
     sensitiveUrls.forEach(url => {
       const urlObj = new URL(url, 'https://example.com')
-      
-      // Service worker should ignore these URLs
-      const shouldIgnore = urlObj.hostname.includes('supabase.co') || 
-                          urlObj.pathname.startsWith('/api/')
-      
-      expect(shouldIgnore).toBe(true)
+
+      const matchesSupabase = urlObj.hostname.includes('supabase.co')
+      const matchesApi = urlObj.pathname.startsWith('/api/')
+
+      expect(matchesSupabase || matchesApi).toBe(true)
     })
   })
 })

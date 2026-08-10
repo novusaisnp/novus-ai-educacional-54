@@ -18,7 +18,7 @@ import {
 import { usePWA } from './PWAProvider';
 import { useState } from 'react';
 
-export function PortalPWAStatus() {
+export function PWAStatus() {
   const { canInstall, isOnline, hasUpdate, install, reloadForUpdate } = usePWA();
   const [showUpdateBanner, setShowUpdateBanner] = useState(true);
 

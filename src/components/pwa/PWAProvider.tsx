@@ -1,6 +1,6 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { pwaManager } from '@/portal/pwa';
+import { pwaManager } from '@/lib/pwa';
 import { logAuditSafe } from '@/utils/auditSafe';
 import { logger } from '@/lib/logger';
 
@@ -8,7 +8,6 @@ interface PWAContextType {
   canInstall: boolean;
   isOnline: boolean;
   hasUpdate: boolean;
-  swVersion?: string;
   install: () => Promise<boolean>;
   reloadForUpdate: () => void;
 }
@@ -32,27 +31,32 @@ export function PWAProvider({ children, enabled = true }: PWAProviderProps) {
   const [canInstall, setCanInstall] = useState(false);
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [hasUpdate, setHasUpdate] = useState(false);
-  const [swVersion, setSwVersion] = useState<string>();
 
   useEffect(() => {
     // Guard: only in browser environment
     if (typeof window === 'undefined') return;
-    
+
     // Initialize online status
     setIsOnline(navigator.onLine);
-    
-    if (!enabled || !window.location.pathname.startsWith('/portal/')) {
+
+    if (!enabled) {
       return;
     }
 
-    // Initialize PWA manager
-    pwaManager.initializeForPortal(true);
+    // Initialize PWA manager (registra o service worker gerado no build)
+    pwaManager.initialize(true, () => {
+      setHasUpdate(true);
+      logAuditSafe('pwa_event', {
+        type: 'update_available',
+        pathname: window.location.pathname,
+      });
+    });
 
     // Setup install prompt listener
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setCanInstall(true);
-      
+
       logAuditSafe('pwa_event', {
         type: 'install_prompt_shown',
         pathname: window.location.pathname,
@@ -76,53 +80,22 @@ export function PWAProvider({ children, enabled = true }: PWAProviderProps) {
       });
     };
 
-    // Setup service worker update listener
-    const handlePWAUpdate = () => {
-      setHasUpdate(true);
-      logAuditSafe('pwa_event', {
-        type: 'update_available',
-        pathname: window.location.pathname,
-        swVersion,
-      });
-    };
-
-    // Setup service worker message listener
-    const handleSWMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'SW_VERSION') {
-        setSwVersion(event.data.version);
-      }
-    };
-
     // Add event listeners
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-    window.addEventListener('pwa-update-available', handlePWAUpdate);
-    
-    // Service worker listeners (with guard)
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker?.addEventListener('message', handleSWMessage);
-      
-      // Check if already installable
-      setCanInstall(pwaManager.isInstallable());
 
-      // Request SW version
-      if (navigator.serviceWorker?.controller) {
-        navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' });
-      }
+    // Check if already installable
+    if ('serviceWorker' in navigator) {
+      setCanInstall(pwaManager.isInstallable());
     }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      window.removeEventListener('pwa-update-available', handlePWAUpdate);
-      
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker?.removeEventListener('message', handleSWMessage);
-      }
     };
-  }, [enabled, swVersion]);
+  }, [enabled]);
 
   const install = async (): Promise<boolean> => {
     try {
@@ -147,17 +120,15 @@ export function PWAProvider({ children, enabled = true }: PWAProviderProps) {
     logAuditSafe('pwa_event', {
       type: 'update_applied',
       pathname: window.location.pathname,
-      swVersion,
     });
-    
-    window.location.reload();
+
+    pwaManager.applyUpdate();
   };
 
   const value: PWAContextType = {
     canInstall,
     isOnline,
     hasUpdate,
-    swVersion,
     install,
     reloadForUpdate,
   };

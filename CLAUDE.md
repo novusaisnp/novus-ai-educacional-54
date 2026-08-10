@@ -4,7 +4,7 @@ Leia isto antes de qualquer mudança. Para saber **o que está pendente agora**,
 
 ## O que é
 
-NOVUS.AI Educacional — SPA React + Vite + shadcn/ui + Supabase, gerado originalmente no Lovable.dev. É o **primeiro módulo satélite** do ecossistema NOVUS.AI, cujo hub é o ERP em `../novusai-erp` (pasta irmã, mesmo nível). Satélite cuida da jornada acadêmica (matrícula, notas, frequência, prontuário do aluno); o ERP cuida do dinheiro (contas a receber, cobrança, fiscal). A ponte entre os dois é o contrato canônico documentado em `novusai-erp/docs/CONTRATOS_CANONICOS_ERP.md` (modelo de 3 "portas": Título e Liquidação via push, Autorização via pull síncrono).
+NOVUS.AI Educacional — SPA React + Vite + shadcn/ui + Supabase. É o **primeiro módulo satélite** do ecossistema NOVUS.AI, cujo hub é o ERP em `../novusai-erp` (pasta irmã, mesmo nível). Satélite cuida da jornada acadêmica (matrícula, notas, frequência, prontuário do aluno); o ERP cuida do dinheiro (contas a receber, cobrança, fiscal). A ponte entre os dois é o contrato canônico documentado em `novusai-erp/docs/CONTRATOS_CANONICOS_ERP.md` (modelo de 3 "portas": Título e Liquidação via push, Autorização via pull síncrono).
 
 ## Stack e arquitetura
 

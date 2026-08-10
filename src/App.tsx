@@ -8,6 +8,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import PortalProtectedRoute from '@/components/portal/PortalProtectedRoute';
 import { PortalLayout } from '@/components/portal/PortalLayout';
 import RoutePerfObserver from '@/components/perf/RoutePerfObserver';
+import { PWAProvider } from '@/components/pwa/PWAProvider';
 
 const Index = lazy(() => import('@/pages/Index'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
@@ -111,6 +112,7 @@ function App() {
         }}
       >
         <RoutePerfObserver />
+        <PWAProvider>
         <Suspense fallback={<div className="p-6 text-sm text-muted-foreground">Carregando…</div>}>
           <Routes>
             <Route path="/" element={<Index />} />
@@ -213,6 +215,7 @@ function App() {
             <Route path="*" element={<Login />} />
           </Routes>
         </Suspense>
+        </PWAProvider>
         <Toaster />
       </BrowserRouter>
     </ErrorBoundary>

@@ -34,11 +34,12 @@ describe('PWA Diagnostics', () => {
   describe('Manifest Diagnostics', () => {
     it('should validate manifest successfully', async () => {
       const mockManifest = {
-        name: 'Portal dos Responsáveis',
-        start_url: '/portal/dashboard',
+        name: 'NOVUS.AI Educacional',
+        start_url: '/',
         icons: [
           { src: '/icons/icon-192.png', sizes: '192x192' },
-          { src: '/icons/icon-512.png', sizes: '512x512' }
+          { src: '/icons/icon-512.png', sizes: '512x512' },
+          { src: '/icons/icon-512-maskable.png', sizes: '512x512' }
         ]
       }
 
@@ -50,9 +51,9 @@ describe('PWA Diagnostics', () => {
       const response = await fetch('/manifest.webmanifest')
       const manifest = await response.json()
 
-      expect(manifest.name).toBe('Portal dos Responsáveis')
-      expect(manifest.start_url).toBe('/portal/dashboard')
-      expect(manifest.icons).toHaveLength(2)
+      expect(manifest.name).toBe('NOVUS.AI Educacional')
+      expect(manifest.start_url).toBe('/')
+      expect(manifest.icons).toHaveLength(3)
     })
 
     it('should handle missing manifest', async () => {
@@ -69,7 +70,7 @@ describe('PWA Diagnostics', () => {
   describe('Service Worker Diagnostics', () => {
     it('should detect active service worker', async () => {
       const mockRegistration = {
-        scope: '/portal/',
+        scope: '/',
         active: true
       }
 
@@ -77,35 +78,20 @@ describe('PWA Diagnostics', () => {
         mockRegistration as unknown as ServiceWorkerRegistration
       )
 
-      const registration = await navigator.serviceWorker.getRegistration('/portal/')
-      
+      const registration = await navigator.serviceWorker.getRegistration('/')
+
       expect(registration).toBeTruthy()
-      expect(registration?.scope).toBe('/portal/')
+      expect(registration?.scope).toBe('/')
     })
 
     it('should handle missing service worker', async () => {
       vi.mocked(navigator.serviceWorker.getRegistration).mockResolvedValue(undefined)
 
-      const registration = await navigator.serviceWorker.getRegistration('/portal/')
-      
+      const registration = await navigator.serviceWorker.getRegistration('/')
+
       expect(registration).toBeUndefined()
     })
 
-    it('should get service worker version', () => {
-      const mockPostMessage = vi.mocked(navigator.serviceWorker.controller.postMessage)
-      
-      // Simulate requesting version from SW
-      const messageChannel = new MessageChannel()
-      navigator.serviceWorker.controller.postMessage(
-        { type: 'GET_VERSION' },
-        [messageChannel.port2]
-      )
-
-      expect(mockPostMessage).toHaveBeenCalledWith(
-        { type: 'GET_VERSION' },
-        expect.any(Array)
-      )
-    })
   })
 
   describe('Icon Diagnostics', () => {

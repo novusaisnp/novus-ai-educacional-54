@@ -66,7 +66,7 @@ export default function Reset() {
         <div className="w-full max-w-md space-y-6">
           <div className="text-center">
             <img
-              src="/lovable-uploads/novus-ai-educacional-logo.png"
+              src="/brand/novus-ai-educacional-logo.png"
               alt="NOVUS.AI Educacional"
               className="mx-auto h-16 object-contain mb-6"
             />
@@ -96,7 +96,7 @@ export default function Reset() {
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <img 
-            src="/lovable-uploads/756ae602-1dc7-4970-aa18-8b7d0675b217.png" 
+            src="/brand/novus-ai-logo.png"
             alt="NOVUS.AI" 
             className="mx-auto h-16 object-contain mb-6"
           />

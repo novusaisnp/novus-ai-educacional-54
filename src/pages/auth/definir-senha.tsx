@@ -63,7 +63,7 @@ export default function DefinirSenha() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <img src="/lovable-uploads/novus-ai-educacional-logo.png" alt="NOVUS.AI Educacional" className="mx-auto h-24 object-contain mb-8" />
+          <img src="/brand/novus-ai-educacional-logo.png" alt="NOVUS.AI Educacional" className="mx-auto h-24 object-contain mb-8" />
           <h2 className="text-3xl font-extrabold text-foreground">Defina sua senha</h2>
         </div>
 

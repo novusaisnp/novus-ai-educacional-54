@@ -1,6 +1,65 @@
 # STATUS — novus-educacional
 
-**Última atualização: 2026-08-09 (conector de Contrato instalado no ERP, gera_financeiro:false).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+**Última atualização: 2026-08-10 (splash de abertura, gate de organização app-wide, PWA unificado com vite-plugin-pwa, limpeza de referências Lovable).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+
+## 🔖 Checkpoint de sessão (2026-08-10 — splash, gate de organização, PWA app-wide, limpeza Lovable)
+
+**Quatro mudanças independentes na mesma sessão, cada uma pedida separadamente pelo usuário:**
+
+1. **Vídeo de abertura (splash) na tela de login staff** — `IntroSplash.tsx` (novo, mesmo padrão do
+   `novusai-erp`), vídeo em `public/intro.mp4`, sessionStorage próprio (`novus_edu_intro_seen`, não colide com
+   o do ERP). Só na tela `auth/login.tsx` (staff) — portal pais/alunos não pedido. Coluna login/background
+   ajustada pra 30%/70% (igual ERP, antes era 1/3-2/3 arredondado).
+
+2. **`OrgGate` — bloqueio de "conta não vinculada" em nível de app, não só dashboard** —
+   `src/components/auth/OrgGate.tsx` (novo), plugado entre `ProtectedRoute` e `AppShell` em `App.tsx`. Antes só
+   `dashboard.tsx` checava `orgId`; qualquer outra rota `/app/*` deixava usuário sem organização ver listas
+   vazias via RLS sem explicação nenhuma. Agora bloqueia qualquer rota com a mesma mensagem + botão "Sair"
+   (`performLogout` exportado de `AppShell.tsx`, reusado). Checagem duplicada removida de `dashboard.tsx`. O
+   fluxo de seleção multi-org (`select-org.tsx`, RPC `switch_active_organization`) **já existia** antes desta
+   sessão — não foi construído do zero, só ganhou o gate que faltava. Testado ao vivo (browser real): bloqueio
+   funciona em `/app/alunos` direto, não só dashboard; botão "Sair" funciona.
+
+3. **PWA unificado com `vite-plugin-pwa`, escopo de app inteiro** — antes só o Portal dos Responsáveis tinha
+   PWA (manifest+SW escritos à mão, `PWAProvider` só ativava em `/portal/*`); área staff (`/app/*`) não tinha
+   nada. Trocado pro mesmo mecanismo do `novusai-erp` (`vite-plugin-pwa`), mas `registerType: 'prompt'` (não
+   `'autoUpdate'` como o ERP) — de propósito, pra preservar o banner "Atualização disponível" +
+   botão "Atualizar" que já existia e tinha teste. `src/portal/pwa.ts` virou `src/lib/pwa.ts` (generalizado,
+   usa `registerSW` de `virtual:pwa-register` em vez de registrar `/portal-sw.js` na mão), `PortalPWAStatus`
+   virou `PWAStatus` (nome não fazia mais sentido só-do-portal) e agora aparece também no header do `/app/*`.
+   Ícones PWA trocados — os antigos (`icon-192.png`/`icon-512.png`) eram um placeholder genérico de "livro com
+   celular" que nunca foi trocado pela marca real; gerados via `@vite-pwa/assets-generator` a partir de
+   `novus-icon-mark.png` (fundo sólido `#0f8a7d`), incluindo variante `maskable`. `public/manifest.webmanifest`
+   e `public/portal-sw.js` (escritos à mão) removidos — gerados pelo build agora. `runtimeCaching` não declara
+   nenhuma regra pra Supabase/API — omissão deliberada, não exclusão explícita, mas mesmo efeito: Workbox só
+   intercepta o que está listado, então dado sensível nunca é cacheado. Verificado via `bun run build` +
+   `bun run preview`: manifest injetado certo, SW ativo escopo `/`, cache só com os 46 assets estáticos
+   precacheados, zero URL de Supabase em `caches`.
+
+4. **Limpeza de referências "Lovable"** (pedido explícito do usuário, "assim como no erp") — dependência
+   `lovable-tagger` removida (`package.json`+`vite.config.ts`+`bun.lockb`, via `bun remove` pra não deixar
+   entrada órfã no lockfile como aconteceu no ERP), pasta `public/lovable-uploads/` renomeada pra
+   `public/brand/` (não só os 3 arquivos citados no ERP — pasta inteira, como pedido), arquivo
+   `756ae602-....png` renomeado pra `novus-ai-logo.png` (nome descritivo, mesmo padrão do ERP). 3 arquivos
+   órfãos/duplicados dentro da pasta (`08d560e2-...png`, `822107e7-...png`, `ccf5664a-...png` — confirmados
+   visualmente como duplicatas antes de apagar, zero referência no código) removidos — o ERP tinha deixado
+   órfãos parecidos pra trás, aqui não. `README.md` (boilerplate 100% genérico do Lovable, nada específico do
+   projeto) deletado. Menções pontuais em `CLAUDE.md`/`docs/SECURITY_NOTES.md` editadas (removida só a
+   cláusula/linha que citava Lovable, resto do documento intacto).
+
+**Verificação**: `bun run typecheck`/`test` (46/46, specs de PWA reescritos pra importar módulo real em vez de
+mock fake que nunca tocava o código de produção)/`build` limpos a cada mudança. Splash e `OrgGate` testados ao
+vivo via Claude in Chrome (login/logout real, navegação entre rotas). PWA testado via build de produção +
+preview (dev server não ativa o SW gerado, mesmo comportamento do ERP).
+
+**Gaps conscientes / fora de escopo desta sessão**:
+- Splash: só na tela de login staff, portal pais/alunos não pedido.
+- `OrgGate`: "trocar unidade" pós-login (like ERP's dropdown "Trocar empresa") e o gap de
+  `centelha-provisiona-organizacao` não gravar `user_organizations` pro primeiro admin — identificados, não
+  pedidos, não implementados.
+- PWA: ícones `any` (192/512) ficam transparentes de propósito (padrão idiomático do
+  `@vite-pwa/assets-generator` — só a variante `maskable` carrega fundo sólido, que é o que a maioria dos SOs
+  usa pra ícone de tela inicial/taskbar).
 
 ## 🔖 Checkpoint de sessão (2026-08-09 — conector de Contrato instalado, `gera_financeiro:false`)
 
@@ -614,7 +673,7 @@ Sessão começou com uma varredura de status pedida pelo usuário e virou uma se
 - `src/components/IconBadge.tsx`: novo prop `variant?: 'flat' | 'totem'` (default `'flat'`, 100% retrocompatível) — quando `'totem'`, ícone branco sobre gradiente radial saturado circular em vez do tint pastel.
 - `src/components/bi/BICard.tsx`: novo prop `totem?: boolean` repassado pro `IconBadge`; valor numérico ganhou `font-display` (Sora).
 - `src/components/bi/BIHeroCard.tsx` (novo): card-âncora de bento — gradiente teal escuro, blobs decorativos (coral + gold) via `radial-gradient`, número grande em Sora. Não fabrica dado que não existe (sem "delta" de tendência, já que o Dashboard não calcula variação semana a semana hoje).
-- `src/components/layout/AppShell.tsx`: sidebar com fundo em gradiente (`.sidebar` em `index.css`, não mais `bg-sidebar` chapado); item de navegação ativo virou pílula coral (`.sidebar-nav-active`, `rounded-full`); logo do estado expandido é `public/lovable-uploads/novus-logo-sidebar.png` (ver "Correções pós-redesign" abaixo — passou por 2 iterações antes de chegar nesse asset); conta do usuário (avatar+nome+role, dropdown com logout) fica no canto superior direito do `TopBar`, sempre visível (desktop e mobile) — não mais um cartão no rodapé da sidebar; lógica de logout extraída pra `performLogout()` em escopo de módulo (compartilhada entre os dois pontos de entrada, sem duplicar).
+- `src/components/layout/AppShell.tsx`: sidebar com fundo em gradiente (`.sidebar` em `index.css`, não mais `bg-sidebar` chapado); item de navegação ativo virou pílula coral (`.sidebar-nav-active`, `rounded-full`); logo do estado expandido é `public/brand/novus-logo-sidebar.png` (ver "Correções pós-redesign" abaixo — passou por 2 iterações antes de chegar nesse asset); conta do usuário (avatar+nome+role, dropdown com logout) fica no canto superior direito do `TopBar`, sempre visível (desktop e mobile) — não mais um cartão no rodapé da sidebar; lógica de logout extraída pra `performLogout()` em escopo de módulo (compartilhada entre os dois pontos de entrada, sem duplicar).
 - `src/pages/app/dashboard.tsx`: grid uniforme de 4 `BICard` trocado por bento (`BIHeroCard` pra "Demandas em aberto", a métrica mais acionável, com saudação dinâmica por horário + primeiro nome do usuário + nome da organização; 3 `BICard totem` de apoio pra Leads/Interações/Documentos).
 
 **Verificação**: `bun run typecheck`/`test` (47/47) e `bun run build` limpos. CSS compilado (`dist/assets/*.css`) inspecionado diretamente pra confirmar que todos os tokens/classes novos (`--background: 40 30% 97%`, `.sidebar-nav-active`, `.totem-teal`, `.font-display`, `.shadow-card-hero`) foram gerados com a receita esperada. **Sem verificação visual ao vivo em navegador autenticado** — esta máquina não tem credenciais de um usuário de teste (a criação de admin via UI foi removida por segurança em sessão anterior, e gerar um usuário novo exigiria mexer direto no schema `auth` via SQL, fora do escopo de uma mudança só visual sem autorização explícita do usuário pra isso). Dev server rodando em `localhost:8080` ao final da sessão pra o usuário conferir com login real.
@@ -632,7 +691,7 @@ Sessão começou com uma varredura de status pedida pelo usuário e virou uma se
 **O que mudou**:
 - `.logo-chip` removida (`index.css`) — trocada por logo real em PNG com fundo transparente de verdade, sem chip nenhum atrás.
 - **Cartão de usuário removido do rodapé da sidebar** (`.sidebar-user-card`, também removida do CSS) — conta do usuário (avatar + nome + role + dropdown de logout) movida pro canto superior direito do `TopBar`, sempre visível em qualquer breakpoint (antes só existia em mobile, `md:hidden`, porque o desktop tinha o cartão da sidebar). Resolve a cobertura pelo rodapé fixo global porque o topbar não tem nada por cima.
-- **Logo da sidebar trocada 2x por pedido do usuário**, cada vez com uma imagem fornecida por ele (`public/lovable-uploads/novus-logo-sidebar.png`, mesmo nome de arquivo nas 2 vezes — só o conteúdo mudou). **Achado importante que se repetiu nas 2 imagens**: os PNGs exportados pelo usuário (provavelmente de um gerador de logo/IA) chegam com o canal alfa quase todo opaco — não é um logo com fundo transparente de verdade, é a arte inteira (incluindo um glow/sombra branco por trás do texto) já achatada sobre branco, com no máximo uma faixa fina de poucos pixels realmente transparente na borda. Usar o PNG direto reproduz o mesmo problema do chip (caixa clara sobre o gradiente escuro da sidebar), só que embutido no asset em vez de CSS. **Correção**: script Node (`pngjs`, rodado fora do repo, em scratch) que remove o fundo por saturação de cor — pixels acinzentados/quase-brancos (baixa saturação, que é como o glow/sombra sempre aparece, independente do brilho) viram transparentes com uma transição suave (`SAT_LOW=10`/`SAT_HIGH=45`) pra não deixar serrilhado, e as bordas anti-aliased são "descontaminadas" (removida a mistura com o branco de fundo) pra não sobrar halo claro. Verificado compondo o resultado sobre a cor real do gradiente da sidebar antes de trocar o asset no código, não só visualmente "parece ok" — checagem de alpha pixel a pixel via `System.Drawing` confirmando `A=0` no que deveria ser fundo e `A=255` com cor saturada correta no que é logo. **Vale lembrar isso pra qualquer asset futuro que o usuário forneça pronto** (não gerado por nós) — não assumir transparência real só porque o arquivo é PNG.
+- **Logo da sidebar trocada 2x por pedido do usuário**, cada vez com uma imagem fornecida por ele (`public/brand/novus-logo-sidebar.png`, mesmo nome de arquivo nas 2 vezes — só o conteúdo mudou). **Achado importante que se repetiu nas 2 imagens**: os PNGs exportados pelo usuário (provavelmente de um gerador de logo/IA) chegam com o canal alfa quase todo opaco — não é um logo com fundo transparente de verdade, é a arte inteira (incluindo um glow/sombra branco por trás do texto) já achatada sobre branco, com no máximo uma faixa fina de poucos pixels realmente transparente na borda. Usar o PNG direto reproduz o mesmo problema do chip (caixa clara sobre o gradiente escuro da sidebar), só que embutido no asset em vez de CSS. **Correção**: script Node (`pngjs`, rodado fora do repo, em scratch) que remove o fundo por saturação de cor — pixels acinzentados/quase-brancos (baixa saturação, que é como o glow/sombra sempre aparece, independente do brilho) viram transparentes com uma transição suave (`SAT_LOW=10`/`SAT_HIGH=45`) pra não deixar serrilhado, e as bordas anti-aliased são "descontaminadas" (removida a mistura com o branco de fundo) pra não sobrar halo claro. Verificado compondo o resultado sobre a cor real do gradiente da sidebar antes de trocar o asset no código, não só visualmente "parece ok" — checagem de alpha pixel a pixel via `System.Drawing` confirmando `A=0` no que deveria ser fundo e `A=255` com cor saturada correta no que é logo. **Vale lembrar isso pra qualquer asset futuro que o usuário forneça pronto** (não gerado por nós) — não assumir transparência real só porque o arquivo é PNG.
 
 **Verificação**: `bun run typecheck`/`test` (47/47)/`build` limpos a cada iteração. Sem acesso a browser nesta máquina (mesmo gap já documentado) — verificação visual foi só a composição sintética sobre a cor real do gradiente da sidebar (não é o mesmo que ver renderizado no app de verdade, mas pega o problema específico de halo/fundo que motivou a correção).
 

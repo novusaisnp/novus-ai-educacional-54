@@ -17,8 +17,7 @@ import {
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
-import { PWAProvider } from "@/components/pwa/PWAProvider";
-import { PortalPWAStatus } from "@/components/pwa/PortalPWAStatus";
+import { PWAStatus } from "@/components/pwa/PWAStatus";
 import { logAuditSafe } from "@/utils/auditSafe";
 
 const navigation = [
@@ -49,7 +48,6 @@ export function PortalLayout() {
   };
 
   return (
-    <PWAProvider enabled={true}>
       <div className="min-h-screen bg-background">
         {/* Mobile sidebar backdrop */}
         {sidebarOpen && (
@@ -79,7 +77,7 @@ export function PortalLayout() {
 
             {/* PWA Status */}
             <div className="px-4 py-2">
-              <PortalPWAStatus />
+              <PWAStatus />
             </div>
 
             {/* Navigation */}
@@ -146,6 +144,5 @@ export function PortalLayout() {
 
         <Toaster />
       </div>
-    </PWAProvider>
   );
 }

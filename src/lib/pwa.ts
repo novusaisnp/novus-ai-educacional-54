@@ -1,6 +1,7 @@
-// PWA utilities for Portal dos Responsáveis
+// PWA utilities — instalação, prompt e registro do service worker gerado pelo build
 
 import { logger } from '@/lib/logger';
+import { registerSW } from 'virtual:pwa-register';
 
 export interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -13,44 +14,16 @@ export interface BeforeInstallPromptEvent extends Event {
 
 class PWAManager {
   private installPrompt: BeforeInstallPromptEvent | null = null;
-  private isRegistered = false;
+  private updateSW: ((reloadPage?: boolean) => Promise<void>) | null = null;
 
-  async registerServiceWorker(): Promise<boolean> {
-    if (!('serviceWorker' in navigator)) {
-      logger.warn('PWA: Service Worker not supported');
-      return false;
-    }
-
-    try {
-      const registration = await navigator.serviceWorker.register('/portal-sw.js', {
-        scope: '/portal/'
-      });
-
-      logger.info('PWA: Service Worker registered', { 
-        scope: registration.scope,
-        updatefound: !!registration.update
-      });
-
-      // Check for updates
-      registration.addEventListener('updatefound', () => {
-        logger.info('PWA: Update found');
-        const newWorker = registration.installing;
-        if (newWorker) {
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              logger.info('PWA: Update available');
-              this.notifyUpdateAvailable();
-            }
-          });
-        }
-      });
-
-      this.isRegistered = true;
-      return true;
-    } catch (error) {
-      logger.error('PWA: Service Worker registration failed', { error });
-      return false;
-    }
+  private register(onNeedRefresh: () => void): void {
+    this.updateSW = registerSW({
+      immediate: true,
+      onNeedRefresh,
+      onRegisterError: (error) => {
+        logger.error('PWA: Service Worker registration failed', { error });
+      },
+    });
   }
 
   setupInstallPrompt(): void {
@@ -75,9 +48,9 @@ class PWAManager {
     try {
       await this.installPrompt.prompt();
       const choice = await this.installPrompt.userChoice;
-      
+
       logger.info('PWA: Install prompt result', { outcome: choice.outcome });
-      
+
       if (choice.outcome === 'accepted') {
         this.installPrompt = null;
         return true;
@@ -100,27 +73,18 @@ class PWAManager {
            nav.standalone === true;
   }
 
-  private notifyUpdateAvailable(): void {
-    // Dispatch custom event for update notification
-    const event = new CustomEvent('pwa-update-available');
-    window.dispatchEvent(event);
+  applyUpdate(): void {
+    this.updateSW?.(true);
   }
 
-  async initializeForPortal(enabled: boolean): Promise<void> {
+  initialize(enabled: boolean, onNeedRefresh: () => void): void {
     if (!enabled) {
       logger.info('PWA: Disabled for this organization');
       return;
     }
 
-    // Only initialize if we're in the portal
-    if (!window.location.pathname.startsWith('/portal/')) {
-      return;
-    }
-
-    logger.info('PWA: Initializing for portal');
-    
     this.setupInstallPrompt();
-    await this.registerServiceWorker();
+    this.register(onNeedRefresh);
   }
 }
 

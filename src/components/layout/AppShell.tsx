@@ -34,6 +34,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { useIAAccess } from '@/hooks/useIAAccess';
 import { useOrganization } from '@/hooks/useOrganization';
 import { logAudit } from '@/lib/audit/logAudit';
+import { PWAStatus } from '@/components/pwa/PWAStatus';
 import DebugBanner from "@/components/DebugBanner";
 
 // Compartilhado entre o cartão de usuário da sidebar (desktop) e o dropdown
@@ -122,7 +123,7 @@ function AppSidebar() {
             {!expanded ? (
               <div className="w-8 h-8 mx-auto">
                 <img
-                  src="/lovable-uploads/novus-icon-mark.png"
+                  src="/brand/novus-icon-mark.png"
                   alt="NOVUS.AI Educacional"
                   className="w-full h-full object-contain"
                 />
@@ -134,7 +135,7 @@ function AppSidebar() {
               // do texto, que aparecia como uma caixa clara sobre o
               // gradiente escuro da sidebar.
               <img
-                src="/lovable-uploads/novus-logo-sidebar.png"
+                src="/brand/novus-logo-sidebar.png"
                 alt="NOVUS.AI Educacional"
                 className="h-9 object-contain"
               />
@@ -276,6 +277,9 @@ function TopBar() {
         </Breadcrumb>
       </div>
 
+      <div className="flex items-center gap-3">
+        <PWAStatus />
+
       {/* Conta do usuário — canto superior direito, sempre visível (antes
           vivia num cartão no rodapé da sidebar, onde o rodapé fixo da
           página cobria por cima). */}
@@ -308,6 +312,7 @@ function TopBar() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      </div>
 
       {/* Mobile drawer */}
       {mobileMenuOpen && (
@@ -320,7 +325,7 @@ function TopBar() {
             <div className="p-4 border-b">
               <div className="flex items-center justify-between">
                 <img
-                  src="/lovable-uploads/novus-ai-educacional-logo.png"
+                  src="/brand/novus-ai-educacional-logo.png"
                   alt="NOVUS.AI Educacional"
                   className="h-6 object-contain"
                 />
@@ -423,7 +428,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground">
             <span>Uma solução</span>
             <img
-              src="/lovable-uploads/756ae602-1dc7-4970-aa18-8b7d0675b217.png"
+              src="/brand/novus-ai-logo.png"
               alt="NOVUS.AI"
               className="h-4 object-contain"
             />

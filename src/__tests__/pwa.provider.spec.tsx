@@ -5,7 +5,7 @@ import { render } from '@testing-library/react'
 import { screen, fireEvent, waitFor } from '@testing-library/dom'
 import { PWAProvider, usePWA } from '@/components/pwa/PWAProvider'
 import * as auditSafe from '@/utils/auditSafe'
-import { pwaManager } from '@/portal/pwa'
+import { pwaManager } from '@/lib/pwa'
 
 // Mock the auditSafe module
 vi.mock('@/utils/auditSafe', () => ({
@@ -13,9 +13,10 @@ vi.mock('@/utils/auditSafe', () => ({
 }))
 
 // Mock pwaManager
-vi.mock('@/portal/pwa', () => ({
+vi.mock('@/lib/pwa', () => ({
   pwaManager: {
-    initializeForPortal: vi.fn(),
+    initialize: vi.fn(),
+    applyUpdate: vi.fn(),
     isInstallable: vi.fn(() => false),
     showInstallPrompt: vi.fn(() => Promise.resolve(true))
   }
@@ -140,10 +141,10 @@ describe('PWAProvider', () => {
       </PWAProvider>
     )
 
-    expect(pwaManager.initializeForPortal).not.toHaveBeenCalled()
+    expect(pwaManager.initialize).not.toHaveBeenCalled()
   })
 
-  it('should not initialize outside portal routes', () => {
+  it('should initialize on any app route, not just /portal', () => {
     window.location.pathname = '/app/dashboard'
 
     render(
@@ -152,6 +153,6 @@ describe('PWAProvider', () => {
       </PWAProvider>
     )
 
-    expect(pwaManager.initializeForPortal).not.toHaveBeenCalled()
+    expect(pwaManager.initialize).toHaveBeenCalled()
   })
 })

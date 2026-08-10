@@ -85,7 +85,7 @@ export default function Login() {
           <div className="max-w-md w-full space-y-8">
             <div className="text-center">
               {/* Logo oficial NOVUS.AI Educacional */}
-              <img src="/lovable-uploads/novus-ai-educacional-logo.png" alt="NOVUS.AI Educacional" className="mx-auto h-24 object-contain mb-8" />
+              <img src="/brand/novus-ai-educacional-logo.png" alt="NOVUS.AI Educacional" className="mx-auto h-24 object-contain mb-8" />
 
               <h2 className="mt-6 text-center text-3xl font-extrabold text-foreground">
                 Entre na sua conta
@@ -141,7 +141,7 @@ export default function Login() {
             substitui a palavra "NOVUS.AI" na frase, não repete ao lado dela. */}
         <div className="py-6 border-t flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <span>Um produto</span>
-          <img src="/lovable-uploads/756ae602-1dc7-4970-aa18-8b7d0675b217.png" alt="NOVUS.AI" className="h-4 object-contain" />
+          <img src="/brand/novus-ai-logo.png" alt="NOVUS.AI" className="h-4 object-contain" />
         </div>
       </div>
 
@@ -149,7 +149,7 @@ export default function Login() {
       <div
         className="hidden lg:flex lg:w-[70%] bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: 'url(/lovable-uploads/login-background.jpg)'
+          backgroundImage: 'url(/brand/login-background.jpg)'
         }}
       >
       </div>

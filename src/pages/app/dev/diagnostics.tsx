@@ -18,7 +18,6 @@ type WebManifest = {
 const PWADiagnostics = () => {
   const [manifest, setManifest] = useState<WebManifest | null>(null);
   const [swStatus, setSWStatus] = useState<string>('checking...');
-  const [swVersion, setSWVersion] = useState<string>('unknown');
 
   useEffect(() => {
     // Check manifest
@@ -29,32 +28,21 @@ const PWADiagnostics = () => {
 
     // Check service worker
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistration('/portal/')
+      navigator.serviceWorker.getRegistration('/')
         .then(registration => {
-          if (registration) {
-            setSWStatus('registered');
-            if (registration.active) {
-              setSWStatus('active');
-            }
-          } else {
+          if (!registration) {
             setSWStatus('not registered');
+          } else if (registration.active) {
+            setSWStatus('active');
+          } else if (registration.waiting) {
+            setSWStatus('waiting');
+          } else if (registration.installing) {
+            setSWStatus('installing');
+          } else {
+            setSWStatus('registered');
           }
         })
         .catch(() => setSWStatus('error'));
-
-      // Get SW version
-      if (navigator.serviceWorker.controller) {
-        const channel = new MessageChannel();
-        channel.port1.onmessage = (event) => {
-          if (event.data?.version) {
-            setSWVersion(event.data.version);
-          }
-        };
-        navigator.serviceWorker.controller.postMessage(
-          { type: 'GET_VERSION' },
-          [channel.port2]
-        );
-      }
     } else {
       setSWStatus('not supported');
     }
@@ -89,12 +77,8 @@ const PWADiagnostics = () => {
         <div className="flex items-center justify-between">
           <span>Service Worker</span>
           <Badge variant={swStatus === 'active' ? "default" : "secondary"}>
-            {swStatus === 'active' ? "✅" : swStatus === 'registered' ? "⚠️" : "❌"} {swStatus}
+            {swStatus === 'active' ? "✅" : swStatus === 'registered' || swStatus === 'waiting' || swStatus === 'installing' ? "⚠️" : "❌"} {swStatus}
           </Badge>
-        </div>
-
-        <div className="ml-4 text-sm text-muted-foreground">
-          Version: {swVersion}
         </div>
 
         {/* Deep Links Test */}

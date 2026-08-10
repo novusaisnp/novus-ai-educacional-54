@@ -12,6 +12,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      'virtual:pwa-register': fileURLToPath(new URL('./src/test/virtual-pwa-register-stub.ts', import.meta.url)),
     },
   },
 })

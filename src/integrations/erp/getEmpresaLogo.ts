@@ -33,3 +33,12 @@ export async function getEmpresaLogoUrl(orgId: string): Promise<string | null> {
     return null;
   }
 }
+
+/**
+ * Mesma prioridade usada em `issueAcademicReports.ts`/`signEnrollmentContract.ts`:
+ * logo real do ERP primeiro, cai pro `organizations.logo_url` local se a
+ * integração não estiver configurada ou falhar.
+ */
+export async function resolveEmpresaLogoUrl(orgId: string, fallbackLogoUrl?: string | null): Promise<string | null> {
+  return (await getEmpresaLogoUrl(orgId)) || fallbackLogoUrl || null;
+}

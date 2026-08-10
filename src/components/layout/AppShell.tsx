@@ -13,6 +13,7 @@ import {
   Pin,
   PinOff,
   BarChart3,
+  Settings,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -33,6 +34,7 @@ import { useSidebarContext, SidebarProvider } from './sidebar-context';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useIAAccess } from '@/hooks/useIAAccess';
 import { useOrganization } from '@/hooks/useOrganization';
+import { useEmpresaLogo } from '@/hooks/useEmpresaLogo';
 import { logAudit } from '@/lib/audit/logAudit';
 import { PWAStatus } from '@/components/pwa/PWAStatus';
 import DebugBanner from "@/components/DebugBanner";
@@ -70,6 +72,7 @@ const baseMenuItems = [
   { title: 'Acadêmico', url: '/app/academico', icon: GraduationCap, roles: ['admin', 'coordenacao', 'professor'] },
   { title: 'Pedagógico', url: '/app/pedagogico', icon: NotebookPen, roles: ['admin', 'coordenacao', 'professor'] },
   { title: 'Eventos', url: '/app/eventos', icon: CalendarDays, roles: ['admin', 'coordenacao', 'professor', 'secretario'] },
+  { title: 'Configurações', url: '/app/config/integracoes', icon: Settings, roles: ['admin'] },
 ];
 
 function AppSidebar() {
@@ -225,6 +228,8 @@ function TopBar() {
   const { user } = useSession();
   const { data: userRole } = useUserRole();
   const { canAccess } = useIAAccess();
+  const { orgId, data: orgData } = useOrganization();
+  const { data: empresaLogoUrl } = useEmpresaLogo(orgId, orgData?.organizations?.logo_url);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const getPageTitle = (pathname: string) => {
@@ -255,7 +260,15 @@ function TopBar() {
   const roleLabel = roleLabels[userRole ?? ''] ?? 'Usuário';
 
   return (
-    <header className="flex h-14 items-center justify-between border-b bg-background px-4">
+    <header className="relative flex min-h-14 items-center justify-between border-b bg-background px-4">
+      {empresaLogoUrl && (
+        <img
+          src={empresaLogoUrl}
+          alt={orgData?.organizations?.name ?? 'Logo da instituição'}
+          className="absolute left-1/2 top-1/2 h-16 max-w-[240px] -translate-x-1/2 -translate-y-1/2 object-contain hidden sm:block"
+        />
+      )}
+
       <div className="flex items-center space-x-4">
         {/* Mobile menu trigger */}
         <Button

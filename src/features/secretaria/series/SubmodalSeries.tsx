@@ -6,12 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/hooks/useOrganization';
 import { toast } from '@/hooks/use-toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -40,9 +35,11 @@ interface SubmodalSeriesProps {
   isOpen: boolean;
   onClose: () => void;
   editingId?: string;
+  /** false quando renderizado dentro do Dialog de outro componente (ex. ModalMestre) — evita dois Dialog Radix sobrepostos */
+  asDialog?: boolean;
 }
 
-export function SubmodalSeries({ isOpen, onClose, editingId }: SubmodalSeriesProps) {
+export function SubmodalSeries({ isOpen, onClose, editingId, asDialog = true }: SubmodalSeriesProps) {
   const { data: organization } = useOrganization();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -185,14 +182,13 @@ export function SubmodalSeries({ isOpen, onClose, editingId }: SubmodalSeriesPro
     }
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{editingId ? 'Editar Série' : 'Nova Série'}</DialogTitle>
-        </DialogHeader>
+  const content = (
+    <>
+      <h3 className="text-lg font-semibold leading-none tracking-tight mb-4">
+        {editingId ? 'Editar Série' : 'Nova Série'}
+      </h3>
 
-        <Form {...form}>
+      <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
@@ -297,7 +293,18 @@ export function SubmodalSeries({ isOpen, onClose, editingId }: SubmodalSeriesPro
               </Button>
             </div>
           </form>
-        </Form>
+      </Form>
+    </>
+  );
+
+  if (!asDialog) {
+    return content;
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        {content}
       </DialogContent>
     </Dialog>
   );

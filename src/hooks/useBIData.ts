@@ -92,40 +92,6 @@ export const useBIAcademico = (filters?: {
   });
 };
 
-// Hook para dados financeiros do BI (só funciona com ERP real)
-export const useBIFinanceiro = (filters?: { 
-  startDate?: string; 
-  endDate?: string;
-}) => {
-  const { data: orgData } = useOrganization();
-
-  return useQuery({
-    queryKey: ['bi-financeiro', orgData?.organization_id, filters],
-    queryFn: async () => {
-      if (!orgData?.organization_id) {
-        throw new Error('Organização não identificada');
-      }
-
-      // Retornar dados vazios por enquanto - aguardando integração ERP real
-      logger.warn('BI Financeiro: ERP real não implementado ainda');
-      
-      return {
-        totalRevenue: 0,
-        overdueAmount: 0,
-        paymentEfficiency: 0,
-        studentsWithOverdue: 0,
-        revenueByMonth: [],
-        paymentsByStatus: [],
-        isERPEnabled: false,
-        isMockData: true,
-      };
-    },
-    enabled: !!orgData?.organization_id,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-  });
-};
-
 // Hook para dados CRM do BI
 export const useBICRM = (filters?: { 
   startDate?: string; 

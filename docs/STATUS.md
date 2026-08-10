@@ -1,6 +1,19 @@
 # STATUS — novus-educacional
 
-**Última atualização: 2026-08-09 (integração ERP funcional de ponta a ponta + fix de segurança em profiles + multi-unidade).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+**Última atualização: 2026-08-09 (varredura UI/UX — grupo 2 corrigido: BI Financeiro mockado + dialog duplicado).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+
+## 🔖 Checkpoint de sessão (2026-08-09 — varredura UI/UX, grupo 2: BI Financeiro mockado + dialog duplicado)
+
+**Continuação direta** — checkpoint anterior (varredura de UI/UX, mesma data) listava 6 grupos de achados sem correção. Usuário escolheu o grupo 2 (funcionalidade travada com armadilha por trás) pra corrigir agora.
+
+1. **Dialog duplicado (2 overlays Radix sobrepostos)**: `SubmodalUnidades`/`SubmodalSegmentos`/`SubmodalSeries`/`SubmodalPeriodos`/`SubmodalVisitantes` ganharam prop nova `asDialog` (default `true` — zero mudança pras páginas-lista dedicadas que os usam standalone, ex. `unidades/ListPage.tsx`). `ModalMestre.tsx` agora passa `asDialog={false}` nos 5, então eles renderizam só o conteúdo (Form) sem seu próprio `<Dialog>`/`<DialogContent>` — fica só o Dialog do próprio `ModalMestre`. Reproduzido antes só de leitura de código (dois `<Dialog open={true}>` aninhados), não clicado ao vivo no navegador nesta sessão.
+2. **BI Financeiro mockado**: `src/pages/app/bi/financeiro.tsx` tinha um dashboard inteiro (gráficos de receita/pagamento, KPIs, badges "Crítico/Atenção/Moderado" com 8/12/25 fixos) atrás de um early-return que sempre disparava (`useBIFinanceiro` sempre retornava `isMockData:true`) — código inalcançável hoje, mas armadilha real pra quem reativasse sem trocar a fonte de dado. Decisão do usuário via `AskUserQuestion` (entre "destravar honesto" / "construir integração real agora" / "deixar como está"): **destravar honesto**, sem construir a integração real (não existe hoje nenhum endpoint de leitura no ERP — só push de título/cliente via `erpClient.upsertClientByCPF`/`createReceivable`; leitura exigiria endpoint novo cross-repo, fatia própria maior). Removido o dashboard fantasma inteiro (mocks `revenueByMonth`/`paymentsByStatus`, KPIs `BICard`, `ExportToolbar`) — página agora só mostra `EmptyState` "ERP não configurado" sempre, sem gate condicional morto por trás. `useBIFinanceiro` (hook que só retornava o mock fixo, nunca consultava nada) removido de `useBIData.ts` por ficar sem nenhum uso.
+3. `bun run typecheck`/`test` (47/47)/`build` limpos após as duas mudanças.
+4. **Não testado ao vivo no navegador** — verificação só via typecheck/test/build; usuário não confirmou visualmente que o hub `/app/secretaria` abre sem dialog duplicado nem que `/app/bi/financeiro` renderiza o empty state limpo.
+
+**Gaps conscientes**:
+- BI Financeiro segue sem dado real — decisão explícita de não construir a integração de leitura ERP nesta fatia (fora do escopo da varredura). Fica pra fatia futura dedicada (endpoint pull novo no `novusai-erp` + consumo aqui).
+- Restam 4 grupos da varredura de UI/UX sem correção: perda de dado real (`SubmodalExAlunos`), funcionalidade anunciada ausente (e-mail de BI), módulos stub inteiros (Pedagógico/Eventos/parte Acadêmico/CRM Campanhas), risco/segurança menor (PII em `console.log`, delete sem confirm em Períodos) + código morto (`onOpenModal`, query param `?modal=` incompleto).
 
 ## 🔖 Checkpoint de sessão (2026-08-09 — integração ERP real + fix de segurança + multi-unidade)
 

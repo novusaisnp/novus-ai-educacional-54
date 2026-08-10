@@ -290,6 +290,7 @@ export function ModalMestre({ isOpen, onClose, defaultTab, editingItem }: ModalM
                       isOpen={true}
                       onClose={context.onClose}
                       editingId={editingStates.unidades}
+                      asDialog={false}
                     />
                   )}
                   {tab.id === 'segmentos' && (
@@ -297,6 +298,7 @@ export function ModalMestre({ isOpen, onClose, defaultTab, editingItem }: ModalM
                       isOpen={true}
                       onClose={context.onClose}
                       editingId={editingStates.segmentos}
+                      asDialog={false}
                     />
                   )}
                   {tab.id === 'series' && (
@@ -304,6 +306,7 @@ export function ModalMestre({ isOpen, onClose, defaultTab, editingItem }: ModalM
                       isOpen={true}
                       onClose={context.onClose}
                       editingId={editingStates.series}
+                      asDialog={false}
                     />
                   )}
                   {tab.id === 'periodos' && (
@@ -311,6 +314,7 @@ export function ModalMestre({ isOpen, onClose, defaultTab, editingItem }: ModalM
                       isOpen={true}
                       onClose={context.onClose}
                       editingId={editingStates.periodos}
+                      asDialog={false}
                     />
                   )}
                   {tab.id === 'visitantes' && (
@@ -318,6 +322,7 @@ export function ModalMestre({ isOpen, onClose, defaultTab, editingItem }: ModalM
                       isOpen={true}
                       onClose={context.onClose}
                       editingId={editingStates.visitantes}
+                      asDialog={false}
                     />
                   )}
                   {tab.id === 'responsaveis' && (

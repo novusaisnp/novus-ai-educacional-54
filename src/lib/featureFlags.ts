@@ -12,6 +12,7 @@ export interface ERPConfig {
     clientUpsert?: boolean;
     receivableCreated?: boolean;
     paymentWebhook?: boolean;
+    contractUpsert?: boolean;
   };
 }
 
@@ -25,6 +26,7 @@ const DEFAULT_ERP_CONFIG: ERPConfig = {
     clientUpsert: false,
     receivableCreated: false,
     paymentWebhook: false,
+    contractUpsert: false,
   },
 };
 

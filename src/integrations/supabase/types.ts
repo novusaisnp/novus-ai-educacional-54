@@ -1101,7 +1101,10 @@ export type Database = {
           document_id: string | null
           due_day: number
           enrollment_id: string
+          erp_contract_error: string | null
           erp_contract_id: string | null
+          erp_contract_status: string
+          erp_contract_synced_at: string | null
           erp_receivable_error: string | null
           erp_receivable_status: string
           erp_receivable_synced_at: string | null
@@ -1127,7 +1130,10 @@ export type Database = {
           document_id?: string | null
           due_day: number
           enrollment_id: string
+          erp_contract_error?: string | null
           erp_contract_id?: string | null
+          erp_contract_status?: string
+          erp_contract_synced_at?: string | null
           erp_receivable_error?: string | null
           erp_receivable_status?: string
           erp_receivable_synced_at?: string | null
@@ -1153,7 +1159,10 @@ export type Database = {
           document_id?: string | null
           due_day?: number
           enrollment_id?: string
+          erp_contract_error?: string | null
           erp_contract_id?: string | null
+          erp_contract_status?: string
+          erp_contract_synced_at?: string | null
           erp_receivable_error?: string | null
           erp_receivable_status?: string
           erp_receivable_synced_at?: string | null

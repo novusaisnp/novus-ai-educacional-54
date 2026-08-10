@@ -5,7 +5,7 @@
  * Gerencia logs discretos e controle de erros
  */
 
-import { erpClient, type ERPClientData, type CreateReceivableInput, type ERPClientResponse } from './client';
+import { erpClient, type ERPClientData, type CreateReceivableInput, type UpsertContractInput, type ERPClientResponse } from './client';
 import { getERPConfig } from '@/lib/featureFlags';
 import { toast } from '@/hooks/use-toast';
 
@@ -73,6 +73,10 @@ export const erpEmit = {
 
   async createReceivable(orgId: string, receivableData: CreateReceivableInput) {
     return withERP(orgId, 'createReceivable', [receivableData]);
+  },
+
+  async upsertContract(orgId: string, contractData: UpsertContractInput) {
+    return withERP(orgId, 'upsertContract', [contractData]);
   },
 
   async testConnection(orgId: string) {

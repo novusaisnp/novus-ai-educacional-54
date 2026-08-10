@@ -1,6 +1,46 @@
 # STATUS — novus-educacional
 
-**Última atualização: 2026-08-09 (varredura UI/UX — grupo 2 corrigido: BI Financeiro mockado + dialog duplicado).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+**Última atualização: 2026-08-09 (conector de Contrato instalado no ERP, gera_financeiro:false).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+
+## 🔖 Checkpoint de sessão (2026-08-09 — conector de Contrato instalado, `gera_financeiro:false`)
+
+**Continuação direta** — pergunta do usuário no repo-mãe sobre o que falta pra integração ERP↔satélite ficar
+efetiva. Trabalho cross-repo, maior parte do fix do lado ERP (`mapClienteData`/`syncContrato`/envelope de
+idempotência) — ver `novusai-erp/docs/STATUS.md` mesma data pro detalhe completo do lado de lá; aqui só o que
+mudou neste repo.
+
+1. **`erpClient.upsertContract`/`erpEmit.upsertContract`** (novos, `src/integrations/erp/client.ts`/`emit.ts`)
+   — mesmo padrão de `createReceivable`, manda `sendSyncEvent('contratos', {...})` com `gera_financeiro:false`
+   por padrão (decisão consciente: o satélite já emite título avulso recorrente por fora via `createReceivable`
+   — mandar `gera_financeiro:true` junto duplicaria a cobrança da 1ª mensalidade no ERP). `ERPConfig.events`
+   ganhou `contractUpsert?: boolean` (`featureFlags.ts`), mesmo padrão de `clientUpsert`/`receivableCreated`.
+2. **`signEnrollmentContract.ts` ganhou passo 6**: depois do título avulso (passo 5, existente), registra o
+   Contrato no ERP via `erpEmit.upsertContract` — `numeroContrato = 'CONT-'+enrollmentId.slice(0,8)`, mandado
+   como `idempotency_key` explícito (protege contra duplicar em retry de webhook desde o primeiro dia, não
+   depende do fallback derivado do ERP). Fora do fluxo crítico, mesmo padrão try/catch não-bloqueante do passo
+   5 — se falhar, matrícula e contrato local continuam válidos, só o resultado fica registrado pra
+   auditoria/retry manual.
+3. **Migration `20260809233000_enrollment_contracts_erp_contract_tracking.sql`**: `enrollment_contracts` ganha
+   `erp_contract_status`/`erp_contract_error`/`erp_contract_synced_at` (mesmo padrão de
+   `erp_receivable_status`/etc. já existentes) — `erp_contract_id` já existia desde a criação da tabela
+   (`20260805100000`, gancho de forward-compat deixado exatamente pra este momento), só passa a ser populado
+   agora. `types.ts` regenerado do schema real.
+4. **Verificação ao vivo, ponta a ponta, contra o ERP real (ALLEGRA)**: POST assinado real simulando o payload
+   que `upsertContract` gera — Contrato criado com `gera_financeiro:false` confirmado sem gerar nenhum título
+   em `contas_receber` (0 linhas), replay de payload idêntico não duplicou a linha, payload divergente com
+   mesmo `idempotency_key` rejeitado pelo ERP (`CONFLITO_PAYLOAD_DIVERGENTE`) em vez de sobrescrever. Dados de
+   teste removidos, `remaining=0` confirmado. Feature flag `erp_integration_config.events.contractUpsert` da
+   ALLEGRA **não foi ligada** nesta sessão — decisão consciente, ligar só depois de confirmar em produção real
+   (não só via POST sintético) que o fluxo completo (`signEnrollmentContract` → `upsertContract`) funciona.
+5. `bun run typecheck`/`test`(47/47)/`build` limpos.
+6. **Skill `~/.claude/skills/erp-satellite-integration/SKILL.md` atualizada** (pedido explícito do usuário) —
+   ver detalhe completo no `STATUS.md` do `novusai-erp`, mesma data.
+
+**Gaps conscientes**:
+- `erp_integration_config.events.contractUpsert` continua `false` pra ALLEGRA — próxima matrícula real ainda
+  não vai sincronizar Contrato até alguém ligar essa flag deliberadamente.
+- Fluxo completo (clique real em "assinar matrícula" → `upsertContract` disparando de dentro do app, não só
+  POST sintético direto no endpoint) não foi testado ao vivo nesta sessão.
 
 ## 🔖 Checkpoint de sessão (2026-08-09 — varredura UI/UX, grupo 2: BI Financeiro mockado + dialog duplicado)
 

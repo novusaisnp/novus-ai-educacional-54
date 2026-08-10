@@ -185,5 +185,52 @@ export async function signEnrollmentContract(input: SignEnrollmentContractInput)
       .eq('id', contract.id);
   }
 
+  // 6) Registra o Contrato em si no ERP (entidade separada de título/cliente)
+  // — visível/consultável na tela de Contratos de lá, registro documental da
+  // matrícula. `gera_financeiro: false` (default de erpEmit.upsertContract) é
+  // proposital: a cobrança já acontece 100% pelo título avulso recorrente do
+  // passo 5 acima — mandar o Contrato com gera_financeiro:true duplicaria a
+  // cobrança da 1ª mensalidade (o ERP tem um trigger que gera título
+  // automaticamente a partir do Contrato quando essa flag é true). Também
+  // fora do fluxo crítico, mesmo padrão não-bloqueante do passo 5.
+  const numeroContrato = `CONT-${input.enrollmentId.slice(0, 8).toUpperCase()}`;
+
+  try {
+    const contractResult = await erpEmit.upsertContract(input.orgId, {
+      numeroContrato,
+      titulo: `Contrato de Matrícula - ${input.studentName}`,
+      clienteCpfCnpj: input.guardianCpf || undefined,
+      dataInicio: input.enrollmentDate,
+      valorMensal: input.monthlyFeeAmount,
+      diaVencimento: input.dueDay,
+      observacoes: `Contrato de matrícula assinado eletronicamente (hash ${contractHash.slice(0, 12)}...). Cobrança via mensalidade avulsa recorrente (Título), não via este Contrato.`,
+      idempotencyKey: numeroContrato,
+    });
+
+    await supabase
+      .from('enrollment_contracts')
+      .update({
+        erp_contract_id: numeroContrato,
+        erp_contract_status: contractResult.skipped ? 'skipped' : contractResult.mock ? 'mock' : contractResult.ok ? 'ok' : 'error',
+        erp_contract_error: contractResult.error || null,
+        erp_contract_synced_at: new Date().toISOString(),
+      })
+      .eq('id', contract.id);
+
+    if (!contractResult.ok) {
+      console.warn('[ERP] Falha ao registrar Contrato da matrícula:', contractResult.error);
+    }
+  } catch (contractErr) {
+    console.error('[ERP] Erro na integração ao registrar Contrato:', contractErr);
+    await supabase
+      .from('enrollment_contracts')
+      .update({
+        erp_contract_status: 'error',
+        erp_contract_error: contractErr instanceof Error ? contractErr.message : 'Erro desconhecido',
+        erp_contract_synced_at: new Date().toISOString(),
+      })
+      .eq('id', contract.id);
+  }
+
   return contract;
 }

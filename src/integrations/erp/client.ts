@@ -23,6 +23,28 @@ interface CreateReceivableInput {
   periodicidade?: string;
 }
 
+interface UpsertContractInput {
+  numeroContrato: string;
+  titulo: string;
+  clienteCpfCnpj?: string;
+  dataInicio: string; // YYYY-MM-DD
+  dataFim?: string; // YYYY-MM-DD
+  valorMensal?: number;
+  valorTotal?: number;
+  diaVencimento?: number;
+  status?: string;
+  /** Sempre false por padrão — o Contrato aqui é registro documental/jurídico
+   * no ERP, não deve disparar o trigger `gerar_titulo_inicial_contrato` de lá
+   * quando a cobrança já acontece por outro caminho (ex. título avulso
+   * recorrente). Só passe true se NENHUM título já estiver sendo emitido
+   * separadamente para este contrato — senão duplica a cobrança. */
+  geraFinanceiro?: boolean;
+  observacoes?: string;
+  /** Estável, gerado pelo satélite — protege contra duplicar o Contrato em
+   * retry de webhook. Sem isso o ERP usa um fallback derivado, menos robusto. */
+  idempotencyKey?: string;
+}
+
 interface ERPClientResponse {
   ok: boolean;
   skipped?: boolean;
@@ -139,6 +161,26 @@ class ERPClient {
     });
   }
 
+  async upsertContract(data: UpsertContractInput): Promise<ERPClientResponse> {
+    if (!this.config.events.contractUpsert) {
+      return { ok: true, skipped: true, mock: this.config.mock };
+    }
+    return this.sendSyncEvent('contratos', {
+      numero_contrato: data.numeroContrato,
+      titulo: data.titulo,
+      cliente_cpf_cnpj: data.clienteCpfCnpj,
+      data_inicio: data.dataInicio,
+      data_fim: data.dataFim,
+      valor_mensal: data.valorMensal,
+      valor_total: data.valorTotal,
+      dia_vencimento: data.diaVencimento,
+      status: data.status || 'ATIVO',
+      gera_financeiro: data.geraFinanceiro ?? false,
+      observacoes: data.observacoes,
+      idempotency_key: data.idempotencyKey,
+    });
+  }
+
   async testConnection(): Promise<ERPClientResponse> {
     if (!this.config.enabled) {
       return { ok: true, skipped: true, mock: this.config.mock };
@@ -176,10 +218,14 @@ export const erpClient = {
     const config = await getERPConfig(orgId);
     return new ERPClient(config).createReceivable(data);
   },
+  upsertContract: async (orgId: string, data: UpsertContractInput): Promise<ERPClientResponse> => {
+    const config = await getERPConfig(orgId);
+    return new ERPClient(config).upsertContract(data);
+  },
   testConnection: async (orgId: string): Promise<ERPClientResponse> => {
     const config = await getERPConfig(orgId);
     return new ERPClient(config).testConnection();
   },
 };
 
-export type { ERPClientData, CreateReceivableInput, ERPClientResponse };
+export type { ERPClientData, CreateReceivableInput, UpsertContractInput, ERPClientResponse };

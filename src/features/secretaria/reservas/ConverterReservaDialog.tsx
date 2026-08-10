@@ -277,7 +277,7 @@ export function ConverterReservaDialog({ open, onClose, application, orgId }: Co
               <>
                 <fieldset className="border border-border rounded-lg p-4 space-y-4">
                   <legend className="text-sm font-semibold px-2">Dados do Aluno</legend>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="first_name"
@@ -301,7 +301,7 @@ export function ConverterReservaDialog({ open, onClose, application, orgId }: Co
                       )}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="birth_date"
@@ -342,7 +342,7 @@ export function ConverterReservaDialog({ open, onClose, application, orgId }: Co
 
                 <fieldset className="border border-border rounded-lg p-4 space-y-4">
                   <legend className="text-sm font-semibold px-2">Responsável</legend>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="guardian_name"
@@ -380,7 +380,7 @@ export function ConverterReservaDialog({ open, onClose, application, orgId }: Co
                       )}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="guardian_document_id"
@@ -408,7 +408,7 @@ export function ConverterReservaDialog({ open, onClose, application, orgId }: Co
 
                 <fieldset className="border border-border rounded-lg p-4 space-y-4">
                   <legend className="text-sm font-semibold px-2">Mensalidade</legend>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="monthly_fee_amount"

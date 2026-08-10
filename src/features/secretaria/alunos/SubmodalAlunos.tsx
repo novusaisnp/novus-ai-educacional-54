@@ -326,7 +326,7 @@ export function SubmodalAlunos({ context, editingStudent, onEditingChange, onEdi
           <fieldset className="border border-border rounded-lg p-4 space-y-4">
             <legend className="text-lg font-semibold px-2">Dados do Aluno</legend>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="first_name"
@@ -355,7 +355,7 @@ export function SubmodalAlunos({ context, editingStudent, onEditingChange, onEdi
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="birth_date"
@@ -403,7 +403,7 @@ export function SubmodalAlunos({ context, editingStudent, onEditingChange, onEdi
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="document_id"
@@ -473,7 +473,7 @@ export function SubmodalAlunos({ context, editingStudent, onEditingChange, onEdi
                 )
               ) : (
                 <>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="responsible_full_name"
@@ -514,7 +514,7 @@ export function SubmodalAlunos({ context, editingStudent, onEditingChange, onEdi
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="responsible_document_id"

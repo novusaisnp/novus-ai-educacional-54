@@ -399,11 +399,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden pb-12">
-      <div 
-        className="flex-1 grid app-grid" 
-        style={{ 
-          gridTemplateColumns: 'var(--sidebar-w) minmax(0, 1fr)'
-        }}
+      <div
+        className="flex-1 grid app-grid grid-cols-1 md:grid-cols-[var(--sidebar-w)_minmax(0,1fr)]"
         data-sidebar={expanded ? 'expanded' : 'collapsed'}
       >
         <aside 

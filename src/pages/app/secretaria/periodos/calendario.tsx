@@ -479,7 +479,7 @@ export default function PeriodoCalendario() {
             uma vez, em vez de um por um.
           </p>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label htmlFor="range-start">Data de início</Label>
               <Input

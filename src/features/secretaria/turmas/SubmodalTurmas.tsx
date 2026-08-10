@@ -225,7 +225,7 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
           )}
         />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="period_id"
@@ -278,7 +278,7 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="year"
@@ -321,7 +321,7 @@ export function SubmodalTurmas({ context, editingClass, onEditingChange }: Submo
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="segment_id"

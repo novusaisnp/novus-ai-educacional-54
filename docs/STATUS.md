@@ -1,6 +1,59 @@
 # STATUS — novus-educacional
 
-**Última atualização: 2026-08-10 (splash de abertura, gate de organização app-wide, PWA unificado com vite-plugin-pwa, limpeza de referências Lovable).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+**Última atualização: 2026-08-10 (melhorias de responsividade mobile — acesso de emergência, desktop intocado).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+
+## 🔖 Checkpoint de sessão (2026-08-10 — responsividade mobile, staff area)
+
+**Contexto**: usuário quer que staff (`/app/*`) e ERP respondam razoavelmente
+num navegador mobile — não como experiência principal (desktop continua
+prioridade #1), só pra cobrir acesso de emergência. Restrição dura: nada que
+arrisque quebrar/regredir o desktop atual.
+
+1. **`alunos.tsx`/`turmas.tsx` — `<Table>` envolvida em `overflow-x-auto`**
+   (mesmo padrão já usado em 12 outras páginas do app). Sem isso, essas duas
+   listas (as mais usadas) cortavam colunas silenciosamente em mobile — o
+   `overflow-x: hidden` global (`src/index.css`) esconde overflow sem dar
+   nenhuma affordance de scroll quando falta o wrapper.
+2. **Sweep `grid-cols-N` → `grid-cols-1 md:grid-cols-N` em 17 arquivos**
+   (família `Submodal*.tsx` + páginas com o mesmo padrão bare) — formulários
+   com campos de verdade (`Input`/`FormField`) que forçavam 2+ colunas
+   espremidas em mobile. Deliberadamente **não** mexido em `crm.tsx` e
+   `crm/demandas.tsx` — são grids de estatística compacta (label+badge), não
+   formulário, ficam melhor em 2 colunas mesmo em mobile.
+3. **Achado real durante verificação, não estava no plano original**:
+   `AppShell.tsx`'s `AppLayout` interno tinha `gridTemplateColumns: 'var(--sidebar-w) minmax(0, 1fr)'`
+   fixo via inline style, sem condicional de viewport — mesmo com o
+   `<aside>` corretamente escondido (`hidden md:block`) abaixo de `md`, o
+   **grid continuava reservando a primeira coluna** (`var(--sidebar-w)`,
+   64px) pro `<aside>` fantasma, espremendo `<main>` pra só ~64px de
+   largura em qualquer tela `/app/*` abaixo de 768px — texto/conteúdo
+   visualmente cortado, não só feio. Bug pré-existente (não introduzido
+   nesta sessão), só ficou visível ao testar de verdade em viewport
+   estreito. Fix: `gridTemplateColumns` inline virou classe Tailwind
+   `grid-cols-1 md:grid-cols-[var(--sidebar-w)_minmax(0,1fr)]` — em `md+`
+   produz exatamente o mesmo resultado de antes (zero mudança desktop),
+   abaixo de `md` vira coluna única (sem reservar espaço fantasma). Esse
+   fix sozinho resolve o layout de TODAS as páginas `/app/*`, não só
+   alunos/turmas.
+4. **Não mexido**: `AppShell.tsx`/`PortalLayout.tsx` (drawer/hamburger já
+   funcionais, só o grid por trás estava errado), breakpoint `md` (staff)
+   vs `lg` (portal) — inconsistente mas não quebrado, fora de escopo.
+
+**Verificação**: `bun run typecheck`/`test` (46/46)/`build` limpos.
+Verificado via Claude in Chrome com técnica de iframe injetado (viewport
+390×844 real, não emulação CSS) — desktop 1920px pixel-idêntico ao anterior
+(sidebar hover, header, tabela sem wrapper visível), mobile confirmado via
+DOM (`main` width 64px→371px após o fix, tabela com scroll horizontal
+funcional dentro do card, `document.documentElement.scrollWidth ===
+clientWidth`, sem overflow de página), formulário `SubmodalTurmas` em
+coluna única testado ao vivo.
+
+**Fila pra próxima sessão** (pedidos pelo usuário, não iniciados):
+- Investigar erro "Object not found" ao clicar em visualizar documento em
+  `secretaria/documentos` (reportado com print).
+- Avaliar viabilidade de reorganizar os cards do hub Secretaria em grupos
+  (Card → Subcards → formulário) — hoje muitos cards soltos sem agrupamento
+  lógico por assunto.
 
 ## 🔖 Checkpoint de sessão (2026-08-10 — splash, gate de organização, PWA app-wide, limpeza Lovable)
 

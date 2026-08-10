@@ -588,7 +588,7 @@ export default function Chamada() {
               <CardTitle>Ações</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <Button 
                   variant="outline" 
                   size="sm"

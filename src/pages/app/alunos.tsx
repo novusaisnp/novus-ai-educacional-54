@@ -354,6 +354,7 @@ export default function Alunos() {
           {isLoading ? (
             <div className="text-center py-8">Carregando...</div>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -459,6 +460,7 @@ export default function Alunos() {
                 })}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

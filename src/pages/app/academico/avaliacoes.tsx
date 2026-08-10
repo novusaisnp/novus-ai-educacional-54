@@ -301,7 +301,7 @@ export default function Avaliacoes() {
                   )}
                 />
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="class_id"
@@ -353,7 +353,7 @@ export default function Avaliacoes() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="term_id"
@@ -429,7 +429,7 @@ export default function Avaliacoes() {
                   />
                 )}
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="date"
@@ -700,7 +700,7 @@ export default function Avaliacoes() {
           </DialogHeader>
           {feedbackData && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">Gramática</label>
                   <div className="text-2xl font-bold text-sky-600">

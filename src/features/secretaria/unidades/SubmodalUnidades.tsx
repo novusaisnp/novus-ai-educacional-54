@@ -193,7 +193,7 @@ export function SubmodalUnidades({ isOpen, onClose, editingId, asDialog = true }
 
       <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="name"
@@ -225,7 +225,7 @@ export function SubmodalUnidades({ isOpen, onClose, editingId, asDialog = true }
 
             <div className="space-y-3">
               <h4 className="font-medium">Endereço</h4>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="address.street"
@@ -312,7 +312,7 @@ export function SubmodalUnidades({ isOpen, onClose, editingId, asDialog = true }
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="phone"

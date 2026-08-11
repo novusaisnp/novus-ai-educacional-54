@@ -121,6 +121,50 @@ serve(async (req) => {
     }
 
     const body = await req.json()
+    const mode = body.mode === 'reset' ? 'reset' : 'create'
+
+    // Reset: redefine a senha de um membro já existente pra senha temporária
+    // = o próprio e-mail (mesmo mecanismo da criação), marcando
+    // senha_pendente de novo -- também repara contas antigas que nunca
+    // tiveram esse vínculo, sem precisar de patch manual em banco.
+    if (mode === 'reset') {
+      const targetUserId = typeof body.user_id === 'string' ? body.user_id.trim() : ''
+      if (!targetUserId) {
+        return jsonResponse({ error: 'user_id ausente' }, 400)
+      }
+
+      const { data: targetProfile, error: targetError } = await adminClient
+        .from('profiles')
+        .select('id, email, organization_id')
+        .eq('id', targetUserId)
+        .maybeSingle()
+
+      if (targetError || !targetProfile || targetProfile.organization_id !== callerProfile.organization_id) {
+        return jsonResponse({ error: 'Usuário não encontrado nesta organização' }, 404)
+      }
+      if (!targetProfile.email) {
+        return jsonResponse({ error: 'Usuário sem e-mail cadastrado' }, 400)
+      }
+
+      const { error: updateAuthError } = await adminClient.auth.admin.updateUserById(targetUserId, {
+        password: targetProfile.email,
+      })
+      if (updateAuthError) {
+        console.error('Failed to reset staff password:', updateAuthError)
+        return jsonResponse({ error: updateAuthError.message || 'Falha ao resetar senha' }, 200)
+      }
+
+      const { error: pendingError } = await adminClient
+        .from('profiles')
+        .update({ senha_pendente: true })
+        .eq('id', targetUserId)
+      if (pendingError) {
+        console.error('Failed to mark senha_pendente on reset:', pendingError)
+      }
+
+      return jsonResponse({ success: true, user_id: targetUserId, mode }, 200)
+    }
+
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
     const fullName = typeof body.full_name === 'string' ? body.full_name.trim() : ''
     const role = body.role as StaffRole
@@ -144,13 +188,18 @@ serve(async (req) => {
       return jsonResponse({ error: colaboradorCheck.reason ?? 'Colaborador não validado no ERP' }, 403)
     }
 
-    // auth-js v2 não tem mais admin.getUserByEmail (era API v1) -- em vez de listar
-    // todos os usuários pra checar duplicata, deixa o próprio inviteUserByEmail
-    // rejeitar (ele já valida unicidade de e-mail no GoTrue) e traduz o erro.
-    const redirectTo = typeof body.redirect_to === 'string' ? body.redirect_to : undefined
-    const { data: inviteRes, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-      data: { full_name: fullName },
-      redirectTo,
+    // Senha temporária = o próprio e-mail (login com e-mail nos dois campos é
+    // uma autenticação real) -- elimina a dependência de e-mail transacional
+    // funcionando, que o convite por magic-link (inviteUserByEmail) tinha.
+    // auth-js v2 não tem mais admin.getUserByEmail (era API v1) -- em vez de
+    // listar todos os usuários pra checar duplicata, deixa o próprio
+    // createUser rejeitar (já valida unicidade de e-mail no GoTrue) e
+    // traduz o erro.
+    const { data: inviteRes, error: inviteError } = await adminClient.auth.admin.createUser({
+      email,
+      password: email,
+      email_confirm: true,
+      user_metadata: { full_name: fullName },
     })
 
     if (inviteError || !inviteRes?.user?.id) {
@@ -203,6 +252,7 @@ serve(async (req) => {
       role,
       cpf,
       email,
+      senha_pendente: true,
     })
 
     if (profileError) {

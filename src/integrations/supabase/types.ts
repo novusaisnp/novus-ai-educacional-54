@@ -1976,6 +1976,7 @@ export type Database = {
           id: string
           organization_id: string
           role: string
+          senha_pendente: boolean
           updated_at: string
         }
         Insert: {
@@ -1987,6 +1988,7 @@ export type Database = {
           id: string
           organization_id: string
           role: string
+          senha_pendente?: boolean
           updated_at?: string
         }
         Update: {
@@ -1998,6 +2000,7 @@ export type Database = {
           id?: string
           organization_id?: string
           role?: string
+          senha_pendente?: boolean
           updated_at?: string
         }
         Relationships: [
@@ -3011,6 +3014,7 @@ export type Database = {
         Args: { columns: string[]; entity: string; entity_id: string }
         Returns: undefined
       }
+      clear_senha_pendente: { Args: never; Returns: undefined }
       current_guardian_id: { Args: never; Returns: string }
       current_guardian_org_id: { Args: never; Returns: string }
       current_org_id: { Args: never; Returns: string }

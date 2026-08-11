@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Outlet, NavLink, useLocation, useNavigate, NavigateFunction } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
   LayoutDashboard,
   School,
@@ -14,6 +17,7 @@ import {
   PinOff,
   BarChart3,
   Settings,
+  KeyRound,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -24,7 +28,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { passwordSchema, PASSWORD_POLICY_MESSAGE } from '@/lib/passwordPolicy';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from '@/components/ui/breadcrumb';
 import { Toaster } from '@/components/ui/toaster';
 import { useSession } from '@/hooks/useSession';
@@ -51,6 +59,18 @@ export async function performLogout(navigate: NavigateFunction) {
     safeToast({ variant: 'destructive', title: 'Erro ao fazer logout' });
   }
 }
+
+const trocarSenhaSchema = z
+  .object({
+    newPassword: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'As senhas não coincidem.',
+    path: ['confirmPassword'],
+  });
+
+type TrocarSenhaFormData = z.infer<typeof trocarSenhaSchema>;
 
 const roleLabels: Record<string, string> = {
   admin: 'Administrador',
@@ -231,6 +251,31 @@ function TopBar() {
   const { orgId, data: orgData } = useOrganization();
   const { data: empresaLogoUrl } = useEmpresaLogo(orgId, orgData?.organizations?.logo_url);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [trocarSenhaOpen, setTrocarSenhaOpen] = useState(false);
+  const [trocandoSenha, setTrocandoSenha] = useState(false);
+
+  const {
+    register: registerTrocarSenha,
+    handleSubmit: handleTrocarSenhaSubmit,
+    formState: { errors: trocarSenhaErrors },
+    reset: resetTrocarSenhaForm,
+  } = useForm<TrocarSenhaFormData>({ resolver: zodResolver(trocarSenhaSchema) });
+
+  const onTrocarSenha = async (data: TrocarSenhaFormData) => {
+    setTrocandoSenha(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: data.newPassword });
+      if (error) {
+        safeToast({ variant: 'destructive', title: 'Erro ao trocar senha', description: error.message });
+        return;
+      }
+      safeToast({ title: 'Senha alterada com sucesso!' });
+      resetTrocarSenhaForm();
+      setTrocarSenhaOpen(false);
+    } finally {
+      setTrocandoSenha(false);
+    }
+  };
 
   const getPageTitle = (pathname: string) => {
     const item = filteredMenuItems.find(item => 
@@ -319,12 +364,47 @@ function TopBar() {
             <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
           </div>
           <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => setTrocarSenhaOpen(true)}>
+            <KeyRound className="mr-2 h-4 w-4" />
+            <span>Trocar senha</span>
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => performLogout(navigate)}>
             <LogOut className="mr-2 h-4 w-4" />
             <span>Sair</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <Dialog open={trocarSenhaOpen} onOpenChange={(open) => { setTrocarSenhaOpen(open); if (!open) resetTrocarSenhaForm(); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Trocar senha</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleTrocarSenhaSubmit(onTrocarSenha)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="topbar-newPassword">Nova senha</Label>
+              <Input id="topbar-newPassword" type="password" {...registerTrocarSenha('newPassword')} />
+              <p className="text-xs text-muted-foreground">{PASSWORD_POLICY_MESSAGE}</p>
+              {trocarSenhaErrors.newPassword && (
+                <p className="text-sm text-destructive">{trocarSenhaErrors.newPassword.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="topbar-confirmPassword">Confirme a nova senha</Label>
+              <Input id="topbar-confirmPassword" type="password" {...registerTrocarSenha('confirmPassword')} />
+              {trocarSenhaErrors.confirmPassword && (
+                <p className="text-sm text-destructive">{trocarSenhaErrors.confirmPassword.message}</p>
+              )}
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setTrocarSenhaOpen(false)} disabled={trocandoSenha}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={trocandoSenha}>{trocandoSenha ? 'Salvando...' : 'Salvar'}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
       </div>
 
       {/* Mobile drawer */}

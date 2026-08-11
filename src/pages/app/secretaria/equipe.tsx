@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { UserCog, Plus } from 'lucide-react';
+import { UserCog, Plus, KeyRound } from 'lucide-react';
 import { IconBadge } from '@/components/IconBadge';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,11 +11,15 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useUserRole } from '@/hooks/useUserRole';
-import { useStaffList, useCreateStaffUser, StaffRole } from '@/hooks/useStaff';
+import { useStaffList, useCreateStaffUser, useResetStaffPassword, StaffRole } from '@/hooks/useStaff';
 import EmptyState from '@/components/EmptyState';
 
 const staffSchema = z.object({
@@ -41,6 +45,7 @@ export default function EquipePage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const { data: staff = [], isLoading } = useStaffList();
   const createStaffUser = useCreateStaffUser();
+  const resetStaffPassword = useResetStaffPassword();
 
   const form = useForm<StaffFormData>({
     resolver: zodResolver(staffSchema),
@@ -55,12 +60,31 @@ export default function EquipePage() {
         cpf: data.cpf.replace(/\D/g, ''),
         role: data.role,
       });
-      toast({ title: 'Convite enviado', description: `${data.full_name} vai receber um e-mail para definir a senha.` });
+      toast({
+        title: 'Membro criado',
+        description: `Peça pra ${data.full_name} entrar com o e-mail dela nos dois campos (login e senha) no primeiro acesso.`,
+      });
       form.reset();
       setDialogOpen(false);
     } catch (error) {
       toast({
-        title: 'Erro ao convidar membro da equipe',
+        title: 'Erro ao criar membro da equipe',
+        description: error instanceof Error ? error.message : 'Tente novamente em alguns instantes.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const onResetPassword = async (memberId: string, memberName: string) => {
+    try {
+      await resetStaffPassword.mutateAsync(memberId);
+      toast({
+        title: 'Senha redefinida',
+        description: `Peça pra ${memberName} entrar com o e-mail dela nos dois campos (login e senha).`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Erro ao resetar senha',
         description: error instanceof Error ? error.message : 'Tente novamente em alguns instantes.',
         variant: 'destructive',
       });
@@ -88,13 +112,13 @@ export default function EquipePage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Equipe</h1>
             <p className="text-muted-foreground">
-              Convide professores, coordenadores e secretários para acessar o sistema.
+              Cadastre professores, coordenadores e secretários para acessar o sistema.
             </p>
           </div>
         </div>
         <Button onClick={() => setDialogOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Convidar
+          Adicionar
         </Button>
       </div>
 
@@ -126,6 +150,7 @@ export default function EquipePage() {
                     <TableHead>Nome</TableHead>
                     <TableHead>E-mail</TableHead>
                     <TableHead>Role</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -135,6 +160,30 @@ export default function EquipePage() {
                       <TableCell className="text-sm text-muted-foreground">{member.email || '—'}</TableCell>
                       <TableCell>
                         <Badge variant="outline">{ROLE_LABELS[member.role as StaffRole] || member.role}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="outline" disabled={resetStaffPassword.isPending}>
+                              <KeyRound className="w-3 h-3 mr-1" />Resetar senha
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Resetar senha de {member.full_name}?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Isso invalida a senha atual e exige que a pessoa defina uma nova no próximo login,
+                                usando o e-mail dela ({member.email}) como senha temporária nos dois campos.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => onResetPassword(member.id, member.full_name)}>
+                                Resetar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -148,7 +197,7 @@ export default function EquipePage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Convidar membro da equipe</DialogTitle>
+            <DialogTitle>Adicionar membro da equipe</DialogTitle>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -218,7 +267,7 @@ export default function EquipePage() {
                   Cancelar
                 </Button>
                 <Button type="submit" disabled={createStaffUser.isPending}>
-                  {createStaffUser.isPending ? 'Enviando...' : 'Enviar convite'}
+                  {createStaffUser.isPending ? 'Criando...' : 'Criar'}
                 </Button>
               </DialogFooter>
             </form>

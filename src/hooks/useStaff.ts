@@ -55,7 +55,27 @@ export const useCreateStaffUser = () => {
   return useMutation({
     mutationFn: async (input: CreateStaffUserInput) => {
       const { data, error } = await supabase.functions.invoke('create-staff-user', {
-        body: { ...input, redirect_to: `${window.location.origin}/auth/definir-senha` },
+        body: input,
+      });
+
+      if (error) {
+        throw new Error(await extractFunctionErrorMessage(error));
+      }
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['staff'] });
+    },
+  });
+};
+
+export const useResetStaffPassword = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const { data, error } = await supabase.functions.invoke('create-staff-user', {
+        body: { mode: 'reset', user_id: userId },
       });
 
       if (error) {

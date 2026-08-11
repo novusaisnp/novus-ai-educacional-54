@@ -42,7 +42,7 @@ export const useAttendanceJustifications = () => {
           id, reason, status, review_note, created_at, reviewed_at, document_id,
           attendance:attendance_id(date, status, subject:subject_id(name), class:class_id(name)),
           student:student_id(first_name, last_name),
-          guardian:guardian_id(name, email),
+          guardian:guardian_id(name:nome, email),
           document:document_id(file_path, title)
         `)
         .eq('organization_id', orgId)

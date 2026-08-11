@@ -44,7 +44,7 @@ export function usePortalAuth(): UsePortalAuthReturn {
 
       const { data, error } = await supabase
         .from('entidades')
-        .select('id, name:nome, cpf, email, phone:telefone, entidade_papeis!inner(dados_papel)')
+        .select('id, name:nome, cpf, email, phone:telefone, user_id, entidade_papeis!inner(dados_papel)')
         .eq('user_id', session.user.id)
         .eq('entidade_papeis.papel', 'RESPONSAVEL')
         .eq('entidade_papeis.ativo', true)

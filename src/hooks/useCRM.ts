@@ -74,37 +74,44 @@ export const useLeads = (params?: { status?: string; search?: string }) => {
   return useQuery({
     queryKey: ['crm.leads', orgData?.organization_id, params],
     queryFn: async () => {
-      let query = supabase.from('visitors').select('*');
-      
+      let query = supabase
+        .from('entidades')
+        .select('id, organization_id, full_name:nome, document:documento_outro, phone:telefone, email, created_at, updated_at, entidade_papeis!inner(dados_papel)')
+        .eq('entidade_papeis.papel', 'VISITANTE');
+
       if (params?.search) {
-        query = query.or(`full_name.ilike.%${params.search}%,phone.ilike.%${params.search}%,email.ilike.%${params.search}%`);
+        query = query.or(`nome.ilike.%${params.search}%,telefone.ilike.%${params.search}%,email.ilike.%${params.search}%`);
       }
-      
-      const { data, error } = await query.order('visit_date', { ascending: false });
-      
+
+      const { data, error } = await query;
+
       if (error) {
         logger.error('Erro ao buscar leads', { error });
         throw error;
       }
-      
-      // Transformar dados de visitors para formato Lead
-      const leads: Lead[] = data?.map(visitor => ({
-        id: visitor.id,
-        organization_id: visitor.organization_id,
-        full_name: visitor.full_name,
-        document: visitor.document,
-        phone: visitor.phone,
-        email: visitor.email,
-        relation: visitor.relation,
-        visit_date: visitor.visit_date,
-        purpose: visitor.purpose,
-        notes: visitor.notes,
-        status: 'ativo' as const, // Status padrão
-        convertido: false,
-        created_at: visitor.created_at,
-        updated_at: visitor.updated_at
-      })) || [];
-      
+
+      // Transformar dados de entidades (papel VISITANTE) para formato Lead
+      const leads: Lead[] = (data || []).map(visitor => {
+        const papel = Array.isArray(visitor.entidade_papeis) ? visitor.entidade_papeis[0] : visitor.entidade_papeis;
+        const dadosPapel = (papel?.dados_papel ?? null) as { relation?: string; visit_date?: string; purpose?: string; notes?: string } | null;
+        return {
+          id: visitor.id,
+          organization_id: visitor.organization_id,
+          full_name: visitor.full_name,
+          document: visitor.document,
+          phone: visitor.phone,
+          email: visitor.email,
+          relation: dadosPapel?.relation,
+          visit_date: dadosPapel?.visit_date ?? '',
+          purpose: dadosPapel?.purpose,
+          notes: dadosPapel?.notes,
+          status: 'ativo' as const, // Status padrão
+          convertido: false,
+          created_at: visitor.created_at,
+          updated_at: visitor.updated_at
+        };
+      }).sort((a, b) => (b.visit_date || '').localeCompare(a.visit_date || ''));
+
       return leads;
     },
     enabled: !!orgData?.organization_id,
@@ -121,17 +128,21 @@ export const useLead = (id: string) => {
     queryKey: ['crm.lead', orgData?.organization_id, id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('visitors')
-        .select('*')
+        .from('entidades')
+        .select('id, organization_id, full_name:nome, document:documento_outro, phone:telefone, email, created_at, updated_at, entidade_papeis!inner(dados_papel)')
         .eq('id', id)
+        .eq('entidade_papeis.papel', 'VISITANTE')
         .single();
-      
+
       if (error) {
         logger.error('Erro ao buscar lead', { error, id });
         throw error;
       }
-      
-      // Transformar dados de visitor para formato Lead
+
+      const papel = Array.isArray(data.entidade_papeis) ? data.entidade_papeis[0] : data.entidade_papeis;
+      const dadosPapel = (papel?.dados_papel ?? null) as { relation?: string; visit_date?: string; purpose?: string; notes?: string } | null;
+
+      // Transformar dados de entidade (papel VISITANTE) para formato Lead
       const lead: Lead = {
         id: data.id,
         organization_id: data.organization_id,
@@ -139,16 +150,16 @@ export const useLead = (id: string) => {
         document: data.document,
         phone: data.phone,
         email: data.email,
-        relation: data.relation,
-        visit_date: data.visit_date,
-        purpose: data.purpose,
-        notes: data.notes,
+        relation: dadosPapel?.relation,
+        visit_date: dadosPapel?.visit_date ?? '',
+        purpose: dadosPapel?.purpose,
+        notes: dadosPapel?.notes,
         status: 'ativo' as const,
         convertido: false,
         created_at: data.created_at,
         updated_at: data.updated_at
       };
-      
+
       return lead;
     },
     enabled: !!orgData?.organization_id && !!id,

@@ -67,14 +67,18 @@ export function SubmodalVisitantes({ isOpen, onClose, editingId, asDialog = true
       if (!editingId || !organization?.organization_id) return null;
       
       const { data, error } = await supabase
-        .from('visitors')
-        .select('*')
+        .from('entidades')
+        .select('id, full_name:nome, document:documento_outro, phone:telefone, email, entidade_papeis!inner(dados_papel)')
         .eq('id', editingId)
         .eq('organization_id', organization.organization_id)
+        .eq('entidade_papeis.papel', 'VISITANTE')
         .single();
 
       if (error) throw error;
-      return data;
+      const papel = Array.isArray(data.entidade_papeis) ? data.entidade_papeis[0] : data.entidade_papeis;
+      const dadosPapel = (papel?.dados_papel ?? null) as { relation?: string; visit_date?: string; purpose?: string; notes?: string } | null;
+      const { entidade_papeis, ...rest } = data;
+      return { ...rest, ...dadosPapel };
     },
     enabled: !!editingId && !!organization?.organization_id,
   });
@@ -99,21 +103,36 @@ export function SubmodalVisitantes({ isOpen, onClose, editingId, asDialog = true
     mutationFn: async (data: VisitanteFormData) => {
       if (!organization?.organization_id) throw new Error('Organização não encontrada');
 
-      const { error } = await supabase
-        .from('visitors')
+      const { data: entidade, error } = await supabase
+        .from('entidades')
         .insert({
-          full_name: data.full_name,
-          document: data.document || null,
-          phone: data.phone || null,
+          tipo_pessoa: 'PF',
+          nome: data.full_name,
+          documento_outro: data.document || null,
+          telefone: data.phone || null,
           email: data.email || null,
-          relation: data.relation || null,
-          visit_date: new Date(data.visit_date + 'T00:00:00').toISOString(),
-          purpose: data.purpose || null,
-          notes: data.notes || null,
           organization_id: organization.organization_id,
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      const { error: papelError } = await supabase
+        .from('entidade_papeis')
+        .insert({
+          entidade_id: entidade.id,
+          organization_id: organization.organization_id,
+          papel: 'VISITANTE',
+          dados_papel: {
+            relation: data.relation || null,
+            visit_date: new Date(data.visit_date + 'T00:00:00').toISOString(),
+            purpose: data.purpose || null,
+            notes: data.notes || null,
+          },
+        });
+
+      if (papelError) throw papelError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['visitors'] });
@@ -134,21 +153,32 @@ export function SubmodalVisitantes({ isOpen, onClose, editingId, asDialog = true
       if (!editingId || !organization?.organization_id) throw new Error('ID não encontrado');
 
       const { error } = await supabase
-        .from('visitors')
+        .from('entidades')
         .update({
-          full_name: data.full_name,
-          document: data.document || null,
-          phone: data.phone || null,
+          nome: data.full_name,
+          documento_outro: data.document || null,
+          telefone: data.phone || null,
           email: data.email || null,
-          relation: data.relation || null,
-          visit_date: new Date(data.visit_date + 'T00:00:00').toISOString(),
-          purpose: data.purpose || null,
-          notes: data.notes || null,
         })
         .eq('id', editingId)
         .eq('organization_id', organization.organization_id);
 
       if (error) throw error;
+
+      const { error: papelError } = await supabase
+        .from('entidade_papeis')
+        .update({
+          dados_papel: {
+            relation: data.relation || null,
+            visit_date: new Date(data.visit_date + 'T00:00:00').toISOString(),
+            purpose: data.purpose || null,
+            notes: data.notes || null,
+          },
+        })
+        .eq('entidade_id', editingId)
+        .eq('papel', 'VISITANTE');
+
+      if (papelError) throw papelError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['visitors'] });

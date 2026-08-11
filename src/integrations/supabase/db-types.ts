@@ -33,6 +33,7 @@ export interface GuardianRow {
   email: string | null;
   phone: string | null;
   relationship: string | null;
+  user_id?: string | null;
 }
 export type DocumentRow = Database['public']['Tables']['documents']['Row'];
 export type WaitlistApplicationRow = Database['public']['Tables']['waitlist_applications']['Row'];

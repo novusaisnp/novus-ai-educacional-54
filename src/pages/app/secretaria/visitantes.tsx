@@ -25,12 +25,19 @@ export default function SecretariaVisitantes() {
     queryKey: ['visitors', orgData?.organization_id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('visitors')
-        .select('*')
-        .order('visit_date', { ascending: false });
-      
+        .from('entidades')
+        .select('id, full_name:nome, document:documento_outro, phone:telefone, entidade_papeis!inner(dados_papel)')
+        .eq('entidade_papeis.papel', 'VISITANTE');
+
       if (error) throw error;
-      return data;
+      return (data || [])
+        .map((v) => {
+          const papel = Array.isArray(v.entidade_papeis) ? v.entidade_papeis[0] : v.entidade_papeis;
+          const dadosPapel = (papel?.dados_papel ?? null) as { visit_date?: string; purpose?: string } | null;
+          const { entidade_papeis, ...rest } = v;
+          return { ...rest, visit_date: dadosPapel?.visit_date ?? '', purpose: dadosPapel?.purpose ?? null };
+        })
+        .sort((a, b) => (b.visit_date || '').localeCompare(a.visit_date || ''));
     },
     enabled: !!orgData?.organization_id,
   });
@@ -38,10 +45,10 @@ export default function SecretariaVisitantes() {
   const deleteVisitor = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('visitors')
+        .from('entidades')
         .delete()
         .eq('id', id);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {

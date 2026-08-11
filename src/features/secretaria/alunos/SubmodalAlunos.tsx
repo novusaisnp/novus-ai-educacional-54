@@ -114,13 +114,19 @@ export function SubmodalAlunos({ context, editingStudent, onEditingChange, onEdi
     queryFn: async () => {
       const { data, error } = await supabase
         .from('student_guardians')
-        .select('is_primary, guardians(id, name, cpf, relationship, email, phone)')
+        .select('is_primary, entidades!student_guardians_guardian_id_fkey(id, name:nome, cpf, email, phone:telefone, entidade_papeis(papel, dados_papel))')
         .eq('student_id', editingStudent.id)
         .eq('organization_id', context.orgId);
       if (error) throw error;
       return (data || [])
-        .map((link): LinkedGuardian | null =>
-          link.guardians ? { ...link.guardians, is_primary: link.is_primary } : null)
+        .map((link): LinkedGuardian | null => {
+          if (!link.entidades) return null;
+          const papeis = Array.isArray(link.entidades.entidade_papeis) ? link.entidades.entidade_papeis : [];
+          const responsavel = papeis.find((p) => p.papel === 'RESPONSAVEL');
+          const dadosPapel = (responsavel?.dados_papel ?? null) as { relationship?: string } | null;
+          const { entidade_papeis, ...guardian } = link.entidades;
+          return { ...guardian, relationship: dadosPapel?.relationship ?? null, is_primary: link.is_primary };
+        })
         .filter((g): g is LinkedGuardian => g !== null);
     },
     enabled: !!editingStudent?.id && !!context.orgId,

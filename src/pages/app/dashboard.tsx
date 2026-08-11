@@ -28,9 +28,10 @@ export default function Dashboard() {
     queryFn: async () => {
       return await safeQuery(async () => {
         const { data, error } = await supabase
-          .from('visitors')
-          .select('id', { count: 'exact' })
-          .eq('organization_id', orgId);
+          .from('entidades')
+          .select('id, entidade_papeis!inner(papel)')
+          .eq('organization_id', orgId)
+          .eq('entidade_papeis.papel', 'VISITANTE');
 
         if (error) {
           console.warn('Erro ao carregar visitantes:', error.message);

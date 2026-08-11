@@ -106,17 +106,24 @@ export const useBICRM = (filters?: {
         throw new Error('Organização não identificada');
       }
 
-      // Buscar dados de visitantes (leads)
-      const { data: visitors, error: visitorsError } = await supabase
-        .from('visitors')
-        .select('*')
-        .gte('visit_date', filters?.startDate || '2024-01-01')
-        .lte('visit_date', filters?.endDate || '2024-12-31');
+      // Buscar dados de visitantes (leads) -- entidades com papel VISITANTE
+      const { data: visitorEntidades, error: visitorsError } = await supabase
+        .from('entidades')
+        .select('id, organization_id, entidade_papeis!inner(dados_papel)')
+        .eq('entidade_papeis.papel', 'VISITANTE')
+        .gte('entidade_papeis.dados_papel->>visit_date', filters?.startDate || '2024-01-01')
+        .lte('entidade_papeis.dados_papel->>visit_date', filters?.endDate || '2024-12-31');
 
       if (visitorsError) {
         logger.error('Erro ao buscar visitantes para BI', { error: visitorsError });
         throw visitorsError;
       }
+
+      const visitors = (visitorEntidades || []).map((v) => {
+        const papel = Array.isArray(v.entidade_papeis) ? v.entidade_papeis[0] : v.entidade_papeis;
+        const dadosPapel = (papel?.dados_papel ?? null) as { visit_date?: string; purpose?: string } | null;
+        return { id: v.id, organization_id: v.organization_id, purpose: dadosPapel?.purpose ?? null, visit_date: dadosPapel?.visit_date ?? '' };
+      });
 
       // Buscar dados de interações
       const { data: interactions, error: interactionsError } = await supabase

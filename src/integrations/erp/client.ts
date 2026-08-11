@@ -24,6 +24,7 @@ interface CreateReceivableInput {
   clienteCpfCnpj?: string;
   recorrente?: boolean;
   periodicidade?: string;
+  idempotencyKey?: string;
 }
 
 interface UpsertContractInput {
@@ -165,6 +166,7 @@ class ERPClient {
       cliente_cpf_cnpj: data.clienteCpfCnpj,
       recorrente: data.recorrente,
       periodicidade: data.periodicidade,
+      idempotency_key: data.idempotencyKey,
     });
   }
 

@@ -159,6 +159,7 @@ export async function signEnrollmentContract(input: SignEnrollmentContractInput)
       clienteCpfCnpj: input.guardianCpf || undefined,
       recorrente: true,
       periodicidade: 'MENSAL',
+      idempotencyKey: `novus-educacional:${input.orgId}:${numeroDocumento}`,
     });
 
     await supabase

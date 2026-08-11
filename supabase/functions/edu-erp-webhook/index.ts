@@ -195,11 +195,10 @@ serve(async (req) => {
       updated_at: new Date().toISOString(),
     };
 
-    if (existing) {
-      await supabase.from('financial_transactions').update(row).eq('id', existing.id);
-    } else {
-      await supabase.from('financial_transactions').insert(row);
-    }
+    const { error: persistError } = existing
+      ? await supabase.from('financial_transactions').update(row).eq('id', existing.id)
+      : await supabase.from('financial_transactions').insert(row);
+    if (persistError) throw persistError;
 
     // Log do evento para auditoria
     await supabase

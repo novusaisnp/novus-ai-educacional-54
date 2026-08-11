@@ -1315,6 +1315,143 @@ export type Database = {
           },
         ]
       }
+      entidade_id_map: {
+        Row: {
+          entidade_id: string
+          id_origem: string
+          tabela_origem: string
+        }
+        Insert: {
+          entidade_id: string
+          id_origem: string
+          tabela_origem: string
+        }
+        Update: {
+          entidade_id?: string
+          id_origem?: string
+          tabela_origem?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entidade_id_map_entidade_id_fkey"
+            columns: ["entidade_id"]
+            isOneToOne: false
+            referencedRelation: "entidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entidade_papeis: {
+        Row: {
+          ativado_em: string
+          ativo: boolean
+          dados_papel: Json | null
+          desativado_em: string | null
+          entidade_id: string
+          id: string
+          organization_id: string
+          papel: string
+        }
+        Insert: {
+          ativado_em?: string
+          ativo?: boolean
+          dados_papel?: Json | null
+          desativado_em?: string | null
+          entidade_id: string
+          id?: string
+          organization_id: string
+          papel: string
+        }
+        Update: {
+          ativado_em?: string
+          ativo?: boolean
+          dados_papel?: Json | null
+          desativado_em?: string | null
+          entidade_id?: string
+          id?: string
+          organization_id?: string
+          papel?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entidade_papeis_entidade_id_fkey"
+            columns: ["entidade_id"]
+            isOneToOne: false
+            referencedRelation: "entidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entidade_papeis_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entidade_papeis_papel_fkey"
+            columns: ["papel"]
+            isOneToOne: false
+            referencedRelation: "papeis_catalogo"
+            referencedColumns: ["codigo"]
+          },
+        ]
+      }
+      entidades: {
+        Row: {
+          ativo: boolean
+          cpf: string | null
+          created_at: string
+          deleted_at: string | null
+          documento_outro: string | null
+          email: string | null
+          id: string
+          nome: string
+          organization_id: string
+          telefone: string | null
+          tipo_pessoa: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          cpf?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          documento_outro?: string | null
+          email?: string | null
+          id?: string
+          nome: string
+          organization_id: string
+          telefone?: string | null
+          tipo_pessoa?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          cpf?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          documento_outro?: string | null
+          email?: string | null
+          id?: string
+          nome?: string
+          organization_id?: string
+          telefone?: string | null
+          tipo_pessoa?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entidades_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       erp_integration_config: {
         Row: {
           base_url: string | null
@@ -1779,6 +1916,27 @@ export type Database = {
           logo_url?: string | null
           name?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      papeis_catalogo: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          nome_exibicao: string
+          tipo_pessoa_permitido: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          nome_exibicao: string
+          tipo_pessoa_permitido: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          nome_exibicao?: string
+          tipo_pessoa_permitido?: string
         }
         Relationships: []
       }

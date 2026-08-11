@@ -9,7 +9,10 @@ interface ERPClientData {
   name: string;
   email?: string;
   phone?: string;
-  address?: string;
+  /** Sempre ['CLIENTE'] hoje — Responsável do Educacional sincroniza como
+   * Cliente no ERP, regra de negócio já travada (ver createGuardianForStudent.ts).
+   * Campo existe pra não hardcodar o literal em mais de um lugar. */
+  papeis?: string[];
 }
 
 interface CreateReceivableInput {
@@ -135,13 +138,17 @@ class ERPClient {
     if (!this.config.events.clientUpsert) {
       return { ok: true, skipped: true, mock: this.config.mock };
     }
-    // Nomes de coluna reais em `clientes` no ERP são em português (nome/telefone),
-    // não os campos em inglês da interface local — traduzir na borda.
-    return this.sendSyncEvent('clientes', {
+    // Nomes de coluna reais em `entidades` no ERP são em português (nome/telefone),
+    // não os campos em inglês da interface local — traduzir na borda. `table:
+    // 'entidades'` é o contrato canônico (Fase 3/7 do Cadastro Unificado de
+    // Entidades) — o ERP também aceita o `table:'clientes'` legado, mas o
+    // satélite já migrou e não precisa mais dele.
+    return this.sendSyncEvent('entidades', {
       cpf: data.cpf,
       nome: data.name,
       email: data.email,
       telefone: data.phone,
+      papeis: data.papeis ?? ['CLIENTE'],
     });
   }
 

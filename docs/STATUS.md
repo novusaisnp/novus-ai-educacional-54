@@ -1,6 +1,16 @@
 # STATUS — novus-educacional
 
-**Última atualização: 2026-08-11 (Cadastro Unificado de Entidades — Fase 6 concluída: Visitantes/Equipe/Responsáveis migrados pra `entidades`+`entidade_papeis`, `guardians`/`visitors` dropadas; Fase 7/8 pendentes).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+**Última atualização: 2026-08-11 (Cadastro Unificado de Entidades — Fase 7 concluída: `erpEmit.upsertClient` manda `table:'entidades'`+`papeis` pro ERP; Fase 8 pendente).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+
+## 🔖 Checkpoint de sessão (2026-08-11 — Cadastro Unificado de Entidades, Fase 7)
+
+**Contexto**: continuação direta da Fase 6 (mesma sessão). `src/integrations/erp/client.ts`'s `ERPClient.upsertClientByCPF` mandava `table:'clientes'` (contrato legado) — o ERP já aceita `table:'entidades'` desde a Fase 3 (janela expand-contract), faltava só o satélite trocar.
+
+1. **`ERPClientData`**: campo `address?: string` removido (nunca populado por nenhum call site, confirmado via grep — lixo desde antes desta sessão), adicionado `papeis?: string[]` (default `['CLIENTE']` aplicado no client, não em cada call site — regra "Responsável sincroniza como Cliente" já travada em `createGuardianForStudent.ts`, não muda).
+2. **`upsertClientByCPF`**: `sendSyncEvent('clientes', ...)` → `sendSyncEvent('entidades', { cpf, nome, email, telefone, papeis })`. Nomes de coluna já eram traduzidos na borda (nome/telefone), só a tabela-alvo mudou. Sem payload de endereço/RG — nenhum form do Educacional coleta esses campos hoje pro Responsável, então não há o que enviar (plano previa "endereço, RG se coletado" — condicional, não obrigatório).
+3. **Verificação**: `bun run typecheck` limpo, `bun run test` 46/46 (nenhum teste travado no literal `'clientes'`, confirmado via grep antes de mudar).
+
+**Gaps conscientes**: sync ponta-a-ponta (criar Responsável de teste no Educacional, confirmar em `sync_logs`/`webhook_deliveries` do ERP que virou `entidade` com papel CLIENTE) **não testado ao vivo** nesta sessão — mesma limitação da Fase 6 (sem sessão de staff autenticada disponível pro browser). Fase 8 (FormEntidade do Educacional) segue como próximo passo do plano `tranquil-growing-zephyr.md`.
 
 ## 🔖 Checkpoint de sessão (2026-08-11 — Cadastro Unificado de Entidades, Fase 5+6 no Educacional)
 

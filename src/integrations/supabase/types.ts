@@ -431,14 +431,7 @@ export type Database = {
             foreignKeyName: "attendance_justifications_guardian_id_fkey"
             columns: ["guardian_id"]
             isOneToOne: false
-            referencedRelation: "guardians"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "attendance_justifications_guardian_id_fkey"
-            columns: ["guardian_id"]
-            isOneToOne: false
-            referencedRelation: "v_guardians_safe"
+            referencedRelation: "entidades"
             referencedColumns: ["id"]
           },
           {
@@ -1199,14 +1192,7 @@ export type Database = {
             foreignKeyName: "enrollment_contracts_guardian_id_fkey"
             columns: ["guardian_id"]
             isOneToOne: false
-            referencedRelation: "guardians"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "enrollment_contracts_guardian_id_fkey"
-            columns: ["guardian_id"]
-            isOneToOne: false
-            referencedRelation: "v_guardians_safe"
+            referencedRelation: "entidades"
             referencedColumns: ["id"]
           },
           {
@@ -1542,14 +1528,7 @@ export type Database = {
             foreignKeyName: "financial_transactions_guardian_id_fkey"
             columns: ["guardian_id"]
             isOneToOne: false
-            referencedRelation: "guardians"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "financial_transactions_guardian_id_fkey"
-            columns: ["guardian_id"]
-            isOneToOne: false
-            referencedRelation: "v_guardians_safe"
+            referencedRelation: "entidades"
             referencedColumns: ["id"]
           },
         ]
@@ -1619,53 +1598,6 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "v_students_safe"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      guardians: {
-        Row: {
-          cpf: string | null
-          created_at: string
-          email: string | null
-          id: string
-          name: string
-          organization_id: string
-          phone: string | null
-          relationship: string | null
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          cpf?: string | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          name: string
-          organization_id: string
-          phone?: string | null
-          relationship?: string | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          cpf?: string | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          name?: string
-          organization_id?: string
-          phone?: string | null
-          relationship?: string | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "guardians_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -2039,6 +1971,7 @@ export type Database = {
           cpf: string | null
           created_at: string
           email: string | null
+          entidade_id: string | null
           full_name: string
           id: string
           organization_id: string
@@ -2049,6 +1982,7 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           email?: string | null
+          entidade_id?: string | null
           full_name: string
           id: string
           organization_id: string
@@ -2059,6 +1993,7 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           email?: string | null
+          entidade_id?: string | null
           full_name?: string
           id?: string
           organization_id?: string
@@ -2066,6 +2001,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_entidade_id_fkey"
+            columns: ["entidade_id"]
+            isOneToOne: false
+            referencedRelation: "entidades"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_organization_id_fkey"
             columns: ["organization_id"]
@@ -2342,14 +2284,7 @@ export type Database = {
             foreignKeyName: "student_guardians_guardian_id_fkey"
             columns: ["guardian_id"]
             isOneToOne: false
-            referencedRelation: "guardians"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "student_guardians_guardian_id_fkey"
-            columns: ["guardian_id"]
-            isOneToOne: false
-            referencedRelation: "v_guardians_safe"
+            referencedRelation: "entidades"
             referencedColumns: ["id"]
           },
           {
@@ -2869,59 +2804,6 @@ export type Database = {
           },
         ]
       }
-      visitors: {
-        Row: {
-          created_at: string
-          document: string | null
-          email: string | null
-          full_name: string
-          id: string
-          notes: string | null
-          organization_id: string
-          phone: string | null
-          purpose: string | null
-          relation: string | null
-          updated_at: string
-          visit_date: string
-        }
-        Insert: {
-          created_at?: string
-          document?: string | null
-          email?: string | null
-          full_name: string
-          id?: string
-          notes?: string | null
-          organization_id: string
-          phone?: string | null
-          purpose?: string | null
-          relation?: string | null
-          updated_at?: string
-          visit_date?: string
-        }
-        Update: {
-          created_at?: string
-          document?: string | null
-          email?: string | null
-          full_name?: string
-          id?: string
-          notes?: string | null
-          organization_id?: string
-          phone?: string | null
-          purpose?: string | null
-          relation?: string | null
-          updated_at?: string
-          visit_date?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "visitors_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       waitlist_applications: {
         Row: {
           birth_date: string | null
@@ -3018,261 +2900,6 @@ export type Database = {
       }
     }
     Views: {
-      v_demandas: {
-        Row: {
-          assunto: string | null
-          created_at: string | null
-          created_by: string | null
-          criado_por_nome: string | null
-          descricao: string | null
-          id: string | null
-          organization_id: string | null
-          origem: string | null
-          requester_id: string | null
-          solicitante_nome: string | null
-          status: string | null
-          tipo: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          assunto?: never
-          created_at?: string | null
-          created_by?: string | null
-          criado_por_nome?: never
-          descricao?: never
-          id?: string | null
-          organization_id?: string | null
-          origem?: string | null
-          requester_id?: string | null
-          solicitante_nome?: never
-          status?: string | null
-          tipo?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          assunto?: never
-          created_at?: string | null
-          created_by?: string | null
-          criado_por_nome?: never
-          descricao?: never
-          id?: string | null
-          organization_id?: string | null
-          origem?: string | null
-          requester_id?: string | null
-          solicitante_nome?: never
-          status?: string | null
-          tipo?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "requests_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "requests_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "v_profiles_safe"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "requests_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      v_guardians_safe: {
-        Row: {
-          created_at: string | null
-          email: string | null
-          id: string | null
-          name: string | null
-          organization_id: string | null
-          phone: string | null
-          relationship: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          email?: never
-          id?: string | null
-          name?: string | null
-          organization_id?: string | null
-          phone?: never
-          relationship?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          email?: never
-          id?: string | null
-          name?: string | null
-          organization_id?: string | null
-          phone?: never
-          relationship?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "guardians_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      v_interactions: {
-        Row: {
-          channel: string | null
-          created_at: string | null
-          direction: string | null
-          entity_id: string | null
-          entity_name: string | null
-          entity_type: string | null
-          id: string | null
-          organization_id: string | null
-          payload: Json | null
-          performed_by: string | null
-          performed_by_name: string | null
-          summary: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          channel?: string | null
-          created_at?: string | null
-          direction?: string | null
-          entity_id?: string | null
-          entity_name?: never
-          entity_type?: string | null
-          id?: string | null
-          organization_id?: string | null
-          payload?: Json | null
-          performed_by?: string | null
-          performed_by_name?: never
-          summary?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          channel?: string | null
-          created_at?: string | null
-          direction?: string | null
-          entity_id?: string | null
-          entity_name?: never
-          entity_type?: string | null
-          id?: string | null
-          organization_id?: string | null
-          payload?: Json | null
-          performed_by?: string | null
-          performed_by_name?: never
-          summary?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "interactions_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "interactions_performed_by_fkey"
-            columns: ["performed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "interactions_performed_by_fkey"
-            columns: ["performed_by"]
-            isOneToOne: false
-            referencedRelation: "v_profiles_safe"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      v_leads: {
-        Row: {
-          convertido: boolean | null
-          created_at: string | null
-          document: string | null
-          email: string | null
-          full_name: string | null
-          id: string | null
-          notes: string | null
-          organization_id: string | null
-          phone: string | null
-          purpose: string | null
-          relation: string | null
-          status: string | null
-          updated_at: string | null
-          visit_date: string | null
-        }
-        Insert: {
-          convertido?: never
-          created_at?: string | null
-          document?: string | null
-          email?: string | null
-          full_name?: string | null
-          id?: string | null
-          notes?: string | null
-          organization_id?: string | null
-          phone?: string | null
-          purpose?: string | null
-          relation?: string | null
-          status?: never
-          updated_at?: string | null
-          visit_date?: string | null
-        }
-        Update: {
-          convertido?: never
-          created_at?: string | null
-          document?: string | null
-          email?: string | null
-          full_name?: string | null
-          id?: string | null
-          notes?: string | null
-          organization_id?: string | null
-          phone?: string | null
-          purpose?: string | null
-          relation?: string | null
-          status?: never
-          updated_at?: string | null
-          visit_date?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "visitors_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      v_pendencias_doc: {
-        Row: {
-          created_at: string | null
-          documentos_count: number | null
-          entity_id: string | null
-          entity_name: string | null
-          entity_type: string | null
-          id: string | null
-          organization_id: string | null
-          pendencia_tipo: string | null
-          status: string | null
-          updated_at: string | null
-        }
-        Relationships: []
-      }
       v_profiles_safe: {
         Row: {
           created_at: string | null

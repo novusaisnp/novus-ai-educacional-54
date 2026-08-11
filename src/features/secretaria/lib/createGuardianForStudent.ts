@@ -27,20 +27,33 @@ export async function createGuardianForStudent({
 }: CreateGuardianForStudentInput) {
   const normalizedCpf = documentId?.replace(/\D/g, '') || null;
 
-  const { data: guardian, error: guardianError } = await supabase
-    .from('guardians')
+  const { data: entidade, error: entidadeError } = await supabase
+    .from('entidades')
     .insert({
-      name,
+      tipo_pessoa: 'PF',
+      nome: name,
       email: email || null,
-      phone: phone || null,
-      relationship: relationship || null,
+      telefone: phone || null,
       cpf: normalizedCpf,
       organization_id: orgId,
     })
     .select()
     .single();
 
-  if (guardianError) throw guardianError;
+  if (entidadeError) throw entidadeError;
+
+  const { error: papelError } = await supabase
+    .from('entidade_papeis')
+    .insert({
+      entidade_id: entidade.id,
+      organization_id: orgId,
+      papel: 'RESPONSAVEL',
+      dados_papel: relationship ? { relationship } : null,
+    });
+
+  if (papelError) throw papelError;
+
+  const guardian = { id: entidade.id, name, email: email || null, phone: phone || null, cpf: normalizedCpf, relationship: relationship || null };
 
   const { error: linkError } = await supabase
     .from('student_guardians')

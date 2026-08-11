@@ -19,7 +19,21 @@ export type EnrollmentUpdate = Database['public']['Tables']['enrollments']['Upda
 
 export type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 
-export type GuardianRow = Database['public']['Tables']['guardians']['Row'];
+export type EntidadeRow = Database['public']['Tables']['entidades']['Row'];
+export type EntidadePapelRow = Database['public']['Tables']['entidade_papeis']['Row'];
+
+// Shape de app pro papel Responsável -- entidades usa nome/telefone, relationship
+// vem de entidade_papeis.dados_papel (Fase 6 do Cadastro Unificado de Entidades).
+// Mantido com esses nomes de campo pra não precisar mexer nos componentes que já
+// consomem GuardianRow.
+export interface GuardianRow {
+  id: string;
+  name: string;
+  cpf: string | null;
+  email: string | null;
+  phone: string | null;
+  relationship: string | null;
+}
 export type DocumentRow = Database['public']['Tables']['documents']['Row'];
 export type WaitlistApplicationRow = Database['public']['Tables']['waitlist_applications']['Row'];
 export type RequestRow = Database['public']['Tables']['requests']['Row'];

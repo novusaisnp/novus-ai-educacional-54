@@ -27,15 +27,22 @@ export default function SecretariaResponsaveis() {
     queryKey: ['guardians', orgData?.organization_id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('guardians')
+        .from('entidades')
         .select(`
-          *,
+          id, name:nome, cpf, email, phone:telefone,
+          entidade_papeis!inner(dados_papel),
           student_guardians(id)
         `)
-        .order('name');
-      
+        .eq('entidade_papeis.papel', 'RESPONSAVEL')
+        .order('nome');
+
       if (error) throw error;
-      return data;
+      return (data || []).map((e) => {
+        const papel = Array.isArray(e.entidade_papeis) ? e.entidade_papeis[0] : e.entidade_papeis;
+        const dadosPapel = (papel?.dados_papel ?? null) as { relationship?: string } | null;
+        const { entidade_papeis, ...rest } = e;
+        return { ...rest, relationship: dadosPapel?.relationship ?? null };
+      });
     },
     enabled: !!orgData?.organization_id,
   });
@@ -43,10 +50,10 @@ export default function SecretariaResponsaveis() {
   const deleteGuardian = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('guardians')
+        .from('entidades')
         .delete()
         .eq('id', id);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {

@@ -126,13 +126,13 @@ export function SubmodalResponsaveis({
   const createGuardianMutation = useMutation({
     mutationFn: async (data: GuardianFormData) => {
       const cpf = data.cpf.replace(/\D/g, '');
-      const { data: guardian, error } = await supabase
-        .from('guardians')
+      const { data: entidade, error } = await supabase
+        .from('entidades')
         .insert({
-          name: data.name,
+          tipo_pessoa: 'PF',
+          nome: data.name,
           email: data.email || null,
-          phone: data.phone || null,
-          relationship: data.relationship || null,
+          telefone: data.phone || null,
           cpf,
           organization_id: context.orgId,
         })
@@ -140,6 +140,19 @@ export function SubmodalResponsaveis({
         .single();
 
       if (error) throw error;
+
+      const { error: papelError } = await supabase
+        .from('entidade_papeis')
+        .insert({
+          entidade_id: entidade.id,
+          organization_id: context.orgId,
+          papel: 'RESPONSAVEL',
+          dados_papel: data.relationship ? { relationship: data.relationship } : null,
+        });
+
+      if (papelError) throw papelError;
+
+      const guardian = { id: entidade.id, name: data.name, email: data.email || null, phone: data.phone || null, cpf, relationship: data.relationship || null };
 
       // Criar vínculos com estudantes se especificados
       if (data.linkedStudents && data.linkedStudents.length > 0) {
@@ -207,18 +220,25 @@ export function SubmodalResponsaveis({
 
       const cpf = data.cpf.replace(/\D/g, '');
       const { error } = await supabase
-        .from('guardians')
+        .from('entidades')
         .update({
-          name: data.name,
+          nome: data.name,
           email: data.email || null,
-          phone: data.phone || null,
-          relationship: data.relationship || null,
+          telefone: data.phone || null,
           cpf,
         })
         .eq('id', editingGuardian.id)
         .eq('organization_id', context.orgId);
 
       if (error) throw error;
+
+      const { error: papelError } = await supabase
+        .from('entidade_papeis')
+        .update({ dados_papel: data.relationship ? { relationship: data.relationship } : null })
+        .eq('entidade_id', editingGuardian.id)
+        .eq('papel', 'RESPONSAVEL');
+
+      if (papelError) throw papelError;
 
       // Capturar quais vínculos eram principais antes de recriar (o delete+insert
       // abaixo não pode rebaixar silenciosamente um vínculo já marcado como principal)

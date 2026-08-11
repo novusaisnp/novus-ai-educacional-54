@@ -24,9 +24,9 @@ export const useOrganization = () => {
         return profileData;
       }
 
-      // Guardian do portal não tem linha em profiles (é staff-only) — cai pra guardians.
+      // Guardian do portal não tem linha em profiles (é staff-only) — cai pra entidades.
       const { data: guardianData, error: guardianError } = await supabase
-        .from('guardians')
+        .from('entidades')
         .select('organization_id, organizations(*)')
         .eq('user_id', user.id)
         .maybeSingle();

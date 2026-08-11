@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import type { Database } from '@/integrations/supabase/types';
+import type { GuardianRow } from '@/integrations/supabase/db-types';
 
-type Guardian = Database['public']['Tables']['guardians']['Row'];
+type Guardian = GuardianRow;
 
 interface UsePortalAuthReturn {
   session: Session | null;
@@ -43,9 +43,11 @@ export function usePortalAuth(): UsePortalAuthReturn {
       if (!session?.user?.id) return null;
 
       const { data, error } = await supabase
-        .from('guardians')
-        .select('*')
+        .from('entidades')
+        .select('id, name:nome, cpf, email, phone:telefone, entidade_papeis!inner(dados_papel)')
         .eq('user_id', session.user.id)
+        .eq('entidade_papeis.papel', 'RESPONSAVEL')
+        .eq('entidade_papeis.ativo', true)
         .single();
 
       if (error) {
@@ -53,7 +55,10 @@ export function usePortalAuth(): UsePortalAuthReturn {
         return null;
       }
 
-      return data;
+      const papel = Array.isArray(data.entidade_papeis) ? data.entidade_papeis[0] : data.entidade_papeis;
+      const dadosPapel = (papel?.dados_papel ?? null) as { relationship?: string } | null;
+      const { entidade_papeis, ...rest } = data;
+      return { ...rest, relationship: dadosPapel?.relationship ?? null } as Guardian;
     },
     enabled: !!session?.user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes

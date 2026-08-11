@@ -42,11 +42,13 @@ export default function PortalLogin() {
         return;
       }
 
-      // Verify user is a guardian
+      // Verify user is a guardian (papel RESPONSAVEL ativo em entidades)
       const { data: guardian } = await supabase
-        .from('guardians')
-        .select('id, name')
+        .from('entidades')
+        .select('id, name:nome, entidade_papeis!inner(papel)')
         .eq('user_id', data.user.id)
+        .eq('entidade_papeis.papel', 'RESPONSAVEL')
+        .eq('entidade_papeis.ativo', true)
         .single();
 
       if (!guardian) {

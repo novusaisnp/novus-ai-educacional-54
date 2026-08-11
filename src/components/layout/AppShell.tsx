@@ -18,6 +18,7 @@ import {
   BarChart3,
   Settings,
   KeyRound,
+  Megaphone,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -92,6 +93,7 @@ const baseMenuItems = [
   { title: 'Acadêmico', url: '/app/academico', icon: GraduationCap, roles: ['admin', 'coordenacao', 'professor'] },
   { title: 'Pedagógico', url: '/app/pedagogico', icon: NotebookPen, roles: ['admin', 'coordenacao', 'professor'] },
   { title: 'Eventos', url: '/app/eventos', icon: CalendarDays, roles: ['admin', 'coordenacao', 'professor', 'secretario'] },
+  { title: 'Mural', url: '/app/mural', icon: Megaphone, roles: ['admin', 'coordenacao', 'professor', 'secretario'] },
   { title: 'Configurações', url: '/app/config/integracoes', icon: Settings, roles: ['admin'] },
 ];
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -6,16 +7,18 @@ import { usePortalData } from '@/hooks/usePortalData';
 import { useOrganization } from '@/hooks/useOrganization';
 import { logAudit } from '@/lib/audit/logAudit';
 import { getERPConfig } from '@/lib/featureFlags';
+import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  CreditCard, 
-  FileText, 
-  MessageSquare, 
+import {
+  CreditCard,
+  FileText,
+  MessageSquare,
   HelpCircle,
   Calendar,
   CheckCircle,
   AlertCircle,
-  Clock
+  Clock,
+  Megaphone
 } from 'lucide-react';
 
 export default function PortalDashboard() {
@@ -23,6 +26,22 @@ export default function PortalDashboard() {
   const { orgId } = useOrganization();
   const { guardian, interactions, requests, documents, loading } = usePortalData();
   const [hasERP, setHasERP] = useState(false);
+
+  const { data: announcements } = useQuery({
+    queryKey: ['portal-announcements', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('announcements')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!orgId,
+    staleTime: 5 * 60 * 1000,
+  });
 
   useEffect(() => {
     if (!orgId) return;
@@ -83,6 +102,28 @@ export default function PortalDashboard() {
           Acompanhe as informações dos seus filhos
         </p>
       </div>
+
+      {announcements && announcements.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Megaphone className="h-5 w-5" />
+              Avisos da Escola
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {announcements.map((a) => (
+              <div key={a.id} className="border-b last:border-0 pb-3 last:pb-0">
+                <p className="text-sm font-medium">{a.title}</p>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{a.body}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {new Date(a.created_at).toLocaleDateString('pt-BR')}
+                </p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

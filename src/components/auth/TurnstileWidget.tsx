@@ -5,7 +5,7 @@ interface TurnstileWidgetProps {
 }
 
 const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
-const SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+const SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
 
 declare global {
   interface Window {

@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { StudentAvatar } from '@/components/StudentAvatar';
 import { StudentAttachments } from '@/components/StudentAttachments';
 import { StudentPeiSection } from '@/components/StudentPeiSection';
+import { StudentHealthSection } from '@/components/StudentHealthSection';
 import { useDocuments, useStudentAvatars } from '@/hooks/useDocuments';
 import { useOrganization } from '@/hooks/useOrganization';
 import { SubmodalAlunos, LinkedGuardian } from '@/features/secretaria/alunos/SubmodalAlunos';
@@ -399,7 +400,7 @@ export default function Alunos() {
                     </TableCell>
                     <TableCell>{student.document_id || '-'}</TableCell>
                     <TableCell>
-                      {student.birth_date ? new Date(student.birth_date).toLocaleDateString('pt-BR') : '-'}
+                      {student.birth_date ? new Date(student.birth_date + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}
                     </TableCell>
                     <TableCell>
                       {student.enrollments?.[0]?.classes ? (
@@ -482,7 +483,7 @@ export default function Alunos() {
                 <h3 className="text-lg font-semibold">Informações Pessoais</h3>
                 <div className="space-y-2">
                   <p><strong>Nome:</strong> {selectedStudent.first_name} {selectedStudent.last_name}</p>
-                  <p><strong>Data de Nascimento:</strong> {selectedStudent.birth_date ? new Date(selectedStudent.birth_date).toLocaleDateString('pt-BR') : 'Não informada'}</p>
+                  <p><strong>Data de Nascimento:</strong> {selectedStudent.birth_date ? new Date(selectedStudent.birth_date + 'T00:00:00').toLocaleDateString('pt-BR') : 'Não informada'}</p>
                   <p><strong>Documento:</strong> {selectedStudent.document_id || 'Não informado'}</p>
                   <p><strong>Gênero:</strong> {selectedStudent.gender || 'Não informado'}</p>
                   <p><strong>Status:</strong> {selectedStudent.status}</p>
@@ -512,6 +513,10 @@ export default function Alunos() {
 
             <div className="pt-4 border-t">
               <StudentPeiSection studentId={selectedStudent.id} />
+            </div>
+
+            <div className="pt-4 border-t">
+              <StudentHealthSection studentId={selectedStudent.id} />
             </div>
           </DialogContent>
         </Dialog>

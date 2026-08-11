@@ -48,6 +48,7 @@ import JustificativasFaltaPage from '@/pages/app/academico/justificativas-falta'
 
 import PedagogicoPage from '@/pages/app/pedagogico';
 import EventosPage from '@/pages/app/eventos';
+import MuralPage from '@/pages/app/mural';
 
 import SecretariaPage from '@/pages/app/secretaria';
 import SecretariaAlunosPage from '@/pages/app/secretaria/alunos';
@@ -178,6 +179,7 @@ function App() {
                 
                 <Route path="pedagogico" element={<PedagogicoPage />} />
                 <Route path="eventos" element={<EventosPage />} />
+                <Route path="mural" element={<MuralPage />} />
                 
                 <Route path="secretaria" element={<SecretariaPage />} />
                 <Route path="secretaria/alunos" element={<SecretariaAlunosPage />} />

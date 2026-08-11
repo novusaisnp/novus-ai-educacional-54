@@ -1,27 +1,25 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { UserPlus, Search, Plus, Edit, Trash2 } from 'lucide-react';
-import { ModalMestre } from '@/features/secretaria/hub/ModalMestre';
-import type { GuardianRow } from '@/integrations/supabase/db-types';
+import { UserPlus, Search, Edit, Trash2 } from 'lucide-react';
 
-type GuardianWithLinks = GuardianRow & { student_guardians: { id: string }[] };
-
+/**
+ * Lista quem já tem o papel Responsável no Cadastro de Entidades — não cria
+ * entidade daqui. "Editar" leva pra /app/secretaria/entidades.
+ */
 export default function SecretariaResponsaveis() {
-  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { data: orgData } = useOrganization();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(searchParams.get('modal') === 'responsaveis');
-  const [editingItem, setEditingItem] = useState<GuardianWithLinks | undefined>(undefined);
 
   const { data: guardians = [], isLoading } = useQuery({
     queryKey: ['guardians', orgData?.organization_id],
@@ -61,29 +59,13 @@ export default function SecretariaResponsaveis() {
       toast({ title: 'Responsável excluído com sucesso!' });
     },
     onError: (error: Error) => {
-      toast({ 
+      toast({
         variant: 'destructive',
         title: 'Erro ao excluir responsável',
-        description: error.message 
+        description: error.message
       });
     },
   });
-
-  const handleOpenModal = () => {
-    setEditingItem(undefined);
-    setIsModalOpen(true);
-  };
-
-  const handleEdit = (guardian: GuardianWithLinks) => {
-    setEditingItem(guardian);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setEditingItem(undefined);
-    queryClient.invalidateQueries({ queryKey: ['guardians'] });
-  };
 
   const filteredGuardians = guardians.filter(guardian =>
     guardian.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -97,11 +79,8 @@ export default function SecretariaResponsaveis() {
           <UserPlus className="h-6 w-6" />
           <h1 className="text-2xl font-bold">Responsáveis</h1>
         </div>
-        <Button onClick={handleOpenModal}>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Responsável
-        </Button>
       </div>
+      <p className="text-muted-foreground -mt-4">Cadastre novos responsáveis em Cadastros → Entidades</p>
 
       <Card>
         <CardHeader>
@@ -155,7 +134,7 @@ export default function SecretariaResponsaveis() {
                     <TableCell>{guardian.student_guardians?.length || 0}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button size="sm" variant="outline" onClick={() => handleEdit(guardian)}>
+                        <Button size="sm" variant="outline" onClick={() => navigate(`/app/secretaria/entidades?edit=${guardian.id}`)}>
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
@@ -182,13 +161,6 @@ export default function SecretariaResponsaveis() {
           )}
         </CardContent>
       </Card>
-
-      <ModalMestre
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        defaultTab="responsaveis"
-        editingItem={editingItem}
-      />
     </div>
   );
 }

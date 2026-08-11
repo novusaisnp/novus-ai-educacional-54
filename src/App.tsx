@@ -56,6 +56,7 @@ import SecretariaDisciplinasPage from '@/pages/app/secretaria/disciplinas';
 import SecretariaMatriculasPage from '@/pages/app/secretaria/matriculas';
 import SecretariaVisitantesPage from '@/pages/app/secretaria/visitantes';
 import SecretariaResponsaveisPage from '@/pages/app/secretaria/responsaveis';
+import SecretariaEntidadesPage from '@/pages/app/secretaria/entidades';
 import SecretariaDocumentosPage from '@/pages/app/secretaria/documentos';
 import SecretariaPeriodsPage from '@/pages/app/secretaria/periodos';
 import SecretariaPeriodCalendarPage from '@/pages/app/secretaria/periodos/calendario';
@@ -185,6 +186,7 @@ function App() {
                 <Route path="secretaria/matriculas" element={<SecretariaMatriculasPage />} />
                 <Route path="secretaria/visitantes" element={<SecretariaVisitantesPage />} />
                 <Route path="secretaria/responsaveis" element={<SecretariaResponsaveisPage />} />
+                <Route path="secretaria/entidades" element={<SecretariaEntidadesPage />} />
                 <Route path="secretaria/documentos" element={<SecretariaDocumentosPage />} />
                 <Route path="secretaria/periodos" element={<SecretariaPeriodsPage />} />
                 <Route path="secretaria/periodos/:periodId/calendario" element={<SecretariaPeriodCalendarPage />} />

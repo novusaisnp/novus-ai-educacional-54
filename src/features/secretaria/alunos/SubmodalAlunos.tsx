@@ -272,7 +272,7 @@ export function SubmodalAlunos({ context, editingStudent, onEditingChange, onEdi
         status: editingStudent.status as StudentFormData['status'],
         _mode: 'edit',
         // Em edição o responsável não é gerenciado por este form — é exibido em
-        // modo leitura (ver linkedGuardians) e editado via SubmodalResponsaveis,
+        // modo leitura (ver linkedGuardians) e editado via FormEntidade,
         // reaproveitando aquele CRUD (já faz update real + resync com o ERP).
         responsible_full_name: '',
         responsible_relationship: '',

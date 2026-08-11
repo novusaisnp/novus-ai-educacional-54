@@ -1,6 +1,6 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useToast } from '@/hooks/use-toast';
@@ -8,18 +8,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { UserMinus, Search, Plus, Edit, Trash2 } from 'lucide-react';
-import { ModalMestre } from '@/features/secretaria/hub/ModalMestre';
+import { UserMinus, Search, Edit, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+/**
+ * Lista quem já tem o papel Visitante no Cadastro de Entidades — não cria
+ * entidade daqui. "Editar" leva pra /app/secretaria/entidades.
+ */
 export default function SecretariaVisitantes() {
-  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { data: orgData } = useOrganization();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(searchParams.get('modal') === 'visitantes');
 
   const { data: visitors = [], isLoading } = useQuery({
     queryKey: ['visitors', orgData?.organization_id],
@@ -56,22 +58,13 @@ export default function SecretariaVisitantes() {
       toast({ title: 'Visitante excluído com sucesso!' });
     },
     onError: (error: Error) => {
-      toast({ 
+      toast({
         variant: 'destructive',
         title: 'Erro ao excluir visitante',
-        description: error.message 
+        description: error.message
       });
     },
   });
-
-  const handleOpenModal = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    queryClient.invalidateQueries({ queryKey: ['visitors'] });
-  };
 
   const filteredVisitors = visitors.filter(visitor =>
     visitor.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -79,7 +72,7 @@ export default function SecretariaVisitantes() {
   );
 
   const formatDateTime = (date: string) => {
-    return format(new Date(date), 'dd/MM/yyyy HH:mm', { locale: ptBR });
+    return date ? format(new Date(date), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '-';
   };
 
   return (
@@ -89,11 +82,8 @@ export default function SecretariaVisitantes() {
           <UserMinus className="h-6 w-6" />
           <h1 className="text-2xl font-bold">Visitantes</h1>
         </div>
-        <Button onClick={handleOpenModal}>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Visitante
-        </Button>
       </div>
+      <p className="text-muted-foreground -mt-4">Cadastre novos visitantes em Cadastros → Entidades</p>
 
       <Card>
         <CardHeader>
@@ -132,10 +122,6 @@ export default function SecretariaVisitantes() {
               <p className="text-muted-foreground mb-4">
                 {searchTerm ? 'Nenhum visitante corresponde aos critérios de busca.' : 'Ainda não há visitantes cadastrados.'}
               </p>
-              <Button onClick={handleOpenModal}>
-                <Plus className="mr-2 h-4 w-4" />
-                Cadastrar Primeiro Visitante
-              </Button>
             </div>
           ) : (
             <Table>
@@ -159,11 +145,11 @@ export default function SecretariaVisitantes() {
                     <TableCell>{visitor.purpose || '-'}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button size="sm" variant="outline">
+                        <Button size="sm" variant="outline" onClick={() => navigate(`/app/secretaria/entidades?edit=${visitor.id}`)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => deleteVisitor.mutate(visitor.id)}
                         >
@@ -178,12 +164,6 @@ export default function SecretariaVisitantes() {
           )}
         </CardContent>
       </Card>
-
-      <ModalMestre
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        defaultTab="visitantes"
-      />
     </div>
   );
 }

@@ -18,6 +18,7 @@ import { useDocuments, useStudentAvatars } from '@/hooks/useDocuments';
 import { useOrganization } from '@/hooks/useOrganization';
 import { SubmodalAlunos, LinkedGuardian } from '@/features/secretaria/alunos/SubmodalAlunos';
 import { ModalMestre } from '@/features/secretaria/hub/ModalMestre';
+import { FormEntidade } from '@/features/secretaria/entidades/FormEntidade';
 import { useRiscoEvasao, useRiskAnalysis } from '@/hooks/useAI';
 import { RiskBadge } from '@/components/RiskBadge';
 import EmptyState from '@/components/EmptyState';
@@ -522,17 +523,39 @@ export default function Alunos() {
         defaultTab="alunos"
       />
 
-      <ModalMestre
-        isOpen={isGuardianModalOpen}
-        onClose={() => {
+      <Dialog
+        open={isGuardianModalOpen}
+        onOpenChange={(open) => {
+          if (open) return;
           setIsGuardianModalOpen(false);
           setEditingGuardianFromStudent(null);
           queryClient.invalidateQueries({ queryKey: ['students.list'] });
           queryClient.invalidateQueries({ queryKey: ['student-guardians'] });
         }}
-        defaultTab="responsaveis"
-        editingItem={editingGuardianFromStudent}
-      />
+      >
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Responsável</DialogTitle>
+          </DialogHeader>
+          {orgData?.organization_id && (
+            <FormEntidade
+              orgId={orgData.organization_id}
+              entidadeId={editingGuardianFromStudent?.id ?? null}
+              papelInicial="RESPONSAVEL"
+              onSaved={() => {
+                setIsGuardianModalOpen(false);
+                setEditingGuardianFromStudent(null);
+                queryClient.invalidateQueries({ queryKey: ['students.list'] });
+                queryClient.invalidateQueries({ queryKey: ['student-guardians'] });
+              }}
+              onCancel={() => {
+                setIsGuardianModalOpen(false);
+                setEditingGuardianFromStudent(null);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

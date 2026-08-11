@@ -10,7 +10,6 @@ import {
   ClassRow,
   DocumentRow,
   EnrollmentRow,
-  GuardianRow,
   ReEnrollmentRow,
   RequestRow,
   StudentRow,
@@ -27,9 +26,7 @@ interface EditingStates {
   segmentos: string | null;
   series: string | null;
   periodos: string | null;
-  responsaveis: Pick<GuardianRow, 'id' | 'name' | 'cpf' | 'relationship' | 'email' | 'phone'> | null;
   documentos: DocumentRow | null;
-  visitantes: string | null;
   reservas: WaitlistApplicationRow | null;
   solicitacoes: RequestRow | null;
   'ex-alunos': StudentRow | null;
@@ -60,12 +57,6 @@ const SubmodalSeries = React.lazy(() =>
 );
 const SubmodalPeriodos = React.lazy(() => 
   import('../periodos/SubmodalPeriodos').then(module => ({ default: module.SubmodalPeriodos }))
-);
-const SubmodalVisitantes = React.lazy(() => 
-  import('../visitantes/SubmodalVisitantes').then(module => ({ default: module.SubmodalVisitantes }))
-);
-const SubmodalResponsaveis = React.lazy(() => 
-  import('../responsaveis/SubmodalResponsaveis').then(module => ({ default: module.SubmodalResponsaveis }))
 );
 const SubmodalDocumentos = React.lazy(() => 
   import('../documentos/SubmodalDocumentos').then(module => ({ default: module.SubmodalDocumentos }))
@@ -102,9 +93,7 @@ export function ModalMestre({ isOpen, onClose, defaultTab, editingItem }: ModalM
     segmentos: null,
     series: null,
     periodos: null,
-    responsaveis: null,
     documentos: null,
-    visitantes: null,
     reservas: null,
     solicitacoes: null,
     'ex-alunos': null,
@@ -166,9 +155,7 @@ export function ModalMestre({ isOpen, onClose, defaultTab, editingItem }: ModalM
       segmentos: null,
       series: null,
       periodos: null,
-      responsaveis: null,
       documentos: null,
-        visitantes: null,
         reservas: null,
         solicitacoes: null,
         'ex-alunos': null,
@@ -196,9 +183,7 @@ export function ModalMestre({ isOpen, onClose, defaultTab, editingItem }: ModalM
     { id: 'segmentos' as const, label: 'Segmentos', component: SubmodalSegmentos },
     { id: 'series' as const, label: 'Séries', component: SubmodalSeries },
     { id: 'periodos' as const, label: 'Períodos', component: SubmodalPeriodos },
-    { id: 'responsaveis' as const, label: 'Responsáveis', component: SubmodalResponsaveis },
     { id: 'documentos' as const, label: 'Documentos', component: SubmodalDocumentos },
-    { id: 'visitantes' as const, label: 'Visitantes', component: SubmodalVisitantes },
     { id: 'reservas' as const, label: 'Reservas', component: SubmodalReservas },
     { id: 'solicitacoes' as const, label: 'Solicitações', component: SubmodalSolicitacoes },
     { id: 'ex-alunos' as const, label: 'Ex-Alunos', component: SubmodalExAlunos },
@@ -315,26 +300,6 @@ export function ModalMestre({ isOpen, onClose, defaultTab, editingItem }: ModalM
                       onClose={context.onClose}
                       editingId={editingStates.periodos}
                       asDialog={false}
-                    />
-                  )}
-                  {tab.id === 'visitantes' && (
-                    <SubmodalVisitantes
-                      isOpen={true}
-                      onClose={context.onClose}
-                      editingId={editingStates.visitantes}
-                      asDialog={false}
-                    />
-                  )}
-                  {tab.id === 'responsaveis' && (
-                    <SubmodalResponsaveis
-                      context={context}
-                      editingGuardian={editingStates.responsaveis}
-                      onEditingChange={(item) => {
-                        setEditingStates(prev => ({
-                          ...prev,
-                          responsaveis: item,
-                        }));
-                      }}
                     />
                   )}
                   {tab.id === 'documentos' && (

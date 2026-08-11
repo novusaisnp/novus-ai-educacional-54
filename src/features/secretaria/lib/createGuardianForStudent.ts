@@ -13,7 +13,7 @@ interface CreateGuardianForStudentInput {
 
 /**
  * Cria um responsável, vincula ao aluno em student_guardians e sincroniza com o ERP
- * como cliente (Porta 1). Mesma sequência já usada em SubmodalResponsaveis.tsx —
+ * como cliente (Porta 1). Mesma sequência já usada em FormEntidade.tsx —
  * extraída aqui para reuso no cadastro direto de aluno e na conversão de reserva.
  */
 export async function createGuardianForStudent({

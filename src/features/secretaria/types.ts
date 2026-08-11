@@ -4,7 +4,7 @@ export interface SecretariaModalContext {
   onClose: () => void;
 }
 
-export type ModalType = 'alunos' | 'turmas' | 'disciplinas' | 'matriculas' | 'unidades' | 'segmentos' | 'series' | 'periodos' | 'responsaveis' | 'documentos' | 'visitantes' | 'reservas' | 'solicitacoes' | 'ex-alunos' | 'rematricula';
+export type ModalType = 'alunos' | 'turmas' | 'disciplinas' | 'matriculas' | 'unidades' | 'segmentos' | 'series' | 'periodos' | 'documentos' | 'reservas' | 'solicitacoes' | 'ex-alunos' | 'rematricula';
 
 export interface SecretariaModalState {
   isOpen: boolean;

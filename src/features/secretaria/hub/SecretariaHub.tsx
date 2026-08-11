@@ -60,6 +60,11 @@ export function SecretariaHub({ onOpenModal }: SecretariaHubProps) {
 
   // Função para determinar a rota do cadastro rápido
   const getQuickAddRoute = (moduleId: string): string => {
+    // Responsáveis/Visitantes não têm form próprio — criação é sempre no
+    // Cadastro de Entidades central (Fase 8 do Cadastro Unificado).
+    if (moduleId === 'responsaveis') return '/app/secretaria/entidades?papel=RESPONSAVEL';
+    if (moduleId === 'visitantes') return '/app/secretaria/entidades?papel=VISITANTE';
+
     // Para os 4 módulos canônicos, usar hub da Secretaria com params
     const canonicalModules = ['alunos', 'turmas', 'disciplinas', 'matriculas'];
 

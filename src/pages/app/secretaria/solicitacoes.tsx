@@ -10,10 +10,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { HelpCircle, Search, Plus, Edit, Trash2, Eye, Paperclip, Download } from 'lucide-react';
+import { HelpCircle, Search, Plus, Edit, Trash2, Paperclip, Download } from 'lucide-react';
 import { ModalMestre } from '@/features/secretaria/hub/ModalMestre';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { SubmodalSolicitacoes } from '@/features/secretaria/solicitacoes/SubmodalSolicitacoes';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import type { RequestRow } from '@/integrations/supabase/db-types';
 
 const REQUEST_TYPES = [
   { value: 'declaracao', label: 'Declaração' },
@@ -39,6 +42,7 @@ export default function SecretariaSolicitacoes() {
   const [selectedType, setSelectedType] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(searchParams.get('modal') === 'solicitacoes');
+  const [editingRequest, setEditingRequest] = useState<RequestRow | null>(null);
 
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ['requests', orgData?.organization_id],
@@ -83,6 +87,34 @@ export default function SecretariaSolicitacoes() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     queryClient.invalidateQueries({ queryKey: ['requests'] });
+  };
+
+  const handleCloseEdit = () => {
+    setEditingRequest(null);
+    queryClient.invalidateQueries({ queryKey: ['requests'] });
+  };
+
+  const editModalContext = {
+    orgId: orgData?.organization_id || '',
+    onSaved: handleCloseEdit,
+    onClose: handleCloseEdit,
+  };
+
+  const handleDownload = async (path: string) => {
+    const { data, error } = await supabase.storage
+      .from('edu-docs')
+      .createSignedUrl(path, 3600);
+
+    if (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao acessar documento',
+        description: error.message,
+      });
+      return;
+    }
+
+    window.open(data.signedUrl, '_blank');
   };
 
   const filteredRequests = requests.filter(request => {
@@ -216,21 +248,22 @@ export default function SecretariaSolicitacoes() {
                       <TableCell>
                         <div className="flex space-x-2">
                           {(request.payload as { document_path?: string } | null)?.document_path && (
-                            <Button size="sm" variant="outline">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDownload((request.payload as { document_path: string }).document_path)}
+                            >
                               <Download className="h-4 w-4" />
                             </Button>
                           )}
-                          <Button size="sm" variant="outline">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button size="sm" variant="outline">
+                          <Button size="sm" variant="outline" onClick={() => setEditingRequest(request)}>
                             <Paperclip className="h-4 w-4" />
                           </Button>
-                          <Button size="sm" variant="outline">
+                          <Button size="sm" variant="outline" onClick={() => setEditingRequest(request)}>
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant="outline"
                             onClick={() => deleteRequest.mutate(request.id)}
                           >
@@ -252,6 +285,21 @@ export default function SecretariaSolicitacoes() {
         onClose={handleCloseModal}
         defaultTab="solicitacoes"
       />
+
+      <Dialog open={!!editingRequest} onOpenChange={(open) => !open && setEditingRequest(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Solicitação</DialogTitle>
+          </DialogHeader>
+          {editingRequest && (
+            <SubmodalSolicitacoes
+              context={editModalContext}
+              editingSolicitacao={editingRequest}
+              onEditingChange={(r) => setEditingRequest(r as RequestRow | null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

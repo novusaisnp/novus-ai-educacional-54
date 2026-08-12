@@ -256,7 +256,6 @@ export function SubmodalAlunos({ context, editingStudent, onEditingChange, onEdi
   });
 
   const onSubmit = (data: StudentFormData) => {
-    console.log('Dados do formulário (incluindo responsável):', data);
     studentMutation.mutate(data);
   };
 

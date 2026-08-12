@@ -252,6 +252,49 @@ export function SubmodalSolicitacoes({
     }
   };
 
+  const uploadAttachmentMutation = useMutation({
+    mutationFn: async (file: File) => {
+      if (!editingSolicitacao?.id) throw new Error('ID da solicitação não encontrado');
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${context.orgId}/service_request/${editingSolicitacao.id}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('edu-docs')
+        .upload(fileName, file);
+      if (uploadError) throw uploadError;
+
+      const { error: docError } = await supabase
+        .from('documents')
+        .insert({
+          title: `Anexo - ${file.name}`,
+          file_path: fileName,
+          owner_type: 'service_request',
+          owner_id: editingSolicitacao.id,
+          organization_id: context.orgId,
+        });
+      if (docError) throw docError;
+    },
+    onSuccess: () => {
+      toast({ title: 'Anexo adicionado com sucesso!' });
+      queryClient.invalidateQueries({ queryKey: ['request-attachments', editingSolicitacao?.id] });
+    },
+    onError: (error) => {
+      console.error('Erro ao anexar documento:', error);
+      toast({
+        title: 'Erro ao anexar documento',
+        description: 'Tente novamente em alguns instantes.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleAttachmentSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) uploadAttachmentMutation.mutate(file);
+    event.target.value = '';
+  };
+
   const deleteDocument = async (docId: string, filePath: string) => {
     if (!confirm('Tem certeza que deseja excluir este documento?')) return;
 
@@ -493,14 +536,24 @@ export function SubmodalSolicitacoes({
             </>
           )}
 
-          {editingSolicitacao && attachments.length > 0 && (
+          {editingSolicitacao && (
             <>
               <Separator />
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Anexos Existentes</CardTitle>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Upload className="h-4 w-4" />
+                    Anexos
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
+                  <Input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    onChange={handleAttachmentSelect}
+                    disabled={uploadAttachmentMutation.isPending}
+                    className="cursor-pointer"
+                  />
                   <div className="space-y-2">
                     {attachments.map((doc) => (
                       <div key={doc.id} className="flex items-center justify-between p-2 border rounded">

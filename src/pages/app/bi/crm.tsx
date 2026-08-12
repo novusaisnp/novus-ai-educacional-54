@@ -58,13 +58,13 @@ export default function BICRM() {
     { key: 'phone', label: 'Telefone' },
     { key: 'email', label: 'Email' },
     { key: 'purpose', label: 'Propósito' },
-    { key: 'visit_date', label: 'Data Visita', format: (date: string) => new Date(date).toLocaleDateString('pt-BR') },
+    { key: 'visit_date', label: 'Data Visita', format: (date: string) => new Date(`${date}T00:00:00`).toLocaleDateString('pt-BR') },
   ];
 
   // Dados para gráficos baseados nos dados reais
   const leadsByMonth = crmData?.leadsByMonth.reduce((acc: Array<{ month: string; leads: number }>, curr) => {
-    const month = new Date(curr.visit_date).getMonth();
-    const monthName = new Date(curr.visit_date).toLocaleDateString('pt-BR', { month: 'short' });
+    const month = new Date(`${curr.visit_date}T00:00:00`).getMonth();
+    const monthName = new Date(`${curr.visit_date}T00:00:00`).toLocaleDateString('pt-BR', { month: 'short' });
     
     const existing = acc.find(item => item.month === monthName);
     if (existing) {

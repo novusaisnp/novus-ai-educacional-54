@@ -143,7 +143,7 @@ export default function Avaliacoes() {
     setEditingAssessment(assessment);
     form.reset({
       title: assessment.title,
-      date: new Date(assessment.date),
+      date: new Date(`${assessment.date}T00:00:00`),
       weight: assessment.weight,
       class_id: assessment.class_id,
       subject_id: assessment.subject_id,
@@ -614,7 +614,7 @@ export default function Avaliacoes() {
                   <TableRow key={assessment.id}>
                     <TableCell className="font-medium">{assessment.title}</TableCell>
                     <TableCell>
-                      {format(new Date(assessment.date), 'dd/MM/yyyy')}
+                      {format(new Date(`${assessment.date}T00:00:00`), 'dd/MM/yyyy')}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{assessment.weight}</Badge>

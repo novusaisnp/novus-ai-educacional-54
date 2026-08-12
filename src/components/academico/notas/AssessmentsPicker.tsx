@@ -38,7 +38,7 @@ export const AssessmentsPicker = memo(({
                 htmlFor={assessment.id}
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
               >
-                {assessment.title} - {format(new Date(assessment.date), 'dd/MM/yyyy')} 
+                {assessment.title} - {format(new Date(`${assessment.date}T00:00:00`), 'dd/MM/yyyy')}
                 <Badge variant="outline" className="ml-2">
                   Peso {assessment.weight}
                 </Badge>

@@ -202,7 +202,7 @@ export default function ChamadaRelatorio() {
       headers.join(','),
       ...attendanceData.map(record => [
         `"${record.student_name}"`,
-        format(new Date(record.date), 'dd/MM/yyyy'),
+        format(new Date(`${record.date}T00:00:00`), 'dd/MM/yyyy'),
         getStatusLabel(record.status),
         `"${record.note || ''}"`,
         format(new Date(record.updated_at), 'dd/MM/yyyy HH:mm'),
@@ -486,7 +486,7 @@ export default function ChamadaRelatorio() {
                         {record.student_name}
                       </TableCell>
                       <TableCell>
-                        {format(new Date(record.date), 'dd/MM/yyyy')}
+                        {format(new Date(`${record.date}T00:00:00`), 'dd/MM/yyyy')}
                       </TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(record.status)}>

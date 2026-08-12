@@ -83,7 +83,7 @@ export const GradesFilters = memo(({
                 <SelectItem value="all">Todas as avaliações</SelectItem>
                 {assessments.map((assessment) => (
                   <SelectItem key={assessment.id} value={assessment.id}>
-                    {assessment.title} - {new Date(assessment.date).toLocaleDateString('pt-BR')}
+                    {assessment.title} - {new Date(`${assessment.date}T00:00:00`).toLocaleDateString('pt-BR')}
                   </SelectItem>
                 ))}
               </SelectContent>

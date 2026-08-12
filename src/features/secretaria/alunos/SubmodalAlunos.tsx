@@ -38,7 +38,7 @@ const studentSchema = z.object({
   if (data._mode === 'edit') return true;
   // Se tem data de nascimento e é menor de 18 anos, responsável é obrigatório
   if (data.birth_date) {
-    const birthDate = new Date(data.birth_date);
+    const birthDate = new Date(`${data.birth_date}T00:00:00`);
     const today = new Date();
     const age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();

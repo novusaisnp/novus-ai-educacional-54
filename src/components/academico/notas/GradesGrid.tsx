@@ -57,7 +57,7 @@ export const GradesGrid = memo(({
                 <div className="space-y-1">
                   <div className="font-medium">{assessment.title}</div>
                   <div className="text-xs text-muted-foreground">
-                    {format(new Date(assessment.date), 'dd/MM')}
+                    {format(new Date(`${assessment.date}T00:00:00`), 'dd/MM')}
                   </div>
                   <Badge variant="outline" className="text-xs">
                     Peso {assessment.weight}

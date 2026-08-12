@@ -56,7 +56,7 @@ export function SubmodalReservas({
     resolver: zodResolver(reservaSchema),
     defaultValues: {
       student_full_name: editingReserva?.student_full_name || '',
-      birth_date: editingReserva?.birth_date ? new Date(editingReserva.birth_date) : undefined,
+      birth_date: editingReserva?.birth_date ? new Date(`${editingReserva.birth_date}T00:00:00`) : undefined,
       guardian_name: editingReserva?.guardian_name || '',
       guardian_phone: editingReserva?.guardian_phone || '',
       desired_segment_id: editingReserva?.desired_segment_id || '',
@@ -71,7 +71,7 @@ export function SubmodalReservas({
   React.useEffect(() => {
     form.reset({
       student_full_name: editingReserva?.student_full_name || '',
-      birth_date: editingReserva?.birth_date ? new Date(editingReserva.birth_date) : undefined,
+      birth_date: editingReserva?.birth_date ? new Date(`${editingReserva.birth_date}T00:00:00`) : undefined,
       guardian_name: editingReserva?.guardian_name || '',
       guardian_phone: editingReserva?.guardian_phone || '',
       desired_segment_id: editingReserva?.desired_segment_id || '',

@@ -246,7 +246,7 @@ export default function PortalAcademico() {
                   <div>
                     <p className="font-medium">{row.assessment?.title || 'Avaliação'}</p>
                     <p className="text-xs text-muted-foreground">
-                      {row.assessment?.subject?.name} · {row.assessment?.date ? new Date(row.assessment.date).toLocaleDateString('pt-BR') : ''}
+                      {row.assessment?.subject?.name} · {row.assessment?.date ? new Date(`${row.assessment.date}T00:00:00`).toLocaleDateString('pt-BR') : ''}
                       {row.comments ? ` · ${row.comments}` : ''}
                     </p>
                   </div>
@@ -282,7 +282,7 @@ export default function PortalAcademico() {
                     <div>
                       <p className="font-medium">{row.subject?.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(row.date).toLocaleDateString('pt-BR')}
+                        {new Date(`${row.date}T00:00:00`).toLocaleDateString('pt-BR')}
                         {row.note ? ` · ${row.note}` : ''}
                       </p>
                       {justification?.status === 'pendente' && (

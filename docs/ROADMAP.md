@@ -4,7 +4,7 @@
 uma escola cliente". Para o histórico do que foi feito em cada sessão, veja [`STATUS.md`](./STATUS.md);
 para regras e arquitetura estáveis, [`../CLAUDE.md`](../CLAUDE.md).
 
-**Nota global: 76/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12, F1 aplicada.
+**Nota global: 77/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12, F1+F2 aplicadas.
 
 ## Rubrica
 
@@ -34,9 +34,9 @@ no app. O padrão "RLS sem policy" que assombrou este schema está, hoje, resolv
 | Auth/Onboarding (`auth/*`, `OrgGate`) | 8 | **90** | UX (catch-all cai no login, `NotFound` morto) | F8 |
 | [Config/Integrações](#configintegrações-9010) | 4 | **90** | UX (loading no submit da tela) | — |
 | [Portal da Família](#portal-da-família-6910) | 12 | **69** | Verificado, Dado real, UX | F1, F7 |
-| [BI](#bi-6810) | 8 | **68** | Funcional, Dado real | F9 |
+| [BI](#bi-7010) | 8 | **70** | Funcional | F9 |
 | [Integração ERP](#integração-erp-6610) | 10 | **66** | Verificado, Funcional | F10 (bloqueada fora do repo) |
-| [CRM](#crm-4710) | 8 | **47** | Funcional, Dado real, Verificado | F2, F9 |
+| [CRM](#crm-5610) | 8 | **56** | Funcional, Verificado | F9 |
 | Pedagógico (`app/pedagogico.tsx`) | 1 | **0** | tudo — 4 cards "Em desenvolvimento", zero query | F11 |
 | Eventos (`app/eventos.tsx`) | 1 | **0** | tudo — idem | F11 |
 
@@ -79,29 +79,37 @@ vinculado**, ou seja, ninguém nunca logou no portal de verdade. Todo o módulo 
 | Documentos / Interações / Demandas | 70 | idem |
 | Configuração do portal (`usePortalConfig.ts:23-32`) | 20 | `save()` só muda estado local — **não persiste no banco** |
 
-### BI — 68/100
+### BI — 70/100
 
 | Submódulo | Nota | O que falta |
 |---|---|---|
 | BI Acadêmico (`bi/academico.tsx`) | 90 | bug de data UTC-3 |
-| BI CRM (`bi/crm.tsx`) | 85 | herda os mocks de `useCRM` |
+| BI CRM (`bi/crm.tsx`) | 88 | dado agora real (herdava mocks de `useCRM`, corrigido na F2) |
 | BI Financeiro (`bi/financeiro.tsx`) | 10 | tela inteira é EmptyState "ERP não configurado" |
 | Hub BI (`bi.tsx`) | 90 | hub de navegação, por design |
 
-### CRM — 47/100
+### CRM — 56/100
 
-O módulo com maior distância entre o que a tela anuncia e o que faz. Decisão registrada em `STATUS.md`:
-o CRM será repensado como produto mais amplo (WhatsApp API, agentes de IA) — por isso **não vale corrigir
-ponto a ponto**, e sim decidir o redesenho antes.
+Decisão registrada em `STATUS.md`: o CRM será repensado como produto mais amplo (WhatsApp API, agentes
+de IA) — por isso os botões mortos ficam para o redesenho (F9), não corrigidos ponto a ponto.
+
+**F2 feita (2026-08-12)**: mocks exibidos como dado real, eliminados. `useInadimplencia` (`useCRM.ts`)
+agora consulta `financial_transactions` de verdade (mesma tabela do Portal Financeiro, populada pelo
+webhook ERP) em vez de retornar zeros com `is_mock_data`; `erpDisabledOrMock` em `demandas.tsx` lê a
+config real do ERP; `tempoMedioResolucao` é calculado das demandas concluídas. `usePendenciasDoc` não
+tinha (e continua sem) tabela/view de checklist documental — construir isso é feature nova, fora desta
+fatia — mas a UI trocou "Nenhuma pendência encontrada" (mentira: nunca foi calculado) por um EmptyState
+"em desenvolvimento" honesto. `assistente.tsx` perdeu os 3 KPIs fixos (23 conversas/2min/156 usuários) —
+sem histórico de conversa persistido, não existe número real para mostrar.
 
 | Submódulo | Nota | O que falta |
 |---|---|---|
 | Leads (`crm/leads.tsx`, `leads/[id].tsx`) | 60 | 4 botões mortos (Ligar/WhatsApp/Email/WhatsApp na linha) |
 | Interações (`crm/interacoes.tsx`) | 40 | CTA principal "Nova Interação" sem `onClick` (`:79`) |
-| Demandas (`crm/demandas.tsx`) | 45 | `erpDisabledOrMock = true` fixo (`:65`), KPI 3.2 hardcoded (`:90`), botão "Ver Documentos" morto (`:700`) |
-| Assistente IA (`crm/assistente.tsx`) | 30 | KPIs fixos (23 conversas / 2min / 156 usuários) exibidos como reais |
+| Demandas (`crm/demandas.tsx`) | 75 | botão "Ver Documentos" morto (`:700`, dentro de aba ainda não implementada) |
+| Assistente IA (`crm/assistente.tsx`) | 70 | sem histórico de conversa persistido (feature nova, não corrigido aqui) |
 | Campanhas (`crm/campanhas.tsx`) | 5 | "Campanhas em Breve", roadmap estático com "Q2 2024" |
-| Hooks (`useCRM.ts:274-315`) | 30 | `usePendenciasDoc` retorna `[]`; `useInadimplencia` retorna zeros com `is_mock_data` |
+| Hooks (`useCRM.ts`) | 70 | `usePendenciasDoc` honestamente não-implementado; `useInadimplencia` real |
 
 ### Integração ERP — 66/100
 
@@ -125,7 +133,7 @@ como real** e **botão morto em CTA principal** bloqueiam; tela que se declara "
 | # | Fatia | Arquivos | Ganho |
 |---|---|---|---|
 | ~~**F1**~~ | ~~Persistir as configs do app~~ — feito em 2026-08-12, `organizations.settings` jsonb + `useOrgSettings.ts` | `usePortalConfig.ts`, `useNotificationsConfig.ts`, `usePWAConfig.ts`, migration `20260812000000` | Config 70→90 |
-| **F2** | Matar os mocks do CRM: ou implementar a query real, ou remover o card/KPI da tela (não exibir número inventado) | `useCRM.ts:274-315`, `crm/demandas.tsx:65,90`, `crm/assistente.tsx:16-20` | CRM 47→65 |
+| ~~**F2**~~ | ~~Matar os mocks do CRM~~ — feito em 2026-08-12 | `useCRM.ts`, `crm/demandas.tsx`, `crm/assistente.tsx`, `crm.tsx` | CRM 47→56 |
 | **F3** | Varredura do bug de data UTC-3 (`new Date(iso)` sem `T00:00:00`) nos ~9 arquivos restantes | `avaliacoes.tsx`, `chamada/relatorio.tsx`, `bi/academico.tsx`, `portal/academico.tsx`, `GradesFilters.tsx` … | Acadêmico 87→94, BI +3 |
 | **F4** | Ligar os 4 botões mortos de Solicitações + trocar o `console.log` do submit de Alunos por gravação real | `secretaria/solicitacoes.tsx:219-229`, `SubmodalAlunos.tsx:259` | Secretaria 82→88 |
 | **F5** | Fechar o hub Acadêmico: implementar ou remover os cards "Competências" e "Relatórios" | `academico.tsx:138,153` | Acadêmico +3 |

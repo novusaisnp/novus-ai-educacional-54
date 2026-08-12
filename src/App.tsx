@@ -216,7 +216,7 @@ function App() {
               </Route>
             </Route>
 
-            <Route path="*" element={<Login />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
         </PWAProvider>

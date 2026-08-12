@@ -4,7 +4,7 @@
 uma escola cliente". Para o histórico do que foi feito em cada sessão, veja [`STATUS.md`](./STATUS.md);
 para regras e arquitetura estáveis, [`../CLAUDE.md`](../CLAUDE.md).
 
-**Nota global: 88/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12, F1–F10 aplicadas/checadas (F8 e F9 parciais).
+**Nota global: 89/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12, F1–F10 aplicadas/checadas (F8 e F9 parciais).
 
 ## Rubrica
 
@@ -36,7 +36,7 @@ no app. O padrão "RLS sem policy" que assombrou este schema está, hoje, resolv
 | [Portal da Família](#portal-da-família-9210) | 12 | **92** | — | — |
 | [BI](#bi-9810) | 8 | **98** | Funcional (BI Financeiro depende de F10) | F9, F10 |
 | [Integração ERP](#integração-erp-8010) | 10 | **80** | Verificado (saída nunca testada contra sync-webhook real) | — |
-| [CRM](#crm-6810) | 8 | **68** | Funcional (Interações/Campanhas fora do escopo v1) | F9 (em andamento) |
+| [CRM](#crm-7410) | 8 | **74** | Campanhas fora do escopo v1 | F9 (em andamento) |
 | Pedagógico (`app/pedagogico.tsx`) | 1 | **0** | tudo — 4 cards "Em desenvolvimento", zero query | F11 |
 | Eventos (`app/eventos.tsx`) | 1 | **0** | tudo — idem | F11 |
 
@@ -110,7 +110,14 @@ reusa `useLinkedStudents` (FK real via `student_guardians`) e resolve o nome do 
 | BI Financeiro (`bi/financeiro.tsx`) | 10 | tela inteira é EmptyState "ERP não configurado" |
 | Hub BI (`bi.tsx`) | 90 | hub de navegação, por design |
 
-### CRM — 68/100
+### CRM — 74/100
+
+**F9 fatia 2 (feita, 2026-08-12)**: "Nova Interação" ganhou dialog real (picker de lead reusando
+`useLeads`, canal/direção/resumo, grava via `useCreateInteraction` que já existia mas nunca era
+chamado) — testado ao vivo, funciona ponta a ponta. De brinde: a coluna "Entidade" da tabela sempre
+mostrava vazio (`entity_name` hardcoded `''`, nunca preenchido); resolvida no client comparando
+`entity_id` com os leads já carregados. Picker limitado a leads (visitor) — guardian/student ainda sem
+picker, gap registrado, não bloqueia o uso real do CRM hoje (única origem de interação é lead).
 
 **F9 iniciada (2026-08-12)**: decisão de produto tomada — CRM redesenhado como produto "de ponta estilo
 Helena" (referência: helena.run, agente de vendas via WhatsApp por IA), no mesmo repo, sem WhatsApp API
@@ -139,7 +146,7 @@ fixos (sem histórico de conversa persistido, não existe número real pra mostr
 | Submódulo | Nota | O que falta |
 |---|---|---|
 | Leads (`crm/leads.tsx`, `leads/[id].tsx`) | 95 | testado ao vivo ponta a ponta, sem exclusão (por design — visitante vira lead permanente) |
-| Interações (`crm/interacoes.tsx`) | 40 | CTA principal "Nova Interação" sem `onClick` — fora da fatia 1 |
+| Interações (`crm/interacoes.tsx`) | 90 | picker de "Nova Interação" só cobre leads (visitor), sem guardian/student |
 | Demandas (`crm/demandas.tsx`) | 75 | botão "Ver Documentos" morto (dentro de aba ainda não implementada) |
 | Assistente IA (`crm/assistente.tsx`) | 70 | sem histórico de conversa persistido — v2 do CRM (agente assistido) vai precisar disso |
 | Campanhas (`crm/campanhas.tsx`) | 5 | "Campanhas em Breve" — fora do escopo da visão nova, decidir manter/remover numa próxima fatia |

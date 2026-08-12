@@ -1,6 +1,6 @@
 
-import { useState, useEffect } from 'react';
 import { useOrganization } from '@/hooks/useOrganization';
+import { useOrgSettings } from '@/hooks/useOrgSettings';
 
 interface PortalConfig {
   enabled: boolean;
@@ -15,27 +15,19 @@ const defaultConfig: PortalConfig = {
 };
 
 export function usePortalConfig() {
-  const [config, setConfig] = useState<PortalConfig>(defaultConfig);
-  const [loading, setLoading] = useState(false);
-  const { data: orgData } = useOrganization();
+  const { isLoading: isLoadingOrg } = useOrganization();
+  const { settings, saveKey, isSaving } = useOrgSettings();
 
-  useEffect(() => {
-    // Por enquanto, usar configuração padrão
-    // No futuro, isso pode ser carregado do banco de dados baseado na organização
-    setConfig(defaultConfig);
-    setLoading(false);
-  }, [orgData]);
+  const config: PortalConfig = { ...defaultConfig, ...(settings.portal as Partial<PortalConfig> | undefined) };
 
   const save = async (newConfig: Partial<PortalConfig>) => {
-    // Por enquanto, apenas atualiza o estado local
-    // No futuro, isso pode salvar no banco de dados
-    setConfig(prev => ({ ...prev, ...newConfig }));
+    await saveKey('portal', { ...config, ...newConfig });
   };
 
   return {
     config,
-    loading,
+    loading: isLoadingOrg,
     save,
-    isLoading: loading,
+    isLoading: isLoadingOrg || isSaving,
   };
 }

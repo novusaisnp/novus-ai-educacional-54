@@ -1,6 +1,5 @@
-
-import { useCallback, useState, useEffect } from "react";
-import { useOrganization } from "@/hooks/useOrganization";
+import { useCallback } from "react";
+import { useOrgSettings } from "@/hooks/useOrgSettings";
 
 export type NotificationsConfig = {
   enabled: {
@@ -14,48 +13,25 @@ const defaultConfig: NotificationsConfig = {
   enabled: { email: false, whatsapp: false },
 };
 
-function storageKey(orgId?: string) {
-  return `notifications:${orgId ?? "none"}`;
-}
-
 export function useNotificationsConfig() {
-  const { orgId } = useOrganization();
+  const { settings, saveKey, isSaving } = useOrgSettings();
 
-  const getConfig = useCallback((): NotificationsConfig => {
-    if (!orgId) return defaultConfig;
-    try {
-      const raw = localStorage.getItem(storageKey(orgId));
-      if (!raw) return defaultConfig;
-      const parsed = JSON.parse(raw);
-      return {
-        ...defaultConfig,
-        ...parsed,
-        enabled: { ...defaultConfig.enabled, ...(parsed?.enabled ?? {}) },
-      } as NotificationsConfig;
-    } catch {
-      return defaultConfig;
-    }
-  }, [orgId]);
-
-  const [cfg, setCfg] = useState<NotificationsConfig>(getConfig);
-
-  // getConfig muda de identidade quando orgId muda (troca de organização) — recarrega
-  // o estado local da nova org em vez de continuar mostrando o cfg da anterior.
-  useEffect(() => {
-    setCfg(getConfig());
-  }, [getConfig]);
+  const raw = settings.notifications as Partial<NotificationsConfig> | undefined;
+  const cfg: NotificationsConfig = {
+    ...defaultConfig,
+    ...raw,
+    enabled: { ...defaultConfig.enabled, ...(raw?.enabled ?? {}) },
+  };
 
   const setConfig = useCallback((updater: (prev: NotificationsConfig) => NotificationsConfig) => {
-    if (!orgId) return;
-    setCfg((prev) => {
-      const next = updater(prev);
-      localStorage.setItem(storageKey(orgId), JSON.stringify(next));
-      return next;
-    });
-  }, [orgId]);
+    const next = updater(cfg);
+    void saveKey("notifications", next);
+    // ponytail: sem optimistic update — useOrgSettings já invalida a query da org no sucesso,
+    // o toggle reflete assim que o save volta. Se a UI parecer travada, adicionar optimistic aqui.
+  }, [cfg, saveKey]);
 
   const isEmailEnabled = !!cfg.enabled.email;
   const isWhatsappEnabled = !!cfg.enabled.whatsapp;
 
-  return { config: cfg, setConfig, isEmailEnabled, isWhatsappEnabled, orgId };
+  return { config: cfg, setConfig, isEmailEnabled, isWhatsappEnabled, isSaving };
 }

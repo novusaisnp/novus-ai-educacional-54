@@ -4,7 +4,7 @@
 uma escola cliente". Para o histórico do que foi feito em cada sessão, veja [`STATUS.md`](./STATUS.md);
 para regras e arquitetura estáveis, [`../CLAUDE.md`](../CLAUDE.md).
 
-**Nota global: 75/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12.
+**Nota global: 76/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12, F1 aplicada.
 
 ## Rubrica
 
@@ -32,7 +32,7 @@ no app. O padrão "RLS sem policy" que assombrou este schema está, hoje, resolv
 | Dashboard (`app/dashboard.tsx`) | 5 | **90** | UX (loading parcial) | — |
 | Mural (`app/mural.tsx`) | 3 | **90** | Verificado (lado portal) | F7 |
 | Auth/Onboarding (`auth/*`, `OrgGate`) | 8 | **90** | UX (catch-all cai no login, `NotFound` morto) | F8 |
-| [Config/Integrações](#configintegrações-7010) | 4 | **70** | Dado real, UX | F1 |
+| [Config/Integrações](#configintegrações-9010) | 4 | **90** | UX (loading no submit da tela) | — |
 | [Portal da Família](#portal-da-família-6910) | 12 | **69** | Verificado, Dado real, UX | F1, F7 |
 | [BI](#bi-6810) | 8 | **68** | Funcional, Dado real | F9 |
 | [Integração ERP](#integração-erp-6610) | 10 | **66** | Verificado, Funcional | F10 (bloqueada fora do repo) |
@@ -110,11 +110,12 @@ Entrada (ERP → Educacional) testada ponta a ponta. **Saída (Educacional → E
 `titulo` NOT NULL; `syncFinanceiro` não mapeia `recorrente`/`periodicidade`) bloqueiam contrato formal e
 mensalidade recorrente. `erpEmit` ainda tem método que responde "não implementado" (`emit.ts:38`).
 
-### Config/Integrações — 70/100
+### Config/Integrações — 90/100
 
-`config/integracoes.tsx` grava a config do ERP de verdade, mas as outras três configs da mesma tela não
-persistem: `usePortalConfig` (só estado local), `useNotificationsConfig` (só local), `usePWAConfig`
-(só `localStorage` por org). O usuário mexe, vê salvar, e perde tudo ao trocar de máquina.
+**F1 feita (2026-08-12)**: `usePortalConfig`/`useNotificationsConfig`/`usePWAConfig` agora persistem em
+`organizations.settings` (jsonb, migration `20260812000000_organizations_settings.sql`) via hook
+`useOrgSettings` novo — mesma policy `organizations_update` já existente (admin/coordenacao). Falta só
+`isSaving`/loading no botão de submit da tela (`config/integracoes.tsx`), não corrigido nesta fatia.
 
 ## Fila de fatias
 
@@ -123,7 +124,7 @@ como real** e **botão morto em CTA principal** bloqueiam; tela que se declara "
 
 | # | Fatia | Arquivos | Ganho |
 |---|---|---|---|
-| **F1** | Persistir as configs do app numa tabela `org_settings` (ou colunas em `organizations`) — Portal, Notificações e PWA | `usePortalConfig.ts`, `useNotificationsConfig.ts`, `usePWAConfig.ts` + migration | Config 70→90, Portal +5 |
+| ~~**F1**~~ | ~~Persistir as configs do app~~ — feito em 2026-08-12, `organizations.settings` jsonb + `useOrgSettings.ts` | `usePortalConfig.ts`, `useNotificationsConfig.ts`, `usePWAConfig.ts`, migration `20260812000000` | Config 70→90 |
 | **F2** | Matar os mocks do CRM: ou implementar a query real, ou remover o card/KPI da tela (não exibir número inventado) | `useCRM.ts:274-315`, `crm/demandas.tsx:65,90`, `crm/assistente.tsx:16-20` | CRM 47→65 |
 | **F3** | Varredura do bug de data UTC-3 (`new Date(iso)` sem `T00:00:00`) nos ~9 arquivos restantes | `avaliacoes.tsx`, `chamada/relatorio.tsx`, `bi/academico.tsx`, `portal/academico.tsx`, `GradesFilters.tsx` … | Acadêmico 87→94, BI +3 |
 | **F4** | Ligar os 4 botões mortos de Solicitações + trocar o `console.log` do submit de Alunos por gravação real | `secretaria/solicitacoes.tsx:219-229`, `SubmodalAlunos.tsx:259` | Secretaria 82→88 |

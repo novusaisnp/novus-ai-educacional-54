@@ -1200,7 +1200,12 @@ Investigando o contrato real do ERP (`novusai-erp/docs/CONTRATOS_CANONICOS_ERP.m
 - Desenhar o padrão de erros inteligíveis/rastreáveis pra qualquer produto NOVUS (não só esta sessão) — pedido explícito do usuário, ainda não desenhado, toca `novus-educacional` e `novusai-erp`.
 - Repensar o CRM (`src/pages/app/crm/*`) como produto mais amplo — WhatsApp API, app próprio da escola, agentes de IA de atendimento/vendas "na pegada do Helena" — pedido explícito do usuário, ainda não desenhado.
 
-## 🗺️ Roadmap formalizado (2026-08-02)
+## 🗺️ Roadmap formalizado (2026-08-02) — **superado por [`ROADMAP.md`](./ROADMAP.md) (2026-08-12)**
+
+> **Leia [`docs/ROADMAP.md`](./ROADMAP.md) primeiro.** Ele é o painel vivo: nota x/100 de prontidão para
+> produção por módulo/submódulo e a fila de fatias até a conclusão. A seção abaixo fica como registro
+> histórico da origem do roadmap (fontes, princípio de fronteira com o ERP, referências de UI) — as fases
+> listadas nela não refletem mais o estado atual.
 
 Baseado em `docs/mapa_mental_gestao_novus.pdf` (backoffice), `docs/mapa_mental_novus.pdf` (engajamento), `docs/MVP de ideias.MD` (raio-x de mercado vs. concorrentes tipo TOTVS Educacional/Sponte) e `docs/novus_edu_mockups.html` (referência de UI navegável — 5 telas: Visão Geral, Acadêmico, Secretaria, Portal Família mobile, Integração ERP). Princípio de fronteira (reafirmado após ler `novusai-erp/docs/CONTRATOS_CANONICOS_ERP.md`): o satélite não recria financeiro/fiscal/RH — só consome as 3 portas do ERP (Título, Liquidação, Autorização) e o módulo `Contrato` recorrente que já existe lá.
 

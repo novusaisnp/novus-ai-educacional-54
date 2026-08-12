@@ -1,0 +1,147 @@
+# ROADMAP — NOVUS.AI Educacional
+
+**Painel vivo de prontidão para produção.** Este arquivo responde "quanto falta para entregar o sistema a
+uma escola cliente". Para o histórico do que foi feito em cada sessão, veja [`STATUS.md`](./STATUS.md);
+para regras e arquitetura estáveis, [`../CLAUDE.md`](../CLAUDE.md).
+
+**Nota global: 75/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12.
+
+## Rubrica
+
+Cada módulo soma 5 eixos de 20 pontos. A nota mede prontidão para produção, não cobertura de escopo:
+um módulo pequeno e completo vale 100; um módulo ambicioso e meio-pronto, não.
+
+| Eixo | Vale 20 quando |
+|---|---|
+| **Funcional** | Fluxo completo (criar/listar/editar/remover onde faz sentido), sem botão sem `onClick`, sem handler no-op |
+| **Dado real** | Zero mock/hardcode exibido como se fosse real; lê e grava no Supabase |
+| **RLS** | Tabelas do módulo com RLS ligado *e* policy real (`pg_policies`), não só RLS ligado |
+| **UX** | Loading, empty e erro tratados; validação; sem bug conhecido de data/`defaultValue` |
+| **Verificado** | Testado ao vivo com dado real (browser, login real), registrado em `STATUS.md` |
+
+Estado do eixo RLS em 2026-08-12 (verificado por query direta): **todas** as tabelas de `public` têm RLS
+ligado e só `entidade_id_map` está sem policy — é tabela de trabalho da migração de entidades, sem consumidor
+no app. O padrão "RLS sem policy" que assombrou este schema está, hoje, resolvido.
+
+## Placar por módulo
+
+| Módulo | Peso | Nota | Eixos que faltam | Fatia que fecha |
+|---|---|---|---|---|
+| [Acadêmico](#acadêmico-8710) | 20 | **87** | UX, Funcional | F3, F5 |
+| [Secretaria](#secretaria-8210) | 20 | **82** | UX, Funcional, Verificado | F2, F4, F6 |
+| Dashboard (`app/dashboard.tsx`) | 5 | **90** | UX (loading parcial) | — |
+| Mural (`app/mural.tsx`) | 3 | **90** | Verificado (lado portal) | F7 |
+| Auth/Onboarding (`auth/*`, `OrgGate`) | 8 | **90** | UX (catch-all cai no login, `NotFound` morto) | F8 |
+| [Config/Integrações](#configintegrações-7010) | 4 | **70** | Dado real, UX | F1 |
+| [Portal da Família](#portal-da-família-6910) | 12 | **69** | Verificado, Dado real, UX | F1, F7 |
+| [BI](#bi-6810) | 8 | **68** | Funcional, Dado real | F9 |
+| [Integração ERP](#integração-erp-6610) | 10 | **66** | Verificado, Funcional | F10 (bloqueada fora do repo) |
+| [CRM](#crm-4710) | 8 | **47** | Funcional, Dado real, Verificado | F2, F9 |
+| Pedagógico (`app/pedagogico.tsx`) | 1 | **0** | tudo — 4 cards "Em desenvolvimento", zero query | F11 |
+| Eventos (`app/eventos.tsx`) | 1 | **0** | tudo — idem | F11 |
+
+### Acadêmico — 87/100
+
+| Submódulo | Nota | O que falta |
+|---|---|---|
+| Chamada (`academico/chamada.tsx`) | 95 | bug de data UTC-3 em `chamada/relatorio.tsx` |
+| Avaliações (`academico/avaliacoes.tsx`) | 90 | bug de data UTC-3 |
+| Notas (`academico/notas.tsx`) | 95 | bug de data UTC-3 em `GradesFilters.tsx` |
+| Currículo (`academico/curriculo.tsx`) | 100 | — |
+| Boletins (`academico/boletins.tsx`) | 95 | — (leitura + emissão, por design) |
+| Resultados do período / Conselho de classe | 90 | leitura + ação pontual, sem criar/excluir (por design) |
+| PEI coordenação (`academico/pei-coordenacao.tsx`) | 85 | painel só-leitura, sem ação a partir dele |
+| Justificativas de falta | 90 | — |
+| Hub Acadêmico (`academico.tsx`) | 60 | 2 cards "Em desenvolvimento" (Competências, Relatórios) anunciados na tela |
+
+### Secretaria — 82/100
+
+| Submódulo | Nota | O que falta |
+|---|---|---|
+| Alunos, Turmas, Disciplinas, Matrículas | 90 | `SubmodalAlunos.tsx:259` tem `console.log` no submit; `alunos.tsx` sem exclusão (só inativação, por design) |
+| Unidades / Segmentos / Séries / Períodos | 85 | submodais sem `isPending` no submit (duplo-clique cria duplicata) |
+| Solicitações (`secretaria/solicitacoes.tsx`) | 55 | **4 botões mortos** na linha da tabela (Download, Ver, Anexar, Editar — `:219,223,226,229`) |
+| Reservas, Visitantes, Documentos, Ex-Alunos, Rematrícula | 85 | falta empty state; `SubmodalRematricula` não edita, só cria |
+| Entidades (`secretaria/entidades.tsx` + `FormEntidade.tsx`) | 70 | sem exclusão, sem loading state, e **nunca testado ao vivo** (Cadastro Unificado Fases 5-8) |
+| Equipe / Salas / Horários / Transferências | 80 | Equipe sem editar/excluir; Salas sem excluir; Horários sem editar |
+| Períodos: calendário, termos, contrato modelo | 95 | — |
+
+### Portal da Família — 69/100
+
+Nota puxada para baixo por um único fato: **nenhum responsável em nenhuma organização tem `user_id`
+vinculado**, ou seja, ninguém nunca logou no portal de verdade. Todo o módulo está sem o eixo Verificado.
+
+| Submódulo | Nota | O que falta |
+|---|---|---|
+| Login / Dashboard | 70 | sem loading state no dashboard; nunca testado com guardian real |
+| Acadêmico (notas/frequência + justificar falta) | 75 | idem |
+| Financeiro | 60 | depende de ERP configurado; sem live-test |
+| Documentos / Interações / Demandas | 70 | idem |
+| Configuração do portal (`usePortalConfig.ts:23-32`) | 20 | `save()` só muda estado local — **não persiste no banco** |
+
+### BI — 68/100
+
+| Submódulo | Nota | O que falta |
+|---|---|---|
+| BI Acadêmico (`bi/academico.tsx`) | 90 | bug de data UTC-3 |
+| BI CRM (`bi/crm.tsx`) | 85 | herda os mocks de `useCRM` |
+| BI Financeiro (`bi/financeiro.tsx`) | 10 | tela inteira é EmptyState "ERP não configurado" |
+| Hub BI (`bi.tsx`) | 90 | hub de navegação, por design |
+
+### CRM — 47/100
+
+O módulo com maior distância entre o que a tela anuncia e o que faz. Decisão registrada em `STATUS.md`:
+o CRM será repensado como produto mais amplo (WhatsApp API, agentes de IA) — por isso **não vale corrigir
+ponto a ponto**, e sim decidir o redesenho antes.
+
+| Submódulo | Nota | O que falta |
+|---|---|---|
+| Leads (`crm/leads.tsx`, `leads/[id].tsx`) | 60 | 4 botões mortos (Ligar/WhatsApp/Email/WhatsApp na linha) |
+| Interações (`crm/interacoes.tsx`) | 40 | CTA principal "Nova Interação" sem `onClick` (`:79`) |
+| Demandas (`crm/demandas.tsx`) | 45 | `erpDisabledOrMock = true` fixo (`:65`), KPI 3.2 hardcoded (`:90`), botão "Ver Documentos" morto (`:700`) |
+| Assistente IA (`crm/assistente.tsx`) | 30 | KPIs fixos (23 conversas / 2min / 156 usuários) exibidos como reais |
+| Campanhas (`crm/campanhas.tsx`) | 5 | "Campanhas em Breve", roadmap estático com "Q2 2024" |
+| Hooks (`useCRM.ts:274-315`) | 30 | `usePendenciasDoc` retorna `[]`; `useInadimplencia` retorna zeros com `is_mock_data` |
+
+### Integração ERP — 66/100
+
+Entrada (ERP → Educacional) testada ponta a ponta. **Saída (Educacional → ERP) nunca foi testada contra o
+`sync-webhook` real** — só com `mock=true`. Dois bugs no repo `novusai-erp` (`syncContrato` não popula
+`titulo` NOT NULL; `syncFinanceiro` não mapeia `recorrente`/`periodicidade`) bloqueiam contrato formal e
+mensalidade recorrente. `erpEmit` ainda tem método que responde "não implementado" (`emit.ts:38`).
+
+### Config/Integrações — 70/100
+
+`config/integracoes.tsx` grava a config do ERP de verdade, mas as outras três configs da mesma tela não
+persistem: `usePortalConfig` (só estado local), `useNotificationsConfig` (só local), `usePWAConfig`
+(só `localStorage` por org). O usuário mexe, vê salvar, e perde tudo ao trocar de máquina.
+
+## Fila de fatias
+
+Ordenada por pontos ganhos ÷ esforço. Bloqueadores de produção primeiro — critério: **dado mock exibido
+como real** e **botão morto em CTA principal** bloqueiam; tela que se declara "Em desenvolvimento" não.
+
+| # | Fatia | Arquivos | Ganho |
+|---|---|---|---|
+| **F1** | Persistir as configs do app numa tabela `org_settings` (ou colunas em `organizations`) — Portal, Notificações e PWA | `usePortalConfig.ts`, `useNotificationsConfig.ts`, `usePWAConfig.ts` + migration | Config 70→90, Portal +5 |
+| **F2** | Matar os mocks do CRM: ou implementar a query real, ou remover o card/KPI da tela (não exibir número inventado) | `useCRM.ts:274-315`, `crm/demandas.tsx:65,90`, `crm/assistente.tsx:16-20` | CRM 47→65 |
+| **F3** | Varredura do bug de data UTC-3 (`new Date(iso)` sem `T00:00:00`) nos ~9 arquivos restantes | `avaliacoes.tsx`, `chamada/relatorio.tsx`, `bi/academico.tsx`, `portal/academico.tsx`, `GradesFilters.tsx` … | Acadêmico 87→94, BI +3 |
+| **F4** | Ligar os 4 botões mortos de Solicitações + trocar o `console.log` do submit de Alunos por gravação real | `secretaria/solicitacoes.tsx:219-229`, `SubmodalAlunos.tsx:259` | Secretaria 82→88 |
+| **F5** | Fechar o hub Acadêmico: implementar ou remover os cards "Competências" e "Relatórios" | `academico.tsx:138,153` | Acadêmico +3 |
+| **F6** | `isPending` nos 7 submodais sem loading no submit (evita duplicata por duplo-clique) | `Submodal{Periodos,Reservas,Segmentos,Series,Solicitacoes,Unidades}.tsx`, `FormEntidade.tsx` | Secretaria +4 |
+| **F7** | Criar um guardian de teste com conta de portal e rodar o live-test completo do Portal + lado família do Mural | dado de teste + browser | Portal 69→85, Mural 90→100 |
+| **F8** | Rota `*` cair em `NotFound` (hoje cai no login) e reativar o captcha com a sitekey certa na allowlist do Cloudflare | `App.tsx:219`, painel Cloudflare + Supabase Auth | Auth 90→100 |
+| **F9** | Decidir o redesenho do CRM como produto (WhatsApp API/agentes) antes de qualquer correção pontual; BI Financeiro sai do EmptyState quando F10 destravar | conversa + plano | CRM, BI |
+| **F10** | Destravar a saída para o ERP: corrigir os 2 bugs em `novusai-erp` e testar `createReceivable`/`upsertClient` contra o `sync-webhook` real | repo irmão | ERP 66→90, BI Financeiro, Portal Financeiro |
+| **F11** | Pedagógico e Eventos: definir escopo real ou remover a tela do menu (fachada visível ao cliente é pior que ausência) | `pedagogico.tsx`, `eventos.tsx`, `AppShell.tsx` | +2 global, ganho de percepção maior que o número |
+
+Fora desta fila, já registrado em `STATUS.md` como backlog e não pontuado aqui: dívida de lint (~234 erros,
+majoritariamente em Edge Functions), rotação de credenciais, secrets do Supabase (`OPENAI_API_KEY`,
+`RESEND_API_KEY`), Fase 0-E (importação/ETL de dados legados) e as fases de escopo novo (Censo/Inep,
+Copiloto do Professor, Engajamento).
+
+## Manutenção
+
+Atualize a nota do módulo **na mesma sessão** em que o código dele mudar, junto do checkpoint no
+`STATUS.md`. Nota sem data de medição apodrece — é exatamente o que aconteceu com a seção "Roadmap
+formalizado (2026-08-02)" que este arquivo substitui.

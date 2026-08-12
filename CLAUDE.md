@@ -54,6 +54,7 @@ Antes de qualquer commit: `typecheck` limpo e `test` passando (47/47 no momento 
 
 ## Onde ler mais
 
+- **Prontidão para produção (nota x/100 por módulo) e fila de fatias até concluir**: [`docs/ROADMAP.md`](./docs/ROADMAP.md).
 - **Estado atual, pendências e próxima ação**: [`docs/STATUS.md`](./docs/STATUS.md).
 - **Notas de segurança/LGPD**: [`docs/SECURITY_NOTES.md`](./docs/SECURITY_NOTES.md).
 - **Contrato de integração com o ERP**: `novusai-erp/docs/CONTRATOS_CANONICOS_ERP.md` (repo irmão).

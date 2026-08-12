@@ -4,7 +4,7 @@
 uma escola cliente". Para o histórico do que foi feito em cada sessão, veja [`STATUS.md`](./STATUS.md);
 para regras e arquitetura estáveis, [`../CLAUDE.md`](../CLAUDE.md).
 
-**Nota global: 83/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12, F1–F6 aplicadas/checadas.
+**Nota global: 86/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12, F1–F7 aplicadas/checadas.
 
 ## Rubrica
 
@@ -30,10 +30,10 @@ no app. O padrão "RLS sem policy" que assombrou este schema está, hoje, resolv
 | [Acadêmico](#acadêmico-9710) | 20 | **97** | — | — |
 | [Secretaria](#secretaria-9010) | 20 | **90** | Verificado | — |
 | Dashboard (`app/dashboard.tsx`) | 5 | **90** | UX (loading parcial) | — |
-| Mural (`app/mural.tsx`) | 3 | **90** | Verificado (lado portal) | F7 |
+| Mural (`app/mural.tsx`) | 3 | **100** | — | — |
 | Auth/Onboarding (`auth/*`, `OrgGate`) | 8 | **90** | UX (catch-all cai no login, `NotFound` morto) | F8 |
 | [Config/Integrações](#configintegrações-9010) | 4 | **90** | UX (loading no submit da tela) | — |
-| [Portal da Família](#portal-da-família-6910) | 12 | **69** | Verificado, Dado real, UX | F1, F7 |
+| [Portal da Família](#portal-da-família-9210) | 12 | **92** | — | — |
 | [BI](#bi-9810) | 8 | **98** | Funcional (BI Financeiro depende de F10) | F9, F10 |
 | [Integração ERP](#integração-erp-6610) | 10 | **66** | Verificado, Funcional | F10 (bloqueada fora do repo) |
 | [CRM](#crm-5610) | 8 | **56** | Funcional, Verificado | F9 |
@@ -81,18 +81,25 @@ removido do submit de Alunos.
 | Equipe / Salas / Horários / Transferências | 80 | Equipe sem editar/excluir; Salas sem excluir; Horários sem editar |
 | Períodos: calendário, termos, contrato modelo | 95 | — |
 
-### Portal da Família — 69/100
+### Portal da Família — 92/100
 
-Nota puxada para baixo por um único fato: **nenhum responsável em nenhuma organização tem `user_id`
-vinculado**, ou seja, ninguém nunca logou no portal de verdade. Todo o módulo está sem o eixo Verificado.
+**F7 feita (2026-08-12)**: primeiro live-test real do portal desde que o app existe — guardian de teste
+criado (`teste.portal.f7@novusai.local`, entidade + `student_guardians` vinculados ao aluno ativo real,
+limpos ao final da sessão), login completo testado no browser (Chrome via extensão). Achado e corrigido
+**um bug real que quebrava `Documentos` para 100% dos responsáveis**: `portal/documentos.tsx` fazia um
+embed PostgREST (`.select('..., students(...)')`) numa coluna sem FK real (`documents.owner_type/owner_id`
+é polimórfico) — 400 sempre, mascarado atrás de ~7s de retry do React Query antes de cair no estado de
+erro. Não era falta de dado de teste, era código quebrado — só ninguém tinha logado pra descobrir. Fix
+reusa `useLinkedStudents` (FK real via `student_guardians`) e resolve o nome do aluno no client.
 
 | Submódulo | Nota | O que falta |
 |---|---|---|
-| Login / Dashboard | 70 | sem loading state no dashboard; nunca testado com guardian real |
-| Acadêmico (notas/frequência + justificar falta) | 75 | idem |
-| Financeiro | 60 | depende de ERP configurado; sem live-test |
-| Documentos / Interações / Demandas | 70 | idem |
-| Configuração do portal (`usePortalConfig.ts:23-32`) | 20 | `save()` só muda estado local — **não persiste no banco** |
+| Login / Dashboard | 95 | sem loading state explícito no dashboard (cosmético) |
+| Acadêmico (notas/frequência + justificar falta) | 95 | testado, vazio honesto (aluno real ainda sem nota/chamada lançada) |
+| Financeiro | 80 | depende de ERP configurado (F10) — testado, EmptyState correto |
+| Documentos | 90 | bug de embed corrigido nesta fatia — testado, vazio honesto |
+| Interações / Demandas | 95 | testado, formulário de nova mensagem/demanda funcional |
+| Configuração do portal (`usePortalConfig.ts`) | 100 | persistido desde F1 |
 
 ### BI — 98/100
 
@@ -153,7 +160,7 @@ como real** e **botão morto em CTA principal** bloqueiam; tela que se declara "
 | ~~**F4**~~ | ~~Ligar os 4 botões mortos de Solicitações~~ — feito em 2026-08-12 | `secretaria/solicitacoes.tsx`, `SubmodalSolicitacoes.tsx`, `SubmodalAlunos.tsx` | Secretaria 82→87 |
 | ~~**F5**~~ | ~~Fechar o hub Acadêmico~~ — feito em 2026-08-12 | `academico.tsx` | Acadêmico 93→97 |
 | ~~**F6**~~ | ~~`isPending` nos 7 submodais~~ — checado em 2026-08-12: já estava feito, achado do inventário original ficou desatualizado | — | Secretaria 87→90 |
-| **F7** | Criar um guardian de teste com conta de portal e rodar o live-test completo do Portal + lado família do Mural | dado de teste + browser | Portal 69→85, Mural 90→100 |
+| ~~**F7**~~ | ~~Live-test completo do Portal + Mural~~ — feito em 2026-08-12, achou e corrigiu bug real em Documentos | `portal/documentos.tsx` | Portal 69→92, Mural 90→100 |
 | **F8** | Rota `*` cair em `NotFound` (hoje cai no login) e reativar o captcha com a sitekey certa na allowlist do Cloudflare | `App.tsx:219`, painel Cloudflare + Supabase Auth | Auth 90→100 |
 | **F9** | Decidir o redesenho do CRM como produto (WhatsApp API/agentes) antes de qualquer correção pontual; BI Financeiro sai do EmptyState quando F10 destravar | conversa + plano | CRM, BI |
 | **F10** | Destravar a saída para o ERP: corrigir os 2 bugs em `novusai-erp` e testar `createReceivable`/`upsertClient` contra o `sync-webhook` real | repo irmão | ERP 66→90, BI Financeiro, Portal Financeiro |

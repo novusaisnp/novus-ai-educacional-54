@@ -33,7 +33,8 @@ export default function CRMHub() {
   const { data: orgData } = useOrganization();
   const { data: leads = [] } = useLeads();
   const { data: demandas = [] } = useDemandas();
-  const { data: pendenciasDoc = [] } = usePendenciasDoc();
+  const { data: pendenciasDocResult } = usePendenciasDoc();
+  const pendenciasDoc = pendenciasDocResult?.items ?? [];
   const { data: inadimplencia } = useInadimplencia();
 
   const leadsAtivos = leads.filter(lead => lead.status === 'ativo');

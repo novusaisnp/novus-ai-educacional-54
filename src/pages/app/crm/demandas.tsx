@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +42,7 @@ import { logAudit } from '@/lib/audit';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useNavigate } from 'react-router-dom';
 import { useIAAccess } from '@/hooks/useIAAccess';
+import { getERPConfig } from '@/lib/featureFlags';
 
 export default function CRMDemandas() {
   const { toast } = useToast();
@@ -60,9 +62,13 @@ export default function CRMDemandas() {
 
   // Guard para Financeiro IA - verifica se pode acessar e se não está em mock
   const canUseFinanceiroIA = canAccess('financeiro');
-  
-  // Simula verificação do estado do ERP (você pode ajustar conforme sua lógica)
-  const erpDisabledOrMock = true; // Será sempre true quando inadimplencia.is_mock_data === true
+
+  const { data: erpConfig } = useQuery({
+    queryKey: ['erp-config', orgData?.organization_id],
+    queryFn: () => getERPConfig(orgData!.organization_id),
+    enabled: !!orgData?.organization_id,
+  });
+  const erpDisabledOrMock = !erpConfig?.enabled || erpConfig?.mock;
 
   // Guard effect para controlar acesso à aba Financeiro IA
   useEffect(() => {
@@ -76,18 +82,23 @@ export default function CRMDemandas() {
     status: statusFilter,
     tipo: tipoFilter 
   });
-  const { data: pendenciasDoc = [] } = usePendenciasDoc();
+  const { data: pendenciasDocResult } = usePendenciasDoc();
+  const pendenciasDoc = pendenciasDocResult?.items ?? [];
+  const pendenciasDocImplemented = pendenciasDocResult?.implemented ?? false;
   const { data: inadimplencia } = useInadimplencia();
-  
+
   const createDemanda = useCreateDemanda();
   const updateStatus = useUpdateDemandaStatus();
 
   const filteredDemandas = demandas;
-  
+
   // KPIs
   const demandasConcluidas = demandas.filter(d => d.status === 'concluida');
   const taxaConclusao = demandas.length > 0 ? Math.round((demandasConcluidas.length / demandas.length) * 100) : 0;
-  const tempoMedioResolucao = 3.2; // Mock - seria calculado baseado em datas
+  const tempoMedioResolucao = demandasConcluidas.length > 0
+    ? (demandasConcluidas.reduce((sum, d) => sum + (new Date(d.updated_at).getTime() - new Date(d.created_at).getTime()), 0)
+        / demandasConcluidas.length / 86400000)
+    : 0;
 
   const formatDate = (date: string) => {
     return format(new Date(date), 'dd/MM/yyyy HH:mm', { locale: ptBR });
@@ -387,7 +398,7 @@ export default function CRMDemandas() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{tempoMedioResolucao} dias</div>
+            <div className="text-2xl font-bold">{tempoMedioResolucao.toFixed(1)} dias</div>
             <p className="text-xs text-muted-foreground">
               Tempo médio de resolução
             </p>
@@ -549,10 +560,10 @@ export default function CRMDemandas() {
                       </div>
                     </div>
                     
-                    {inadimplencia.is_mock_data && (
+                    {erpDisabledOrMock && (
                       <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
                         <p className="text-sm text-yellow-800">
-                          ⚠️ Dados simulados - Integração ERP não configurada
+                          ⚠️ Integração ERP não configurada — nenhum título sincronizado ainda
                         </p>
                       </div>
                     )}
@@ -596,7 +607,7 @@ export default function CRMDemandas() {
             </CardHeader>
             <CardContent>
               {inadimplencia ? (
-                inadimplencia.is_mock_data ? (
+                erpDisabledOrMock ? (
                   <EmptyState
                     title="Integração desabilitada"
                     description="O módulo financeiro está em modo simulado ou desabilitado. Configure a integração ERP para dados reais."
@@ -662,7 +673,12 @@ export default function CRMDemandas() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {pendenciasDoc.length === 0 ? (
+              {!pendenciasDocImplemented ? (
+                <EmptyState
+                  title="Funcionalidade em desenvolvimento"
+                  description="Checklist de documentos pendentes por aluno/responsável ainda não foi implementado."
+                />
+              ) : pendenciasDoc.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   Nenhuma pendência documental encontrada
                 </div>

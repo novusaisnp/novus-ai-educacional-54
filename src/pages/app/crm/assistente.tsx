@@ -1,8 +1,8 @@
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import ChatbotInterface from '@/components/ai/ChatbotInterface';
-import { Bot, MessageSquare, Clock, Users } from 'lucide-react';
+import { Bot } from 'lucide-react';
 import { useOrganization } from '@/hooks/useOrganization';
 import { logger } from '@/lib/logger';
 import { logAudit } from '@/lib/audit/logAudit';
@@ -13,11 +13,9 @@ export default function AssistenteIA() {
   const { data: orgData } = useOrganization();
   const { canAccess } = useIAAccess();
 
-  const stats = [
-    { label: 'Conversas Hoje', value: '23', icon: MessageSquare },
-    { label: 'Tempo Médio', value: '2min', icon: Clock },
-    { label: 'Usuários Atendidos', value: '156', icon: Users },
-  ];
+  // ponytail: KPIs de conversas/tempo médio/usuários removidos — chatbot não grava histórico
+  // em nenhuma tabela hoje, então os números eram fixos, não calculados. Reintroduzir quando
+  // existir log de conversa persistido (ver ai-chatbot function).
 
   useEffect(() => {
     if (!canAccess('chatbot')) {
@@ -64,28 +62,6 @@ export default function AssistenteIA() {
           <div className="w-2 h-2 bg-emerald-500 rounded-full mr-2" />
           Sistema Online
         </Badge>
-      </div>
-
-      {/* Estatísticas rápidas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <Card key={stat.label}>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <Icon className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{stat.value}</p>
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

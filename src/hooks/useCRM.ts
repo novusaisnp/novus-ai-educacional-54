@@ -271,18 +271,17 @@ export const useDemandas = (filters?: { status?: string; tipo?: string; origem?:
   });
 };
 
-// Hook para pendências documentais - simulado com base em documentos
+// ponytail: pendência documental (checklist de doc obrigatório por aluno/responsável) não tem
+// tabela/view no schema — construir isso é feature nova, não um mock a destravar. `implemented:false`
+// deixa a UI honesta em vez de mostrar "Nenhuma pendência encontrada" (parecia bom, era não-calculado).
 export const usePendenciasDoc = () => {
   const { data: orgData } = useOrganization();
 
   return useQuery({
     queryKey: ['crm.pendencias-doc', orgData?.organization_id],
     queryFn: async () => {
-      // Como não temos a view, retornamos dados mockados ou vazios
-      // Em um cenário real, isso seria implementado com uma view ou query complexa
       const pendencias: PendenciaDoc[] = [];
-      
-      return pendencias;
+      return { items: pendencias, implemented: false };
     },
     enabled: !!orgData?.organization_id,
     staleTime: 5 * 60 * 1000,
@@ -290,22 +289,37 @@ export const usePendenciasDoc = () => {
   });
 };
 
-// Hook para inadimplência - simulado
+// Inadimplência real via financial_transactions (populada pelo webhook ERP, mesma tabela
+// já usada em portal/financeiro.tsx). Sem título vencido sincronizado, o resultado é
+// legitimamente zero — não é mais um mock, é dado real que ainda não tem o que mostrar.
 export const useInadimplencia = () => {
   const { data: orgData } = useOrganization();
 
   return useQuery({
     queryKey: ['crm.inadimplencia', orgData?.organization_id],
     queryFn: async () => {
-      // Como não temos sistema financeiro implementado, retornamos dados mockados
+      const { data, error } = await supabase
+        .from('financial_transactions')
+        .select('guardian_id, amount, status')
+        .eq('organization_id', orgData!.organization_id);
+
+      if (error) {
+        logger.error('Erro ao buscar inadimplência', { error });
+        throw error;
+      }
+
+      const vencidos = (data ?? []).filter((t) => t.status === 'vencido');
+      const guardiansTotal = new Set((data ?? []).map((t) => t.guardian_id)).size;
+      const guardiansInadimplentes = new Set(vencidos.map((t) => t.guardian_id)).size;
+      const valorTotalDevido = vencidos.reduce((sum, t) => sum + Number(t.amount ?? 0), 0);
+
       return {
-        total_alunos: 0,
-        inadimplentes: 0,
-        total_inadimplentes: 0,
-        percentual: 0,
-        valor_total: 0,
-        valor_total_devido: 0,
-        is_mock_data: true
+        total_alunos: guardiansTotal,
+        inadimplentes: guardiansInadimplentes,
+        total_inadimplentes: guardiansInadimplentes,
+        percentual: guardiansTotal > 0 ? Math.round((guardiansInadimplentes / guardiansTotal) * 100) : 0,
+        valor_total: valorTotalDevido,
+        valor_total_devido: valorTotalDevido,
       };
     },
     enabled: !!orgData?.organization_id,

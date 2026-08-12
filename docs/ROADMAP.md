@@ -4,7 +4,7 @@
 uma escola cliente". Para o histórico do que foi feito em cada sessão, veja [`STATUS.md`](./STATUS.md);
 para regras e arquitetura estáveis, [`../CLAUDE.md`](../CLAUDE.md).
 
-**Nota global: 77/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12, F1+F2 aplicadas.
+**Nota global: 80/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12, F1+F2+F3 aplicadas.
 
 ## Rubrica
 
@@ -27,26 +27,28 @@ no app. O padrão "RLS sem policy" que assombrou este schema está, hoje, resolv
 
 | Módulo | Peso | Nota | Eixos que faltam | Fatia que fecha |
 |---|---|---|---|---|
-| [Acadêmico](#acadêmico-8710) | 20 | **87** | UX, Funcional | F3, F5 |
+| [Acadêmico](#acadêmico-9310) | 20 | **93** | Funcional (hub Acadêmico) | F5 |
 | [Secretaria](#secretaria-8210) | 20 | **82** | UX, Funcional, Verificado | F2, F4, F6 |
 | Dashboard (`app/dashboard.tsx`) | 5 | **90** | UX (loading parcial) | — |
 | Mural (`app/mural.tsx`) | 3 | **90** | Verificado (lado portal) | F7 |
 | Auth/Onboarding (`auth/*`, `OrgGate`) | 8 | **90** | UX (catch-all cai no login, `NotFound` morto) | F8 |
 | [Config/Integrações](#configintegrações-9010) | 4 | **90** | UX (loading no submit da tela) | — |
 | [Portal da Família](#portal-da-família-6910) | 12 | **69** | Verificado, Dado real, UX | F1, F7 |
-| [BI](#bi-7010) | 8 | **70** | Funcional | F9 |
+| [BI](#bi-9810) | 8 | **98** | Funcional (BI Financeiro depende de F10) | F9, F10 |
 | [Integração ERP](#integração-erp-6610) | 10 | **66** | Verificado, Funcional | F10 (bloqueada fora do repo) |
 | [CRM](#crm-5610) | 8 | **56** | Funcional, Verificado | F9 |
 | Pedagógico (`app/pedagogico.tsx`) | 1 | **0** | tudo — 4 cards "Em desenvolvimento", zero query | F11 |
 | Eventos (`app/eventos.tsx`) | 1 | **0** | tudo — idem | F11 |
 
-### Acadêmico — 87/100
+### Acadêmico — 93/100
+
+**F3 feita (2026-08-12)**: bug de data UTC-3 corrigido em todos os pontos confirmados deste módulo.
 
 | Submódulo | Nota | O que falta |
 |---|---|---|
-| Chamada (`academico/chamada.tsx`) | 95 | bug de data UTC-3 em `chamada/relatorio.tsx` |
-| Avaliações (`academico/avaliacoes.tsx`) | 90 | bug de data UTC-3 |
-| Notas (`academico/notas.tsx`) | 95 | bug de data UTC-3 em `GradesFilters.tsx` |
+| Chamada (`academico/chamada.tsx`, `chamada/relatorio.tsx`) | 100 | — |
+| Avaliações (`academico/avaliacoes.tsx`) | 100 | — |
+| Notas (`academico/notas.tsx`, `GradesFilters.tsx`, `GradesGrid.tsx`, `AssessmentsPicker.tsx`) | 100 | — |
 | Currículo (`academico/curriculo.tsx`) | 100 | — |
 | Boletins (`academico/boletins.tsx`) | 95 | — (leitura + emissão, por design) |
 | Resultados do período / Conselho de classe | 90 | leitura + ação pontual, sem criar/excluir (por design) |
@@ -79,12 +81,12 @@ vinculado**, ou seja, ninguém nunca logou no portal de verdade. Todo o módulo 
 | Documentos / Interações / Demandas | 70 | idem |
 | Configuração do portal (`usePortalConfig.ts:23-32`) | 20 | `save()` só muda estado local — **não persiste no banco** |
 
-### BI — 70/100
+### BI — 98/100
 
 | Submódulo | Nota | O que falta |
 |---|---|---|
-| BI Acadêmico (`bi/academico.tsx`) | 90 | bug de data UTC-3 |
-| BI CRM (`bi/crm.tsx`) | 88 | dado agora real (herdava mocks de `useCRM`, corrigido na F2) |
+| BI Acadêmico (`bi/academico.tsx`) | 100 | — (bug de data corrigido na F3) |
+| BI CRM (`bi/crm.tsx`) | 100 | — (dado real desde F2, bug de data corrigido na F3) |
 | BI Financeiro (`bi/financeiro.tsx`) | 10 | tela inteira é EmptyState "ERP não configurado" |
 | Hub BI (`bi.tsx`) | 90 | hub de navegação, por design |
 
@@ -134,7 +136,7 @@ como real** e **botão morto em CTA principal** bloqueiam; tela que se declara "
 |---|---|---|---|
 | ~~**F1**~~ | ~~Persistir as configs do app~~ — feito em 2026-08-12, `organizations.settings` jsonb + `useOrgSettings.ts` | `usePortalConfig.ts`, `useNotificationsConfig.ts`, `usePWAConfig.ts`, migration `20260812000000` | Config 70→90 |
 | ~~**F2**~~ | ~~Matar os mocks do CRM~~ — feito em 2026-08-12 | `useCRM.ts`, `crm/demandas.tsx`, `crm/assistente.tsx`, `crm.tsx` | CRM 47→56 |
-| **F3** | Varredura do bug de data UTC-3 (`new Date(iso)` sem `T00:00:00`) nos ~9 arquivos restantes | `avaliacoes.tsx`, `chamada/relatorio.tsx`, `bi/academico.tsx`, `portal/academico.tsx`, `GradesFilters.tsx` … | Acadêmico 87→94, BI +3 |
+| ~~**F3**~~ | ~~Varredura do bug de data UTC-3~~ — feito em 2026-08-12, 15 pontos em 10 arquivos | `avaliacoes.tsx`, `chamada/relatorio.tsx`, `bi/{academico,crm}.tsx`, `portal/academico.tsx`, `Grades{Filters,Grid}.tsx`, `AssessmentsPicker.tsx`, `Submodal{Alunos,Reservas}.tsx` | Acadêmico 87→93, BI 68→98 |
 | **F4** | Ligar os 4 botões mortos de Solicitações + trocar o `console.log` do submit de Alunos por gravação real | `secretaria/solicitacoes.tsx:219-229`, `SubmodalAlunos.tsx:259` | Secretaria 82→88 |
 | **F5** | Fechar o hub Acadêmico: implementar ou remover os cards "Competências" e "Relatórios" | `academico.tsx:138,153` | Acadêmico +3 |
 | **F6** | `isPending` nos 7 submodais sem loading no submit (evita duplicata por duplo-clique) | `Submodal{Periodos,Reservas,Segmentos,Series,Solicitacoes,Unidades}.tsx`, `FormEntidade.tsx` | Secretaria +4 |

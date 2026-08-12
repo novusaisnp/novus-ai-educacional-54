@@ -4,7 +4,7 @@
 uma escola cliente". Para o histórico do que foi feito em cada sessão, veja [`STATUS.md`](./STATUS.md);
 para regras e arquitetura estáveis, [`../CLAUDE.md`](../CLAUDE.md).
 
-**Nota global: 87/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12, F1–F8 (parcial) + F9 (fatia 1) aplicadas/checadas.
+**Nota global: 88/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12, F1–F10 aplicadas/checadas (F8 e F9 parciais).
 
 ## Rubrica
 
@@ -35,7 +35,7 @@ no app. O padrão "RLS sem policy" que assombrou este schema está, hoje, resolv
 | [Config/Integrações](#configintegrações-9010) | 4 | **90** | UX (loading no submit da tela) | — |
 | [Portal da Família](#portal-da-família-9210) | 12 | **92** | — | — |
 | [BI](#bi-9810) | 8 | **98** | Funcional (BI Financeiro depende de F10) | F9, F10 |
-| [Integração ERP](#integração-erp-6610) | 10 | **66** | Verificado, Funcional | F10 (bloqueada fora do repo) |
+| [Integração ERP](#integração-erp-8010) | 10 | **80** | Verificado (saída nunca testada contra sync-webhook real) | — |
 | [CRM](#crm-6810) | 8 | **68** | Funcional (Interações/Campanhas fora do escopo v1) | F9 (em andamento) |
 | Pedagógico (`app/pedagogico.tsx`) | 1 | **0** | tudo — 4 cards "Em desenvolvimento", zero query | F11 |
 | Eventos (`app/eventos.tsx`) | 1 | **0** | tudo — idem | F11 |
@@ -145,12 +145,20 @@ fixos (sem histórico de conversa persistido, não existe número real pra mostr
 | Campanhas (`crm/campanhas.tsx`) | 5 | "Campanhas em Breve" — fora do escopo da visão nova, decidir manter/remover numa próxima fatia |
 | Hooks (`useCRM.ts`) | 80 | `usePendenciasDoc` honestamente não-implementado; leads/inadimplência reais |
 
-### Integração ERP — 66/100
+### Integração ERP — 80/100
 
-Entrada (ERP → Educacional) testada ponta a ponta. **Saída (Educacional → ERP) nunca foi testada contra o
-`sync-webhook` real** — só com `mock=true`. Dois bugs no repo `novusai-erp` (`syncContrato` não popula
-`titulo` NOT NULL; `syncFinanceiro` não mapeia `recorrente`/`periodicidade`) bloqueiam contrato formal e
-mensalidade recorrente. `erpEmit` ainda tem método que responde "não implementado" (`emit.ts:38`).
+**F10 checada (2026-08-12), nenhum código mudado**: os 2 bugs bloqueantes reportados em 2026-08-05 já
+tinham sido corrigidos numa sessão do `novusai-erp` em 2026-08-09 (migration `20260809233000_recorrencia_
+cron_e_gera_financeiro.sql`), só não tinha voltado pra este ROADMAP. Confirmado no banco real (`db query
+--linked` no projeto `reksodqzemboaeqxnxyy`): `syncContrato` já popula `titulo` com fallback (linha 601
+de `sync-webhook/index.ts`); `syncFinanceiro` já mapeia `recorrente`/`periodicidade`/`total_parcelas`
+(linhas 701-703); trigger `trg_gerar_titulo_inicial_contrato` ativa (`tgenabled='O'`) cria o primeiro
+título recorrente quando um Contrato tem `gera_financeiro=true`; cron `job_materializar_recorrencias`
+ativo, rodando `0 4 * * *`. Contrato formal ligado à matrícula e mensalidade recorrente automática **não
+estão mais bloqueados** do lado do ERP.
+
+Único gap real restante: **saída (Educacional → ERP) nunca foi testada contra o `sync-webhook` real** —
+só com `mock=true`. `erpEmit` ainda tem um método que responde "não implementado" (`emit.ts:38`).
 
 ### Config/Integrações — 90/100
 
@@ -175,7 +183,7 @@ como real** e **botão morto em CTA principal** bloqueiam; tela que se declara "
 | ~~**F7**~~ | ~~Live-test completo do Portal + Mural~~ — feito em 2026-08-12, achou e corrigiu bug real em Documentos | `portal/documentos.tsx` | Portal 69→92, Mural 90→100 |
 | **F8 (parcial)** | ~~Rota `*` cair em `NotFound`~~ feito em 2026-08-12. Captcha continua desligado — depende do usuário adicionar o domínio de produção na allowlist do Cloudflare Turnstile; quando fizer, reativar `security_captcha_enabled` via Supabase Auth API nos dois projetos (educacional + ERP) | painel Cloudflare (ação do usuário) | Auth 90→95, falta captcha pra 100 |
 | **F9 (em andamento)** | CRM v1 "estilo Helena" — escopo fechado (sem WhatsApp/IA autônoma ainda). Fatia 1 (kanban de Leads) feita. Fatia 2 sugerida: mesma UX rica na tela de detalhe do lead (`leads/[id].tsx`) + Interações real | `crm/leads/[id].tsx`, `crm/interacoes.tsx` | CRM 62→? |
-| **F10** | Destravar a saída para o ERP: corrigir os 2 bugs em `novusai-erp` e testar `createReceivable`/`upsertClient` contra o `sync-webhook` real | repo irmão | ERP 66→90, BI Financeiro, Portal Financeiro |
+| **F10 (reduzida)** | ~~Corrigir os 2 bugs em `novusai-erp`~~ — já estavam corrigidos, checado em 2026-08-12. Falta só testar `createReceivable`/`upsertClient` contra o `sync-webhook` real (cadastrar `webhook_configs` de um tenant real) | repo irmão, config de org real | BI Financeiro, Portal Financeiro |
 | **F11** | Pedagógico e Eventos: definir escopo real ou remover a tela do menu (fachada visível ao cliente é pior que ausência) | `pedagogico.tsx`, `eventos.tsx`, `AppShell.tsx` | +2 global, ganho de percepção maior que o número |
 
 Fora desta fila, já registrado em `STATUS.md` como backlog e não pontuado aqui: dívida de lint (~234 erros,

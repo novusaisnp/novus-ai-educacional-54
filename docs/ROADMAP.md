@@ -36,7 +36,7 @@ no app. O padrão "RLS sem policy" que assombrou este schema está, hoje, resolv
 | [Portal da Família](#portal-da-família-9210) | 12 | **92** | — | — |
 | [BI](#bi-9810) | 8 | **98** | Funcional (BI Financeiro depende de F10) | F9, F10 |
 | [Integração ERP](#integração-erp-6610) | 10 | **66** | Verificado, Funcional | F10 (bloqueada fora do repo) |
-| [CRM](#crm-6210) | 8 | **62** | Funcional, Verificado | F9 (em andamento) |
+| [CRM](#crm-6810) | 8 | **68** | Funcional (Interações/Campanhas fora do escopo v1) | F9 (em andamento) |
 | Pedagógico (`app/pedagogico.tsx`) | 1 | **0** | tudo — 4 cards "Em desenvolvimento", zero query | F11 |
 | Eventos (`app/eventos.tsx`) | 1 | **0** | tudo — idem | F11 |
 
@@ -110,7 +110,7 @@ reusa `useLinkedStudents` (FK real via `student_guardians`) e resolve o nome do 
 | BI Financeiro (`bi/financeiro.tsx`) | 10 | tela inteira é EmptyState "ERP não configurado" |
 | Hub BI (`bi.tsx`) | 90 | hub de navegação, por design |
 
-### CRM — 62/100
+### CRM — 68/100
 
 **F9 iniciada (2026-08-12)**: decisão de produto tomada — CRM redesenhado como produto "de ponta estilo
 Helena" (referência: helena.run, agente de vendas via WhatsApp por IA), no mesmo repo, sem WhatsApp API
@@ -123,8 +123,12 @@ HTML5, sem lib nova) com cards reais (totem de iniciais, links `tel:`/`wa.me`/`m
 Bug achado no caminho: `status` do lead estava **hardcoded em `'ativo'`** em `useLeads`/`useLead` — o
 board não tinha onde persistir nada. Corrigido: `status` agora vive em `entidade_papeis.dados_papel`
 (mesmo padrão jsonb já usado pra `relation`/`visit_date`/`purpose`), `useUpdateLeadStatus` novo grava
-via fetch+merge. **Não verificado ao vivo** — sem sessão de staff autenticada disponível no browser
-desta sessão (mesma limitação já documentada nas Fases 5-8 do Cadastro Unificado).
+via fetch+merge. **Verificado ao vivo** (usuário abriu sessão de staff durante a sessão, login real admin
+Allegra): board carrega, drag entre colunas persiste de verdade (confirmado por SQL), navegação pro
+detalhe funciona. O live-test achou 2 bugs em `leads/[id].tsx` (fora da fatia 1 original, corrigidos na
+hora): mesmo padrão de data UTC-3 do F3 em `visit_date` (a função `formatDate` também formatava
+`created_at`/`updated_at`, timestamptz completo — separada em `formatDate`/`formatDateTime`) e os 3
+botões mortos (Ligar/WhatsApp/E-mail) viraram links reais `tel:`/`wa.me`/`mailto:`.
 
 **F2 feita (2026-08-12)**: mocks exibidos como dado real, eliminados. `useInadimplencia` (`useCRM.ts`)
 consulta `financial_transactions` de verdade; `erpDisabledOrMock` em `demandas.tsx` lê a config real do
@@ -134,7 +138,7 @@ fixos (sem histórico de conversa persistido, não existe número real pra mostr
 
 | Submódulo | Nota | O que falta |
 |---|---|---|
-| Leads (`crm/leads.tsx`, `leads/[id].tsx`) | 75 | kanban feito, sem live-test; tela de detalhe (`[id].tsx`) ainda com os 3 botões mortos antigos (fora da fatia 1) |
+| Leads (`crm/leads.tsx`, `leads/[id].tsx`) | 95 | testado ao vivo ponta a ponta, sem exclusão (por design — visitante vira lead permanente) |
 | Interações (`crm/interacoes.tsx`) | 40 | CTA principal "Nova Interação" sem `onClick` — fora da fatia 1 |
 | Demandas (`crm/demandas.tsx`) | 75 | botão "Ver Documentos" morto (dentro de aba ainda não implementada) |
 | Assistente IA (`crm/assistente.tsx`) | 70 | sem histórico de conversa persistido — v2 do CRM (agente assistido) vai precisar disso |

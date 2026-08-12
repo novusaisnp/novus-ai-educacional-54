@@ -4,7 +4,7 @@
 uma escola cliente". Para o histórico do que foi feito em cada sessão, veja [`STATUS.md`](./STATUS.md);
 para regras e arquitetura estáveis, [`../CLAUDE.md`](../CLAUDE.md).
 
-**Nota global: 86/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12, F1–F7 aplicadas/checadas.
+**Nota global: 86/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12, F1–F8 (parcial) aplicadas/checadas.
 
 ## Rubrica
 
@@ -31,7 +31,7 @@ no app. O padrão "RLS sem policy" que assombrou este schema está, hoje, resolv
 | [Secretaria](#secretaria-9010) | 20 | **90** | Verificado | — |
 | Dashboard (`app/dashboard.tsx`) | 5 | **90** | UX (loading parcial) | — |
 | Mural (`app/mural.tsx`) | 3 | **100** | — | — |
-| Auth/Onboarding (`auth/*`, `OrgGate`) | 8 | **90** | UX (catch-all cai no login, `NotFound` morto) | F8 |
+| Auth/Onboarding (`auth/*`, `OrgGate`) | 8 | **95** | Captcha desligado (ação do usuário no Cloudflare) | F8 (parcial) |
 | [Config/Integrações](#configintegrações-9010) | 4 | **90** | UX (loading no submit da tela) | — |
 | [Portal da Família](#portal-da-família-9210) | 12 | **92** | — | — |
 | [BI](#bi-9810) | 8 | **98** | Funcional (BI Financeiro depende de F10) | F9, F10 |
@@ -161,7 +161,7 @@ como real** e **botão morto em CTA principal** bloqueiam; tela que se declara "
 | ~~**F5**~~ | ~~Fechar o hub Acadêmico~~ — feito em 2026-08-12 | `academico.tsx` | Acadêmico 93→97 |
 | ~~**F6**~~ | ~~`isPending` nos 7 submodais~~ — checado em 2026-08-12: já estava feito, achado do inventário original ficou desatualizado | — | Secretaria 87→90 |
 | ~~**F7**~~ | ~~Live-test completo do Portal + Mural~~ — feito em 2026-08-12, achou e corrigiu bug real em Documentos | `portal/documentos.tsx` | Portal 69→92, Mural 90→100 |
-| **F8** | Rota `*` cair em `NotFound` (hoje cai no login) e reativar o captcha com a sitekey certa na allowlist do Cloudflare | `App.tsx:219`, painel Cloudflare + Supabase Auth | Auth 90→100 |
+| **F8 (parcial)** | ~~Rota `*` cair em `NotFound`~~ feito em 2026-08-12. Captcha continua desligado — depende do usuário adicionar o domínio de produção na allowlist do Cloudflare Turnstile; quando fizer, reativar `security_captcha_enabled` via Supabase Auth API nos dois projetos (educacional + ERP) | painel Cloudflare (ação do usuário) | Auth 90→95, falta captcha pra 100 |
 | **F9** | Decidir o redesenho do CRM como produto (WhatsApp API/agentes) antes de qualquer correção pontual; BI Financeiro sai do EmptyState quando F10 destravar | conversa + plano | CRM, BI |
 | **F10** | Destravar a saída para o ERP: corrigir os 2 bugs em `novusai-erp` e testar `createReceivable`/`upsertClient` contra o `sync-webhook` real | repo irmão | ERP 66→90, BI Financeiro, Portal Financeiro |
 | **F11** | Pedagógico e Eventos: definir escopo real ou remover a tela do menu (fachada visível ao cliente é pior que ausência) | `pedagogico.tsx`, `eventos.tsx`, `AppShell.tsx` | +2 global, ganho de percepção maior que o número |

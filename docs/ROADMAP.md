@@ -4,7 +4,7 @@
 uma escola cliente". Para o histórico do que foi feito em cada sessão, veja [`STATUS.md`](./STATUS.md);
 para regras e arquitetura estáveis, [`../CLAUDE.md`](../CLAUDE.md).
 
-**Nota global: 82/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12, F1+F2+F3+F4+F5 aplicadas.
+**Nota global: 83/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12, F1–F6 aplicadas/checadas.
 
 ## Rubrica
 
@@ -28,7 +28,7 @@ no app. O padrão "RLS sem policy" que assombrou este schema está, hoje, resolv
 | Módulo | Peso | Nota | Eixos que faltam | Fatia que fecha |
 |---|---|---|---|---|
 | [Acadêmico](#acadêmico-9710) | 20 | **97** | — | — |
-| [Secretaria](#secretaria-8710) | 20 | **87** | UX, Verificado | F6 |
+| [Secretaria](#secretaria-9010) | 20 | **90** | Verificado | — |
 | Dashboard (`app/dashboard.tsx`) | 5 | **90** | UX (loading parcial) | — |
 | Mural (`app/mural.tsx`) | 3 | **90** | Verificado (lado portal) | F7 |
 | Auth/Onboarding (`auth/*`, `OrgGate`) | 8 | **90** | UX (catch-all cai no login, `NotFound` morto) | F8 |
@@ -59,7 +59,12 @@ Relatório de Chamada, que já existiam e só não estavam linkados a partir do 
 | Justificativas de falta | 90 | — |
 | Hub Acadêmico (`academico.tsx`) | 100 | — |
 
-### Secretaria — 87/100
+### Secretaria — 90/100
+
+**F6 checada (2026-08-12), sem código mudado**: os 7 submodais listados abaixo já tinham
+`isSubmitting`/`isPending` desabilitando o botão de submit — achado do inventário original estava
+desatualizado (fix de sessão anterior a este ROADMAP). `Unidades/Segmentos/Séries/Períodos` sobem
+de nota; nenhum arquivo tocado.
 
 **F4 feita (2026-08-12)**: os 4 botões mortos de Solicitações resolvidos (Download real via signed URL,
 Editar/Anexar abrem edição real, "Ver" removido por ser redundante com Editar — mesma ação, dois botões).
@@ -69,10 +74,10 @@ removido do submit de Alunos.
 | Submódulo | Nota | O que falta |
 |---|---|---|
 | Alunos, Turmas, Disciplinas, Matrículas | 95 | `alunos.tsx` sem exclusão (só inativação, por design) |
-| Unidades / Segmentos / Séries / Períodos | 85 | submodais sem `isPending` no submit (duplo-clique cria duplicata) |
+| Unidades / Segmentos / Séries / Períodos | 95 | — |
 | Solicitações (`secretaria/solicitacoes.tsx`) | 90 | sem live-test do fluxo novo (Download/Editar/Anexar) |
 | Reservas, Visitantes, Documentos, Ex-Alunos, Rematrícula | 85 | falta empty state; `SubmodalRematricula` não edita, só cria |
-| Entidades (`secretaria/entidades.tsx` + `FormEntidade.tsx`) | 70 | sem exclusão, sem loading state, e **nunca testado ao vivo** (Cadastro Unificado Fases 5-8) |
+| Entidades (`secretaria/entidades.tsx` + `FormEntidade.tsx`) | 75 | sem exclusão, e **nunca testado ao vivo** (Cadastro Unificado Fases 5-8) |
 | Equipe / Salas / Horários / Transferências | 80 | Equipe sem editar/excluir; Salas sem excluir; Horários sem editar |
 | Períodos: calendário, termos, contrato modelo | 95 | — |
 
@@ -147,7 +152,7 @@ como real** e **botão morto em CTA principal** bloqueiam; tela que se declara "
 | ~~**F3**~~ | ~~Varredura do bug de data UTC-3~~ — feito em 2026-08-12, 15 pontos em 10 arquivos | `avaliacoes.tsx`, `chamada/relatorio.tsx`, `bi/{academico,crm}.tsx`, `portal/academico.tsx`, `Grades{Filters,Grid}.tsx`, `AssessmentsPicker.tsx`, `Submodal{Alunos,Reservas}.tsx` | Acadêmico 87→93, BI 68→98 |
 | ~~**F4**~~ | ~~Ligar os 4 botões mortos de Solicitações~~ — feito em 2026-08-12 | `secretaria/solicitacoes.tsx`, `SubmodalSolicitacoes.tsx`, `SubmodalAlunos.tsx` | Secretaria 82→87 |
 | ~~**F5**~~ | ~~Fechar o hub Acadêmico~~ — feito em 2026-08-12 | `academico.tsx` | Acadêmico 93→97 |
-| **F6** | `isPending` nos 7 submodais sem loading no submit (evita duplicata por duplo-clique) | `Submodal{Periodos,Reservas,Segmentos,Series,Solicitacoes,Unidades}.tsx`, `FormEntidade.tsx` | Secretaria +4 |
+| ~~**F6**~~ | ~~`isPending` nos 7 submodais~~ — checado em 2026-08-12: já estava feito, achado do inventário original ficou desatualizado | — | Secretaria 87→90 |
 | **F7** | Criar um guardian de teste com conta de portal e rodar o live-test completo do Portal + lado família do Mural | dado de teste + browser | Portal 69→85, Mural 90→100 |
 | **F8** | Rota `*` cair em `NotFound` (hoje cai no login) e reativar o captcha com a sitekey certa na allowlist do Cloudflare | `App.tsx:219`, painel Cloudflare + Supabase Auth | Auth 90→100 |
 | **F9** | Decidir o redesenho do CRM como produto (WhatsApp API/agentes) antes de qualquer correção pontual; BI Financeiro sai do EmptyState quando F10 destravar | conversa + plano | CRM, BI |

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import PortalPageHeader from '@/components/portal/PortalPageHeader';
 import { Download, FileText, Eye } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePortalAuth } from '@/hooks/usePortalAuth';
+import { useLinkedStudents } from '@/hooks/usePortalAcademic';
 
 interface Document {
   id: string;
@@ -20,27 +22,27 @@ interface Document {
 
 export default function PortalDocumentos() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const { guardian } = usePortalAuth();
+  const { data: linkedStudents = [] } = useLinkedStudents();
 
+  // documents é owner_type/owner_id polimórfico (guardian ou student), sem FK real pra
+  // students — não dá pra fazer embed via PostgREST (era o bug: 400 sempre, mesmo padrão
+  // já resolvido em useDocuments.ts/usePortalData.ts). Busca as duas fontes em paralelo e
+  // resolve o nome do aluno no client a partir de useLinkedStudents (mesma FK real).
   const { data: documents = [], isLoading, error } = useQuery({
-    queryKey: ['portal-documents'],
+    queryKey: ['portal-documents', guardian?.id, linkedStudents.map((s) => s.id).join(',')],
     queryFn: async () => {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user) {
-        throw new Error('Not authenticated');
-      }
+      if (!guardian?.id) return [];
+
+      const studentIds = linkedStudents.map((s) => s.id);
+      const ownerFilter = studentIds.length > 0
+        ? `and(owner_type.eq.guardian,owner_id.eq.${guardian.id}),and(owner_type.eq.student,owner_id.in.(${studentIds.join(',')}))`
+        : `and(owner_type.eq.guardian,owner_id.eq.${guardian.id})`;
 
       const { data, error } = await supabase
         .from('documents')
-        .select(`
-          id,
-          title,
-          file_path,
-          created_at,
-          students (
-            first_name,
-            last_name
-          )
-        `)
+        .select('id, title, file_path, created_at, owner_type, owner_id')
+        .or(ownerFilter)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -48,13 +50,17 @@ export default function PortalDocumentos() {
         throw error;
       }
 
-      return (data || []).map(doc => ({
-        ...doc,
-        student: Array.isArray(doc.students) && doc.students.length > 0
-          ? { name: `${doc.students[0].first_name} ${doc.students[0].last_name}` }
-          : undefined
-      })) as Document[];
-    }
+      const studentsById = new Map(linkedStudents.map((s) => [s.id, s]));
+
+      return (data || []).map((doc) => {
+        const student = doc.owner_type === 'student' ? studentsById.get(doc.owner_id) : undefined;
+        return {
+          ...doc,
+          student: student ? { name: `${student.first_name} ${student.last_name}` } : undefined,
+        };
+      }) as Document[];
+    },
+    enabled: !!guardian?.id,
   });
 
   const handleDownload = async (document: Document) => {

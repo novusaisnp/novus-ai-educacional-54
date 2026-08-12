@@ -4,7 +4,7 @@
 uma escola cliente". Para o histórico do que foi feito em cada sessão, veja [`STATUS.md`](./STATUS.md);
 para regras e arquitetura estáveis, [`../CLAUDE.md`](../CLAUDE.md).
 
-**Nota global: 86/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12, F1–F8 (parcial) aplicadas/checadas.
+**Nota global: 87/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12, F1–F8 (parcial) + F9 (fatia 1) aplicadas/checadas.
 
 ## Rubrica
 
@@ -36,7 +36,7 @@ no app. O padrão "RLS sem policy" que assombrou este schema está, hoje, resolv
 | [Portal da Família](#portal-da-família-9210) | 12 | **92** | — | — |
 | [BI](#bi-9810) | 8 | **98** | Funcional (BI Financeiro depende de F10) | F9, F10 |
 | [Integração ERP](#integração-erp-6610) | 10 | **66** | Verificado, Funcional | F10 (bloqueada fora do repo) |
-| [CRM](#crm-5610) | 8 | **56** | Funcional, Verificado | F9 |
+| [CRM](#crm-6210) | 8 | **62** | Funcional, Verificado | F9 (em andamento) |
 | Pedagógico (`app/pedagogico.tsx`) | 1 | **0** | tudo — 4 cards "Em desenvolvimento", zero query | F11 |
 | Eventos (`app/eventos.tsx`) | 1 | **0** | tudo — idem | F11 |
 
@@ -110,28 +110,36 @@ reusa `useLinkedStudents` (FK real via `student_guardians`) e resolve o nome do 
 | BI Financeiro (`bi/financeiro.tsx`) | 10 | tela inteira é EmptyState "ERP não configurado" |
 | Hub BI (`bi.tsx`) | 90 | hub de navegação, por design |
 
-### CRM — 56/100
+### CRM — 62/100
 
-Decisão registrada em `STATUS.md`: o CRM será repensado como produto mais amplo (WhatsApp API, agentes
-de IA) — por isso os botões mortos ficam para o redesenho (F9), não corrigidos ponto a ponto.
+**F9 iniciada (2026-08-12)**: decisão de produto tomada — CRM redesenhado como produto "de ponta estilo
+Helena" (referência: helena.run, agente de vendas via WhatsApp por IA), no mesmo repo, sem WhatsApp API
+ainda (entra quando a conta Business for aprovada — fora do controle direto da equipe), IA v1 só sugere
+rascunho pro atendente revisar e mandar (nunca responde sozinha). Campanhas e Interações seguem como
+estavam — não fazem parte da fatia 1.
+
+**Fatia 1 (feita, 2026-08-12)**: Leads virou kanban (4 colunas: ativo/morno/frio/convertido, drag nativo
+HTML5, sem lib nova) com cards reais (totem de iniciais, links `tel:`/`wa.me`/`mailto:` de verdade).
+Bug achado no caminho: `status` do lead estava **hardcoded em `'ativo'`** em `useLeads`/`useLead` — o
+board não tinha onde persistir nada. Corrigido: `status` agora vive em `entidade_papeis.dados_papel`
+(mesmo padrão jsonb já usado pra `relation`/`visit_date`/`purpose`), `useUpdateLeadStatus` novo grava
+via fetch+merge. **Não verificado ao vivo** — sem sessão de staff autenticada disponível no browser
+desta sessão (mesma limitação já documentada nas Fases 5-8 do Cadastro Unificado).
 
 **F2 feita (2026-08-12)**: mocks exibidos como dado real, eliminados. `useInadimplencia` (`useCRM.ts`)
-agora consulta `financial_transactions` de verdade (mesma tabela do Portal Financeiro, populada pelo
-webhook ERP) em vez de retornar zeros com `is_mock_data`; `erpDisabledOrMock` em `demandas.tsx` lê a
-config real do ERP; `tempoMedioResolucao` é calculado das demandas concluídas. `usePendenciasDoc` não
-tinha (e continua sem) tabela/view de checklist documental — construir isso é feature nova, fora desta
-fatia — mas a UI trocou "Nenhuma pendência encontrada" (mentira: nunca foi calculado) por um EmptyState
-"em desenvolvimento" honesto. `assistente.tsx` perdeu os 3 KPIs fixos (23 conversas/2min/156 usuários) —
-sem histórico de conversa persistido, não existe número real para mostrar.
+consulta `financial_transactions` de verdade; `erpDisabledOrMock` em `demandas.tsx` lê a config real do
+ERP; `tempoMedioResolucao` é calculado das demandas concluídas. `usePendenciasDoc` segue honestamente
+não-implementado (EmptyState em vez de mentir "nenhuma pendência"). `assistente.tsx` perdeu os 3 KPIs
+fixos (sem histórico de conversa persistido, não existe número real pra mostrar).
 
 | Submódulo | Nota | O que falta |
 |---|---|---|
-| Leads (`crm/leads.tsx`, `leads/[id].tsx`) | 60 | 4 botões mortos (Ligar/WhatsApp/Email/WhatsApp na linha) |
-| Interações (`crm/interacoes.tsx`) | 40 | CTA principal "Nova Interação" sem `onClick` (`:79`) |
-| Demandas (`crm/demandas.tsx`) | 75 | botão "Ver Documentos" morto (`:700`, dentro de aba ainda não implementada) |
-| Assistente IA (`crm/assistente.tsx`) | 70 | sem histórico de conversa persistido (feature nova, não corrigido aqui) |
-| Campanhas (`crm/campanhas.tsx`) | 5 | "Campanhas em Breve", roadmap estático com "Q2 2024" |
-| Hooks (`useCRM.ts`) | 70 | `usePendenciasDoc` honestamente não-implementado; `useInadimplencia` real |
+| Leads (`crm/leads.tsx`, `leads/[id].tsx`) | 75 | kanban feito, sem live-test; tela de detalhe (`[id].tsx`) ainda com os 3 botões mortos antigos (fora da fatia 1) |
+| Interações (`crm/interacoes.tsx`) | 40 | CTA principal "Nova Interação" sem `onClick` — fora da fatia 1 |
+| Demandas (`crm/demandas.tsx`) | 75 | botão "Ver Documentos" morto (dentro de aba ainda não implementada) |
+| Assistente IA (`crm/assistente.tsx`) | 70 | sem histórico de conversa persistido — v2 do CRM (agente assistido) vai precisar disso |
+| Campanhas (`crm/campanhas.tsx`) | 5 | "Campanhas em Breve" — fora do escopo da visão nova, decidir manter/remover numa próxima fatia |
+| Hooks (`useCRM.ts`) | 80 | `usePendenciasDoc` honestamente não-implementado; leads/inadimplência reais |
 
 ### Integração ERP — 66/100
 
@@ -162,7 +170,7 @@ como real** e **botão morto em CTA principal** bloqueiam; tela que se declara "
 | ~~**F6**~~ | ~~`isPending` nos 7 submodais~~ — checado em 2026-08-12: já estava feito, achado do inventário original ficou desatualizado | — | Secretaria 87→90 |
 | ~~**F7**~~ | ~~Live-test completo do Portal + Mural~~ — feito em 2026-08-12, achou e corrigiu bug real em Documentos | `portal/documentos.tsx` | Portal 69→92, Mural 90→100 |
 | **F8 (parcial)** | ~~Rota `*` cair em `NotFound`~~ feito em 2026-08-12. Captcha continua desligado — depende do usuário adicionar o domínio de produção na allowlist do Cloudflare Turnstile; quando fizer, reativar `security_captcha_enabled` via Supabase Auth API nos dois projetos (educacional + ERP) | painel Cloudflare (ação do usuário) | Auth 90→95, falta captcha pra 100 |
-| **F9** | Decidir o redesenho do CRM como produto (WhatsApp API/agentes) antes de qualquer correção pontual; BI Financeiro sai do EmptyState quando F10 destravar | conversa + plano | CRM, BI |
+| **F9 (em andamento)** | CRM v1 "estilo Helena" — escopo fechado (sem WhatsApp/IA autônoma ainda). Fatia 1 (kanban de Leads) feita. Fatia 2 sugerida: mesma UX rica na tela de detalhe do lead (`leads/[id].tsx`) + Interações real | `crm/leads/[id].tsx`, `crm/interacoes.tsx` | CRM 62→? |
 | **F10** | Destravar a saída para o ERP: corrigir os 2 bugs em `novusai-erp` e testar `createReceivable`/`upsertClient` contra o `sync-webhook` real | repo irmão | ERP 66→90, BI Financeiro, Portal Financeiro |
 | **F11** | Pedagógico e Eventos: definir escopo real ou remover a tela do menu (fachada visível ao cliente é pior que ausência) | `pedagogico.tsx`, `eventos.tsx`, `AppShell.tsx` | +2 global, ganho de percepção maior que o número |
 

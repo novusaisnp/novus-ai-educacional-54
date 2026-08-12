@@ -4,7 +4,7 @@
 uma escola cliente". Para o histórico do que foi feito em cada sessão, veja [`STATUS.md`](./STATUS.md);
 para regras e arquitetura estáveis, [`../CLAUDE.md`](../CLAUDE.md).
 
-**Nota global: 81/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12, F1+F2+F3+F4 aplicadas.
+**Nota global: 82/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12, F1+F2+F3+F4+F5 aplicadas.
 
 ## Rubrica
 
@@ -27,7 +27,7 @@ no app. O padrão "RLS sem policy" que assombrou este schema está, hoje, resolv
 
 | Módulo | Peso | Nota | Eixos que faltam | Fatia que fecha |
 |---|---|---|---|---|
-| [Acadêmico](#acadêmico-9310) | 20 | **93** | Funcional (hub Acadêmico) | F5 |
+| [Acadêmico](#acadêmico-9710) | 20 | **97** | — | — |
 | [Secretaria](#secretaria-8710) | 20 | **87** | UX, Verificado | F6 |
 | Dashboard (`app/dashboard.tsx`) | 5 | **90** | UX (loading parcial) | — |
 | Mural (`app/mural.tsx`) | 3 | **90** | Verificado (lado portal) | F7 |
@@ -40,9 +40,12 @@ no app. O padrão "RLS sem policy" que assombrou este schema está, hoje, resolv
 | Pedagógico (`app/pedagogico.tsx`) | 1 | **0** | tudo — 4 cards "Em desenvolvimento", zero query | F11 |
 | Eventos (`app/eventos.tsx`) | 1 | **0** | tudo — idem | F11 |
 
-### Acadêmico — 93/100
+### Acadêmico — 97/100
 
 **F3 feita (2026-08-12)**: bug de data UTC-3 corrigido em todos os pontos confirmados deste módulo.
+**F5 feita (2026-08-12)**: hub fechado — "Competências" (sem schema, feature nova) removido em vez de
+mentir "Em desenvolvimento"; "Relatórios" trocou a fachada por links reais pro BI Acadêmico e pro
+Relatório de Chamada, que já existiam e só não estavam linkados a partir do hub.
 
 | Submódulo | Nota | O que falta |
 |---|---|---|
@@ -54,7 +57,7 @@ no app. O padrão "RLS sem policy" que assombrou este schema está, hoje, resolv
 | Resultados do período / Conselho de classe | 90 | leitura + ação pontual, sem criar/excluir (por design) |
 | PEI coordenação (`academico/pei-coordenacao.tsx`) | 85 | painel só-leitura, sem ação a partir dele |
 | Justificativas de falta | 90 | — |
-| Hub Acadêmico (`academico.tsx`) | 60 | 2 cards "Em desenvolvimento" (Competências, Relatórios) anunciados na tela |
+| Hub Acadêmico (`academico.tsx`) | 100 | — |
 
 ### Secretaria — 87/100
 
@@ -143,7 +146,7 @@ como real** e **botão morto em CTA principal** bloqueiam; tela que se declara "
 | ~~**F2**~~ | ~~Matar os mocks do CRM~~ — feito em 2026-08-12 | `useCRM.ts`, `crm/demandas.tsx`, `crm/assistente.tsx`, `crm.tsx` | CRM 47→56 |
 | ~~**F3**~~ | ~~Varredura do bug de data UTC-3~~ — feito em 2026-08-12, 15 pontos em 10 arquivos | `avaliacoes.tsx`, `chamada/relatorio.tsx`, `bi/{academico,crm}.tsx`, `portal/academico.tsx`, `Grades{Filters,Grid}.tsx`, `AssessmentsPicker.tsx`, `Submodal{Alunos,Reservas}.tsx` | Acadêmico 87→93, BI 68→98 |
 | ~~**F4**~~ | ~~Ligar os 4 botões mortos de Solicitações~~ — feito em 2026-08-12 | `secretaria/solicitacoes.tsx`, `SubmodalSolicitacoes.tsx`, `SubmodalAlunos.tsx` | Secretaria 82→87 |
-| **F5** | Fechar o hub Acadêmico: implementar ou remover os cards "Competências" e "Relatórios" | `academico.tsx:138,153` | Acadêmico +3 |
+| ~~**F5**~~ | ~~Fechar o hub Acadêmico~~ — feito em 2026-08-12 | `academico.tsx` | Acadêmico 93→97 |
 | **F6** | `isPending` nos 7 submodais sem loading no submit (evita duplicata por duplo-clique) | `Submodal{Periodos,Reservas,Segmentos,Series,Solicitacoes,Unidades}.tsx`, `FormEntidade.tsx` | Secretaria +4 |
 | **F7** | Criar um guardian de teste com conta de portal e rodar o live-test completo do Portal + lado família do Mural | dado de teste + browser | Portal 69→85, Mural 90→100 |
 | **F8** | Rota `*` cair em `NotFound` (hoje cai no login) e reativar o captcha com a sitekey certa na allowlist do Cloudflare | `App.tsx:219`, painel Cloudflare + Supabase Auth | Auth 90→100 |

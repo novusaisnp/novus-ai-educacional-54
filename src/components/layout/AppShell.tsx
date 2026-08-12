@@ -19,7 +19,9 @@ import {
   Settings,
   KeyRound,
   Megaphone,
+  Building2,
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
@@ -256,6 +258,21 @@ function TopBar() {
   const [trocarSenhaOpen, setTrocarSenhaOpen] = useState(false);
   const [trocandoSenha, setTrocandoSenha] = useState(false);
 
+  // Paridade com o "Trocar empresa" do ERP: quem tem vínculo com mais de uma unidade
+  // (sócio multi-CNPJ é o caso real) precisa alternar sem deslogar. Com um vínculo só,
+  // o item nem aparece.
+  const { data: totalUnidades = 0 } = useQuery({
+    queryKey: ['user-organizations-count', user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('user_organizations')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user!.id);
+      return count ?? 0;
+    },
+  });
+
   const {
     register: registerTrocarSenha,
     handleSubmit: handleTrocarSenhaSubmit,
@@ -366,6 +383,12 @@ function TopBar() {
             <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
           </div>
           <DropdownMenuSeparator />
+          {totalUnidades > 1 && (
+            <DropdownMenuItem onClick={() => navigate('/auth/select-org')}>
+              <Building2 className="mr-2 h-4 w-4" />
+              <span>Trocar unidade</span>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={() => setTrocarSenhaOpen(true)}>
             <KeyRound className="mr-2 h-4 w-4" />
             <span>Trocar senha</span>

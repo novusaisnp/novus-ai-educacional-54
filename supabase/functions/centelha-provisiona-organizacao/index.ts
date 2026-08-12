@@ -150,6 +150,22 @@ serve(async (req) => {
       )
     }
 
+    // Vínculo é obrigatório: current_org_id() exige a linha em user_organizations
+    // (ver 20260811230000_vinculo_como_fonte_de_verdade.sql). Sem ela o admin fundador
+    // criado aqui não enxergaria nada.
+    const { error: membershipError } = await adminClient.from('user_organizations').upsert(
+      { user_id: inviteRes.user.id, organization_id: org.id, role: 'admin' },
+      { onConflict: 'user_id,organization_id' }
+    )
+
+    if (membershipError) {
+      console.error('Failed to upsert admin membership:', membershipError)
+      return jsonResponse(
+        { error: 'Organização criada, mas falha ao vincular unidade ao admin: ' + membershipError.message, organization_id: org.id },
+        500
+      )
+    }
+
     return jsonResponse({ success: true, organization_id: org.id }, 200)
   } catch (error) {
     console.error('Unexpected error in centelha-provisiona-organizacao:', error)

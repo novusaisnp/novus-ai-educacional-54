@@ -129,9 +129,28 @@ serve(async (req) => {
     if (pErr) {
       console.error('Failed to upsert profile:', pErr)
       return new Response(
-        JSON.stringify({ error: 'Failed to upsert profile: ' + pErr.message }), 
-        { 
-          status: 500, 
+        JSON.stringify({ error: 'Failed to upsert profile: ' + pErr.message }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'content-type': 'application/json' }
+        }
+      )
+    }
+
+    // Vínculo é obrigatório: current_org_id() exige a linha em user_organizations
+    // (ver 20260811230000_vinculo_como_fonte_de_verdade.sql). Profile sem vínculo
+    // não enxerga nada.
+    const { error: mErr } = await adminClient.from('user_organizations').upsert(
+      { user_id: userId, organization_id: orgId, role: 'admin' },
+      { onConflict: 'user_id,organization_id' }
+    )
+
+    if (mErr) {
+      console.error('Failed to upsert membership:', mErr)
+      return new Response(
+        JSON.stringify({ error: 'Failed to upsert membership: ' + mErr.message }),
+        {
+          status: 500,
           headers: { ...corsHeaders, 'content-type': 'application/json' }
         }
       )

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { IconBadge } from '@/components/IconBadge';
-import { BarChart3, BookOpen, Trophy, TrendingUp, UserCheck, Gavel, HeartHandshake } from 'lucide-react';
+import { BarChart3, BookOpen, TrendingUp, UserCheck, Gavel, HeartHandshake } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Academico() {
@@ -124,22 +124,7 @@ export default function Academico() {
           </CardContent>
         </Card>
 
-        <Card className="opacity-50">
-          <CardHeader>
-            <div className="flex items-center space-x-3">
-              <IconBadge icon={Trophy} tone="purple" />
-              <div>
-                <CardTitle className="text-xl">Competências</CardTitle>
-                <CardDescription>Acompanhamento de competências</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">Em desenvolvimento...</p>
-          </CardContent>
-        </Card>
-
-        <Card className="opacity-50">
+        <Card>
           <CardHeader>
             <div className="flex items-center space-x-3">
               <IconBadge icon={TrendingUp} tone="warm" />
@@ -149,8 +134,16 @@ export default function Academico() {
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">Em desenvolvimento...</p>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">Painéis de frequência, notas e desempenho já disponíveis no BI</p>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild>
+                <Link to="/app/bi/academico">Abrir BI Acadêmico</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to="/app/academico/chamada/relatorio">Relatório de Chamada</Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

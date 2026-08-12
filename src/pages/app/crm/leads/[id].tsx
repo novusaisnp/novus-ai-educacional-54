@@ -57,7 +57,14 @@ export default function CRMLeadDetail() {
     return <Badge variant={variants[status as keyof typeof variants] || 'outline'}>{status}</Badge>;
   };
 
+  // visit_date é DATE puro (sem hora) — precisa do T00:00:00 pra não sofrer o
+  // shift de fuso (parse como UTC meia-noite, exibe um dia pra trás em UTC-3).
+  // created_at/updated_at/interaction.created_at já são timestamptz completo.
   const formatDate = (date: string) => {
+    return format(new Date(`${date}T00:00:00`), 'dd/MM/yyyy', { locale: ptBR });
+  };
+
+  const formatDateTime = (date: string) => {
     return format(new Date(date), 'dd/MM/yyyy HH:mm', { locale: ptBR });
   };
 
@@ -129,11 +136,15 @@ export default function CRMLeadDetail() {
                   <label className="text-sm font-medium text-muted-foreground">Telefone</label>
                   <div className="flex items-center gap-2">
                     <p>{lead.phone}</p>
-                    <Button size="sm" variant="outline">
-                      <Phone className="h-3 w-3" />
+                    <Button size="sm" variant="outline" asChild>
+                      <a href={`tel:${lead.phone}`}>
+                        <Phone className="h-3 w-3" />
+                      </a>
                     </Button>
-                    <Button size="sm" variant="outline">
-                      <MessageCircle className="h-3 w-3" />
+                    <Button size="sm" variant="outline" asChild>
+                      <a href={`https://wa.me/${lead.phone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer">
+                        <MessageCircle className="h-3 w-3" />
+                      </a>
                     </Button>
                   </div>
                 </div>
@@ -144,8 +155,10 @@ export default function CRMLeadDetail() {
                   <label className="text-sm font-medium text-muted-foreground">Email</label>
                   <div className="flex items-center gap-2">
                     <p>{lead.email}</p>
-                    <Button size="sm" variant="outline">
-                      <Mail className="h-3 w-3" />
+                    <Button size="sm" variant="outline" asChild>
+                      <a href={`mailto:${lead.email}`}>
+                        <Mail className="h-3 w-3" />
+                      </a>
                     </Button>
                   </div>
                 </div>
@@ -194,8 +207,8 @@ export default function CRMLeadDetail() {
             <Separator />
             
             <div className="text-sm text-muted-foreground">
-              <p>Cadastrado em: {formatDate(lead.created_at)}</p>
-              <p>Última atualização: {formatDate(lead.updated_at)}</p>
+              <p>Cadastrado em: {formatDateTime(lead.created_at)}</p>
+              <p>Última atualização: {formatDateTime(lead.updated_at)}</p>
             </div>
           </CardContent>
         </Card>
@@ -234,7 +247,7 @@ export default function CRMLeadDetail() {
                       </p>
                     </div>
                     <span className="text-sm text-muted-foreground">
-                      {formatDate(interaction.created_at)}
+                      {formatDateTime(interaction.created_at)}
                     </span>
                   </div>
                 </div>

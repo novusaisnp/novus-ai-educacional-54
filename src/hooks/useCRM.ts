@@ -93,7 +93,8 @@ export const useLeads = (params?: { status?: string; search?: string }) => {
       // Transformar dados de entidades (papel VISITANTE) para formato Lead
       const leads: Lead[] = (data || []).map(visitor => {
         const papel = Array.isArray(visitor.entidade_papeis) ? visitor.entidade_papeis[0] : visitor.entidade_papeis;
-        const dadosPapel = (papel?.dados_papel ?? null) as { relation?: string; visit_date?: string; purpose?: string; notes?: string } | null;
+        const dadosPapel = (papel?.dados_papel ?? null) as { relation?: string; visit_date?: string; purpose?: string; notes?: string; status?: string } | null;
+        const status = (dadosPapel?.status ?? 'ativo') as Lead['status'];
         return {
           id: visitor.id,
           organization_id: visitor.organization_id,
@@ -105,8 +106,8 @@ export const useLeads = (params?: { status?: string; search?: string }) => {
           visit_date: dadosPapel?.visit_date ?? '',
           purpose: dadosPapel?.purpose,
           notes: dadosPapel?.notes,
-          status: 'ativo' as const, // Status padrão
-          convertido: false,
+          status,
+          convertido: status === 'convertido',
           created_at: visitor.created_at,
           updated_at: visitor.updated_at
         };
@@ -140,7 +141,8 @@ export const useLead = (id: string) => {
       }
 
       const papel = Array.isArray(data.entidade_papeis) ? data.entidade_papeis[0] : data.entidade_papeis;
-      const dadosPapel = (papel?.dados_papel ?? null) as { relation?: string; visit_date?: string; purpose?: string; notes?: string } | null;
+      const dadosPapel = (papel?.dados_papel ?? null) as { relation?: string; visit_date?: string; purpose?: string; notes?: string; status?: string } | null;
+      const status = (dadosPapel?.status ?? 'ativo') as Lead['status'];
 
       // Transformar dados de entidade (papel VISITANTE) para formato Lead
       const lead: Lead = {
@@ -154,8 +156,8 @@ export const useLead = (id: string) => {
         visit_date: dadosPapel?.visit_date ?? '',
         purpose: dadosPapel?.purpose,
         notes: dadosPapel?.notes,
-        status: 'ativo' as const,
-        convertido: false,
+        status,
+        convertido: status === 'convertido',
         created_at: data.created_at,
         updated_at: data.updated_at
       };
@@ -165,6 +167,41 @@ export const useLead = (id: string) => {
     enabled: !!orgData?.organization_id && !!id,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
+  });
+};
+
+// Move um lead entre colunas do kanban — grava em entidade_papeis.dados_papel
+// (jsonb), campo status não existia antes (kanban era decorativo, toda linha
+// caía em 'ativo' fixo no map acima). Fetch+merge porque PostgREST não faz
+// merge parcial de jsonb num único update.
+export const useUpdateLeadStatus = () => {
+  const queryClient = useQueryClient();
+  const { data: orgData } = useOrganization();
+
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: Lead['status'] }) => {
+      const { data: papel, error: fetchError } = await supabase
+        .from('entidade_papeis')
+        .select('id, dados_papel')
+        .eq('entidade_id', id)
+        .eq('papel', 'VISITANTE')
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const nextDadosPapel = { ...(papel.dados_papel as Record<string, Json> ?? {}), status };
+
+      const { error } = await supabase
+        .from('entidade_papeis')
+        .update({ dados_papel: nextDadosPapel })
+        .eq('id', papel.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crm.leads', orgData?.organization_id] });
+      queryClient.invalidateQueries({ queryKey: ['crm.lead', orgData?.organization_id] });
+    },
   });
 };
 

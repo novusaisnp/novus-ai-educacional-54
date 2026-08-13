@@ -19,6 +19,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/
 import { useOrganization } from '@/hooks/useOrganization';
 import { supabase } from '@/integrations/supabase/client';
 import { generateAttendanceReportPdf } from '@/features/academico/lib/generateAttendanceReportPdf';
+import { getEmpresaLogoUrl } from '@/integrations/erp/getEmpresaLogo';
 
 const reportSchema = z.object({
   classId: z.string().optional(),
@@ -32,6 +33,17 @@ type ReportFormData = z.infer<typeof reportSchema>;
 // Valores devem bater com o CHECK constraint de public.attendance.status no banco
 // (attendance_status_check: presente/falta/atraso/justificada) — não são livres.
 type AttendanceStatus = 'presente' | 'falta' | 'atraso' | 'justificada';
+
+async function fetchLogoBytes(orgId: string, fallbackUrl?: string | null): Promise<Uint8Array | null> {
+  try {
+    const url = (await getEmpresaLogoUrl(orgId)) || fallbackUrl;
+    if (!url) return null;
+    const response = await fetch(url);
+    return response.ok ? new Uint8Array(await response.arrayBuffer()) : null;
+  } catch {
+    return null;
+  }
+}
 
 interface AttendanceRecord {
   id: string;
@@ -221,8 +233,13 @@ export default function ChamadaRelatorio() {
   const handlePdfExport = async () => {
     if (attendanceData.length === 0) return;
 
+    const logoBytes = orgData?.organization_id
+      ? await fetchLogoBytes(orgData.organization_id, orgData.organizations?.logo_url)
+      : null;
+
     const pdfBytes = await generateAttendanceReportPdf({
       organizationName: orgData?.organizations?.name || 'NOVUS.AI Educacional',
+      logoBytes,
       className: selectedClass?.name || 'Todas as turmas',
       subjectName: selectedSubject?.name || 'Todas as disciplinas',
       dateStart: format(dateStart, 'dd/MM/yyyy'),

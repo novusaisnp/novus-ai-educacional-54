@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1041503347421",
+    "project_id": "novusai-78017",
+    "storage_bucket": "novusai-78017.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1041503347421:android:6e02f8f175e202d1da7134",
+        "android_client_info": {
+          "package_name": "ai.novus.educacional"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMp6hU8ZwwDoPCiCwUx8Z-TwfQAkTmCLg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

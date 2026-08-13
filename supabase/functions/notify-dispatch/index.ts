@@ -8,10 +8,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// 'push' entrou nos CHECK de notification_queue/templates/contact_consents na
+// migration 20260814020000. Para esse canal, `recipient` é o user_id do dono
+// dos tokens — não um e-mail/telefone.
+type Channel = "email" | "whatsapp" | "push";
+
 type QueueItem = {
   id: string;
   organization_id: string;
-  channel: "email" | "whatsapp";
+  channel: Channel;
   event_type: string;
   recipient: string;
   payload: Record<string, unknown>;
@@ -27,7 +32,7 @@ type QueueItem = {
 type Template = {
   id: string;
   organization_id: string;
-  channel: "email" | "whatsapp";
+  channel: Channel;
   event_type: string;
   name: string;
   version: number;
@@ -122,6 +127,108 @@ async function checkConsent(orgId: string, channel: "email" | "whatsapp", payloa
   return Boolean((data as { allowed: boolean }).allowed);
 }
 
+// --- FCM HTTP v1 --------------------------------------------------------
+// A API v1 exige OAuth do service account (a legacy key foi desligada pelo
+// Google). Sem lib: JWT RS256 assinado com WebCrypto e trocado por token.
+
+const fcmServiceAccount = (() => {
+  const raw = Deno.env.get("FCM_SERVICE_ACCOUNT");
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as { client_email: string; private_key: string; project_id: string };
+  } catch {
+    console.warn("FCM_SERVICE_ACCOUNT não é um JSON válido");
+    return null;
+  }
+})();
+
+const b64url = (bytes: Uint8Array) =>
+  btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
+async function fcmAccessToken(): Promise<string> {
+  const account = fcmServiceAccount!;
+  const pem = account.private_key.replace(/-----[A-Z ]+-----/g, "").replace(/\s/g, "");
+  const key = await crypto.subtle.importKey(
+    "pkcs8",
+    Uint8Array.from(atob(pem), (c) => c.charCodeAt(0)),
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+
+  const issuedAt = Math.floor(Date.now() / 1000);
+  const claim = {
+    iss: account.client_email,
+    scope: "https://www.googleapis.com/auth/firebase.messaging",
+    aud: "https://oauth2.googleapis.com/token",
+    iat: issuedAt,
+    exp: issuedAt + 3600,
+  };
+  const encoder = new TextEncoder();
+  const unsigned = `${b64url(encoder.encode(JSON.stringify({ alg: "RS256", typ: "JWT" })))}.${b64url(encoder.encode(JSON.stringify(claim)))}`;
+  const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, encoder.encode(unsigned));
+  const assertion = `${unsigned}.${b64url(new Uint8Array(signature))}`;
+
+  const resp = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion }),
+  });
+  const json = await resp.json();
+  if (!resp.ok) throw new Error(`fcm_oauth_${resp.status}: ${JSON.stringify(json)}`);
+  return json.access_token as string;
+}
+
+/**
+ * Envia para todos os aparelhos do usuário. Token que o Google diz não existir
+ * mais (app desinstalado) é apagado — senão a fila tenta pra sempre.
+ * Retorna quantos aparelhos aceitaram.
+ */
+async function sendPush(userId: string, title: string, body: string, route?: string): Promise<number> {
+  const { data: tokens } = await supabase
+    .from("push_tokens")
+    .select("token")
+    .eq("user_id", userId);
+
+  if (!tokens?.length) throw new Error("push_sem_token");
+
+  const accessToken = await fcmAccessToken();
+  const endpoint = `https://fcm.googleapis.com/v1/projects/${fcmServiceAccount!.project_id}/messages:send`;
+  let delivered = 0;
+
+  for (const { token } of tokens as { token: string }[]) {
+    const resp = await fetch(endpoint, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: {
+          token,
+          notification: { title, body },
+          // O app abre nessa rota ao tocar na notificação.
+          data: route ? { route } : undefined,
+          android: { priority: "HIGH" },
+        },
+      }),
+    });
+
+    if (resp.ok) {
+      delivered += 1;
+      continue;
+    }
+
+    const detail = await resp.text();
+    if (resp.status === 404 || detail.includes("UNREGISTERED") || detail.includes("INVALID_ARGUMENT")) {
+      await supabase.from("push_tokens").delete().eq("token", token);
+      console.warn("push token removido", { status: resp.status });
+      continue;
+    }
+    throw new Error(`fcm_${resp.status}: ${detail}`);
+  }
+
+  if (delivered === 0) throw new Error("push_sem_token");
+  return delivered;
+}
+
 async function insertDelivery(orgId: string, queueId: string, status: string, details?: Record<string, unknown>, providerMsgId?: string) {
   await supabase.from("notification_deliveries").insert({
     organization_id: orgId,
@@ -142,7 +249,7 @@ async function updateQueueStatus(id: string, status: QueueItem["status"], error?
 
 async function createInteraction(opts: {
   organization_id: string;
-  channel: "email" | "whatsapp";
+  channel: Channel;
   summary: string;
   entity_type?: string;
   entity_id?: string;
@@ -276,12 +383,34 @@ async function processItem(item: QueueItem) {
       return;
     }
 
+    if (item.channel === "push") {
+      if (!fcmServiceAccount) {
+        throw new Error("provider_ausente_push");
+      }
+      // recipient é o user_id; os aparelhos vêm de push_tokens.
+      const delivered = await sendPush(
+        item.recipient,
+        subject || "NOVUS.AI Educacional",
+        text,
+        item.payload?.route as string | undefined,
+      );
+
+      await insertDelivery(item.organization_id, item.id, "sent", { provider: "fcm", devices: delivered });
+      await updateQueueStatus(item.id, "sent", null);
+      await logAudit(item.organization_id, "notification_sent", "notification_queue", {
+        queue_id: item.id, channel: item.channel, event_type: item.event_type,
+      });
+      return;
+    }
+
     // Canal desconhecido
     throw new Error(`canal_desconhecido_${item.channel}`);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err ?? "erro_desconhecido");
 
-    if (message.startsWith("provider_ausente")) {
+    // push_sem_token não é falha de envio: o usuário simplesmente não tem o app
+    // instalado. Retentar não muda nada, então entra como skipped.
+    if (message.startsWith("provider_ausente") || message === "push_sem_token") {
       // Sem provider: marcar skipped + interaction + audit
       await insertDelivery(item.organization_id, item.id, "skipped", { reason: message });
       await updateQueueStatus(item.id, "skipped", message);

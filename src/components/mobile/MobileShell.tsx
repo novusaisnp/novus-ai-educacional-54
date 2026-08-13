@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { Style, StatusBar } from '@capacitor/status-bar';
 import MobileTabBar, { type MobileTab } from './MobileTabBar';
 import { isNativeApp } from '@/lib/native';
+import { usePushRegistration } from '@/hooks/usePushRegistration';
 
 /**
  * Casca das rotas /m/*: conteúdo rolável + tab bar fixa. Sem sidebar, sem
@@ -14,6 +15,9 @@ export default function MobileShell({ tabs }: { tabs: MobileTab[] }) {
   useEffect(() => {
     if (isNativeApp) StatusBar.setStyle({ style: Style.Light });
   }, []);
+
+  // Só dentro do app: pede permissão e guarda o token do aparelho.
+  usePushRegistration();
 
   return (
     <div className="min-h-screen bg-background">

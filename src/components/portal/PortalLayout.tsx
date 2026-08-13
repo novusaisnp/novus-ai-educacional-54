@@ -2,7 +2,6 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { usePortalAuth } from "@/hooks/usePortalAuth";
-import { useOrganization } from "@/hooks/useOrganization";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Home,
@@ -18,6 +17,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
 import { PWAStatus } from "@/components/pwa/PWAStatus";
+import OrgLogo from "@/components/OrgLogo";
 import { logAuditSafe } from "@/utils/auditSafe";
 
 const navigation = [
@@ -33,7 +33,6 @@ export function PortalLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { guardian } = usePortalAuth();
-  const { data: orgData } = useOrganization();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -65,14 +64,9 @@ export function PortalLayout() {
           )}
         >
           <div className="flex flex-col h-full">
-            {/* Header */}
-            <div className="flex items-center justify-between h-16 px-6 border-b">
-              <div>
-                <h1 className="text-lg font-semibold">Portal</h1>
-                <p className="text-xs text-muted-foreground">
-                  {orgData?.organizations?.name}
-                </p>
-              </div>
+            {/* Header: marca da instituição, não o nome do módulo */}
+            <div className="flex h-20 items-center justify-center border-b px-6">
+              <OrgLogo className="max-h-14" />
             </div>
 
             {/* PWA Status */}
@@ -132,7 +126,7 @@ export function PortalLayout() {
             >
               <Menu className="h-5 w-5" />
             </Button>
-            <h1 className="text-lg font-semibold">Portal dos Responsáveis</h1>
+            <OrgLogo className="max-h-10" />
             <div />
           </div>
 

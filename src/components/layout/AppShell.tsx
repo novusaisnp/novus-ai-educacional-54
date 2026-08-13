@@ -45,7 +45,7 @@ import { useSidebarContext, SidebarProvider } from './sidebar-context';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useIAAccess } from '@/hooks/useIAAccess';
 import { useOrganization } from '@/hooks/useOrganization';
-import { useEmpresaLogo } from '@/hooks/useEmpresaLogo';
+import OrgLogo from '@/components/OrgLogo';
 import { logAudit } from '@/lib/audit/logAudit';
 import { PWAStatus } from '@/components/pwa/PWAStatus';
 import DebugBanner from "@/components/DebugBanner";
@@ -253,7 +253,6 @@ function TopBar() {
   const { data: userRole } = useUserRole();
   const { canAccess } = useIAAccess();
   const { orgId, data: orgData } = useOrganization();
-  const { data: empresaLogoUrl } = useEmpresaLogo(orgId, orgData?.organizations?.logo_url);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [trocarSenhaOpen, setTrocarSenhaOpen] = useState(false);
   const [trocandoSenha, setTrocandoSenha] = useState(false);
@@ -325,13 +324,9 @@ function TopBar() {
 
   return (
     <header className="relative flex min-h-14 items-center justify-between border-b bg-background px-4">
-      {empresaLogoUrl && (
-        <img
-          src={empresaLogoUrl}
-          alt={orgData?.organizations?.name ?? 'Logo da instituição'}
-          className="absolute left-1/2 top-1/2 h-16 max-w-[240px] -translate-x-1/2 -translate-y-1/2 object-contain hidden sm:block"
-        />
-      )}
+      {/* Some em telas estreitas pra não brigar com o menu e o nome do usuário;
+          lá quem mostra a marca é o cabeçalho do app mobile. */}
+      <OrgLogo className="absolute left-1/2 top-1/2 hidden h-16 max-w-[240px] -translate-x-1/2 -translate-y-1/2 sm:block" />
 
       <div className="flex items-center space-x-4">
         {/* Mobile menu trigger */}

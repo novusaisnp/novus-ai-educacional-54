@@ -3661,6 +3661,16 @@ export type Database = {
       erp_financeiro_ativo: { Args: never; Returns: boolean }
       get_current_user_role: { Args: never; Returns: string }
       is_authenticated: { Args: never; Returns: boolean }
+      org_branding: {
+        Args: never
+        Returns: {
+          empresa_representada_id: string
+          erp_base_url: string
+          logo_url: string
+          name: string
+          organization_id: string
+        }[]
+      }
       set_request_status: {
         Args: { new_status: string; request_id: string }
         Returns: Json

@@ -4,8 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { useOrganization } from '@/hooks/useOrganization';
 import { usePortalData } from '@/hooks/usePortalData';
 import { logAudit } from '@/lib/audit/logAudit';
-import { getERPConfig } from '@/lib/featureFlags';
-import { supabase } from '@/integrations/supabase/client';
+import { usePortalFinance } from '@/hooks/usePortalFinance';
+import { formatDateBR } from '@/lib/utils';
 import EmptyState from '@/components/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,7 +16,6 @@ import {
   CheckCircle,
   Clock
 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
 
 export default function PortalFinanceiro() {
   const { orgId } = useOrganization();
@@ -34,50 +33,8 @@ export default function PortalFinanceiro() {
     }
   }, [orgId, guardian?.id, period]);
 
-  const { data: erpConfig } = useQuery({
-    queryKey: ['erp-config', orgId],
-    queryFn: () => getERPConfig(orgId || ''),
-    enabled: !!orgId,
-  });
-  const hasERP = !!erpConfig?.enabled && !erpConfig?.mock;
-
-  const STATUS_MAP: Record<string, string> = {
-    aberto: 'open',
-    parcial: 'open',
-    pago: 'paid',
-    vencido: 'overdue',
-    cancelado: 'canceled',
-  };
-
   // Títulos/pagamentos recebidos do ERP via edu-erp-webhook (Porta 2 - Liquidação)
-  const { data: financialData, isLoading } = useQuery({
-    queryKey: ['portal-financial', orgId, guardian?.id, period],
-    queryFn: async () => {
-      if (!guardian?.id || !orgId) return null;
-
-      const { data, error } = await supabase
-        .from('financial_transactions')
-        .select('*')
-        .eq('organization_id', orgId)
-        .eq('guardian_id', guardian.id)
-        .order('due_date', { ascending: false });
-
-      if (error) throw error;
-
-      return {
-        receivables: (data || []).map((row) => ({
-          documentNumber: row.numero_documento || row.id,
-          description: row.description || 'Mensalidade',
-          dueDate: row.due_date,
-          amount: Number(row.amount ?? 0),
-          status: STATUS_MAP[row.status] || row.status,
-          paymentDate: row.payment_date,
-        })),
-      };
-    },
-    enabled: !!guardian?.id && hasERP && !!orgId,
-    staleTime: 5 * 60 * 1000,
-  });
+  const { hasERP, receivables, isLoading } = usePortalFinance(Number(period));
 
   if (!hasERP) {
     return (
@@ -157,8 +114,6 @@ export default function PortalFinanceiro() {
         return 'outline';
     }
   };
-
-  const receivables = financialData?.receivables || [];
 
   return (
     <div className="space-y-6">
@@ -252,11 +207,11 @@ export default function PortalFinanceiro() {
                       <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                         <span className="flex items-center">
                           <Calendar className="h-3 w-3 mr-1" />
-                          Vencimento: {new Date(receivable.dueDate).toLocaleDateString('pt-BR')}
+                          Vencimento: {formatDateBR(receivable.dueDate)}
                         </span>
                         {receivable.paymentDate && (
                           <span>
-                            Pago em: {new Date(receivable.paymentDate).toLocaleDateString('pt-BR')}
+                            Pago em: {formatDateBR(receivable.paymentDate)}
                           </span>
                         )}
                       </div>

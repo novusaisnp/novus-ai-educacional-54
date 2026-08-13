@@ -14,3 +14,17 @@ export function cn(...inputs: ClassValue[]) {
 export function toLocalISODate(date: Date = new Date()): string {
   return date.toLocaleDateString('en-CA');
 }
+
+/**
+ * Colunas DATE do Postgres voltam como 'YYYY-MM-DD'. `new Date('2026-08-12')`
+ * é interpretado como UTC e, em UTC-3, imprime o dia anterior. O sufixo
+ * 'T00:00:00' força interpretação local.
+ */
+export function parseDateOnly(date: string): Date {
+  return new Date(`${date}T00:00:00`);
+}
+
+export function formatDateBR(date?: string | null): string {
+  if (!date) return '—';
+  return parseDateOnly(date).toLocaleDateString('pt-BR');
+}

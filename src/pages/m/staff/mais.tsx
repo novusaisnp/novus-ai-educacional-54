@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 // desktop — aqui é só o atalho, não uma reimplementação.
 const ITEMS = [
   { icon: LayoutDashboard, label: 'Painel completo', to: '/app/dashboard' },
-  { icon: Users, label: 'Alunos', to: '/app/alunos' },
+  { icon: Users, label: 'Alunos', to: '/m/staff/alunos' },
   { icon: GraduationCap, label: 'Notas', to: '/app/academico/notas' },
 ];
 

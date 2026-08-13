@@ -24,9 +24,11 @@ const FamiliaInicio = lazy(() => import('@/pages/m/familia/inicio'));
 const FamiliaAcademico = lazy(() => import('@/pages/m/familia/academico'));
 const FamiliaMural = lazy(() => import('@/pages/m/familia/mural'));
 const FamiliaMensagens = lazy(() => import('@/pages/m/familia/mensagens'));
+const FamiliaFinanceiro = lazy(() => import('@/pages/m/familia/financeiro'));
 const FamiliaMais = lazy(() => import('@/pages/m/familia/mais'));
 
 const StaffChamada = lazy(() => import('@/pages/m/staff/chamada'));
+const StaffAlunos = lazy(() => import('@/pages/m/staff/alunos'));
 const StaffPublicar = lazy(() => import('@/pages/m/staff/publicar'));
 const StaffMensagens = lazy(() => import('@/pages/m/staff/mensagens'));
 const StaffMais = lazy(() => import('@/pages/m/staff/mais'));
@@ -79,6 +81,7 @@ const mobileRoutes = (
         <Route path="academico" element={<FamiliaAcademico />} />
         <Route path="mural" element={<FamiliaMural />} />
         <Route path="mensagens" element={<FamiliaMensagens />} />
+        <Route path="financeiro" element={<FamiliaFinanceiro />} />
         <Route path="mais" element={<FamiliaMais />} />
       </Route>
     </Route>
@@ -88,6 +91,7 @@ const mobileRoutes = (
         <Route path="staff" element={<MobileShell tabs={STAFF_TABS} />}>
           <Route index element={<StaffChamada />} />
           <Route path="chamada" element={<StaffChamada />} />
+          <Route path="alunos" element={<StaffAlunos />} />
           <Route path="publicar" element={<StaffPublicar />} />
           <Route path="mensagens" element={<StaffMensagens />} />
           <Route path="mais" element={<StaffMais />} />

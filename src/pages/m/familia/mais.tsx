@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 
 // Financeiro, Documentos e Perfil moram aqui em vez de virar aba própria —
-// são acessos ocasionais, não a jornada diária da família. Por enquanto abrem
-// as telas do portal web (mesmo login, dentro do WebView).
+// são acessos ocasionais, não a jornada diária da família. Documentos e perfil
+// ainda abrem as telas do portal web (mesmo login, dentro do WebView).
 const ITEMS = [
-  { icon: Wallet, label: 'Financeiro', to: '/portal/financeiro' },
+  { icon: Wallet, label: 'Financeiro', to: '/m/familia/financeiro' },
   { icon: FileText, label: 'Documentos', to: '/portal/documentos' },
   { icon: User, label: 'Meus dados', to: '/portal/dashboard' },
 ];

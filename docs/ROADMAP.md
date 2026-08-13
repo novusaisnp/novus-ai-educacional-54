@@ -4,7 +4,7 @@
 uma escola cliente". Para o histórico do que foi feito em cada sessão, veja [`STATUS.md`](./STATUS.md);
 para regras e arquitetura estáveis, [`../CLAUDE.md`](../CLAUDE.md).
 
-**Nota global: 90/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12, F1–F10 aplicadas/checadas (F8 e F9 parciais).
+**Nota global: 91/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12, F1–F10 aplicadas/checadas (F8 e F9 parciais) + Eventos.
 
 ## Rubrica
 
@@ -38,7 +38,7 @@ no app. O padrão "RLS sem policy" que assombrou este schema está, hoje, resolv
 | [Integração ERP](#integração-erp-9210) | 10 | **92** | — | — |
 | [CRM](#crm-7410) | 8 | **74** | Campanhas fora do escopo v1 | F9 (em andamento) |
 | Pedagógico (`app/pedagogico.tsx`) | 1 | **0** | tudo — 4 cards "Em desenvolvimento", zero query | F11 |
-| Eventos (`app/eventos.tsx`) | 1 | **0** | tudo — idem | F11 |
+| Eventos (`app/eventos.tsx`) | 1 | **90** | sem repetição/recorrência de evento (por design, não pedido) | — |
 
 ### Acadêmico — 97/100
 
@@ -200,7 +200,7 @@ como real** e **botão morto em CTA principal** bloqueiam; tela que se declara "
 | **F8 (parcial)** | ~~Rota `*` cair em `NotFound`~~ feito em 2026-08-12. Captcha continua desligado — depende do usuário adicionar o domínio de produção na allowlist do Cloudflare Turnstile; quando fizer, reativar `security_captcha_enabled` via Supabase Auth API nos dois projetos (educacional + ERP) | painel Cloudflare (ação do usuário) | Auth 90→95, falta captcha pra 100 |
 | **F9 (em andamento)** | CRM v1 "estilo Helena" — escopo fechado (sem WhatsApp/IA autônoma ainda). Fatia 1 (kanban de Leads) feita. Fatia 2 sugerida: mesma UX rica na tela de detalhe do lead (`leads/[id].tsx`) + Interações real | `crm/leads/[id].tsx`, `crm/interacoes.tsx` | CRM 62→? |
 | ~~**F10**~~ | ~~Corrigir bugs + testar saída contra sync-webhook real~~ — feito em 2026-08-12 (bugs já corrigidos em sessão anterior do ERP; `upsertClientByCPF` testado ao vivo end-to-end) | repo irmão | ERP 66→92 |
-| **F11** | Pedagógico e Eventos: definir escopo real ou remover a tela do menu (fachada visível ao cliente é pior que ausência) | `pedagogico.tsx`, `eventos.tsx`, `AppShell.tsx` | +2 global, ganho de percepção maior que o número |
+| **F11 (reduzida)** | Pedagógico: ~~Eventos~~ feito em 2026-08-13 (CRUD real de eventos escolares). Falta só Pedagógico — definir escopo real ou remover do menu | `pedagogico.tsx`, `AppShell.tsx` | +1 global |
 
 Fora desta fila, já registrado em `STATUS.md` como backlog e não pontuado aqui: dívida de lint (~234 erros,
 majoritariamente em Edge Functions), rotação de credenciais, secrets do Supabase (`OPENAI_API_KEY`,

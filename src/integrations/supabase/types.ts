@@ -1773,6 +1773,94 @@ export type Database = {
           },
         ]
       }
+      lesson_plans: {
+        Row: {
+          class_id: string
+          content: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          lesson_date: string
+          objectives: string | null
+          organization_id: string
+          subject_id: string
+          term_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lesson_date: string
+          objectives?: string | null
+          organization_id: string
+          subject_id: string
+          term_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lesson_date?: string
+          objectives?: string | null
+          organization_id?: string
+          subject_id?: string
+          term_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_plans_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_plans_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_plans_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_plans_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_plans_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_plans_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "academic_terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_deliveries: {
         Row: {
           created_at: string
@@ -1981,6 +2069,155 @@ export type Database = {
           tipo_pessoa_permitido?: string
         }
         Relationships: []
+      }
+      pedagogical_goals: {
+        Row: {
+          class_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          organization_id: string
+          project_id: string | null
+          status: string
+          target_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          class_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          organization_id: string
+          project_id?: string | null
+          status?: string
+          target_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          organization_id?: string
+          project_id?: string | null
+          status?: string
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedagogical_goals_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedagogical_goals_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedagogical_goals_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedagogical_goals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedagogical_goals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "pedagogical_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pedagogical_projects: {
+        Row: {
+          class_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          organization_id: string
+          start_date: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          class_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          organization_id: string
+          start_date?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          organization_id?: string
+          start_date?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedagogical_projects_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedagogical_projects_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedagogical_projects_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedagogical_projects_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       periods: {
         Row: {
@@ -2604,6 +2841,85 @@ export type Database = {
           },
           {
             foreignKeyName: "student_pei_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_tracking_notes: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          id: string
+          note: string
+          note_date: string
+          organization_id: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note: string
+          note_date?: string
+          organization_id: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string
+          note_date?: string
+          organization_id?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_tracking_notes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_tracking_notes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_tracking_notes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_tracking_notes_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_tracking_notes_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_risco_evasao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_tracking_notes_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "v_students_safe"

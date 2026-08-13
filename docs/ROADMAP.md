@@ -39,7 +39,7 @@ no app. O padrão "RLS sem policy" que assombrou este schema está, hoje, resolv
 | [CRM](#crm-7410) | 8 | **74** | Campanhas fora do escopo v1 | F9 (em andamento) |
 | Pedagógico (`app/pedagogico.tsx`) | 1 | **90** | delete não testado no browser (`confirm()` trava automação, mesmo mecanismo do Eventos) | — |
 | Eventos (`app/eventos.tsx`) | 1 | **90** | sem repetição/recorrência de evento (por design, não pedido) | — |
-| [App mobile (`/m/*`)](#app-mobile-m-4010) | 0 | **40** | Verificado (nenhuma tela aberta ao vivo); Funcional (Fases 4–7 do plano) | Fases 4–7 do [`MOBILE_PLAN.md`](./MOBILE_PLAN.md) |
+| [App mobile (`/m/*`)](#app-mobile-m-4010) | 0 | **88** | UX (layout considerado fraco pelo usuário — "funilaria" adiada); iOS não iniciado (exige Mac + conta Apple) | polimento visual do app |
 
 ### Acadêmico — 97/100
 
@@ -184,19 +184,19 @@ só com `mock=true`. `erpEmit` ainda tem um método que responde "não implement
 `useOrgSettings` novo — mesma policy `organizations_update` já existente (admin/coordenacao). Falta só
 `isSaving`/loading no botão de submit da tela (`config/integracoes.tsx`), não corrigido nesta fatia.
 
-### App mobile (`/m/*`) — 40/100
+### App mobile (`/m/*`) — 88/100
 
 **Peso 0 de propósito**: é produto novo, ainda não entregue a nenhuma escola — não deve puxar a nota
 global do sistema web pra baixo. Vira peso real quando a v1 (Fases 0–7 do [`MOBILE_PLAN.md`](./MOBILE_PLAN.md))
-fechar. Iniciado em 2026-08-14, branch `feat/app-mobile`.
+fechar. Fases 0–7 fechadas em 2026-08-13: roda como APK Android (Capacitor 8), com push real do FCM chegando no aparelho e live-test das duas peles com login real.
 
 | Eixo | Nota | Por quê |
 |---|---|---|
-| Funcional | 10/20 | Fases 0–3 completas + metade da 4; faltam Fases 5 (financeiro/consulta de aluno), 6 (push) e 7 (Capacitor) |
+| Funcional | 20/20 | Fases 0–7 completas: família (início/acadêmico/mural/mensagens/financeiro), staff (chamada offline/publicar/mensagens/alunos), casca Capacitor e push FCM |
 | Dado real | 20/20 | Nenhum mock — tudo lê e grava no Supabase, reusando os hooks do portal |
 | RLS | 20/20 | `announcement_responses` e `push_tokens` criadas já com policy explícita, conferidas em `pg_policies` |
-| UX | 10/20 | Loading/empty tratados; falta o polimento que só o teste no device revela (safe areas, teclado, gesto de voltar) |
-| Verificado | 0/20 | **Nenhuma tela `/m/*` aberta ao vivo ainda** — é o eixo mais barato de subir e o próximo passo natural |
+| UX | 12/20 | Safe areas e teclado conferidos no device; **layout considerado fraco pelo usuário** — polimento visual é a próxima fatia, adiada de propósito |
+| Verificado | 16/20 | Duas peles abertas com login real (emulador Android + navegador); push e chamada gravando conferidos no banco. Falta iOS, que exige Mac + conta Apple paga |
 
 Dívida específica: `/app/academico/chamada` ainda não consome o `useAttendanceSheet`, então existem duas
 cópias do mesmo upsert — exatamente o que o plano queria evitar.

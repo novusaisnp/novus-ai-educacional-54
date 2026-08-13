@@ -1,6 +1,30 @@
 # STATUS — novus-educacional
 
-**Última atualização: 2026-08-12 (live-test do `/m/staff/*`, 2 bugs de chamada corrigidos, varredura do padrão `toISOString`, Fase 5 do `MOBILE_PLAN.md` construída — `main`).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+**Última atualização: 2026-08-13 (app mobile rodando como APK Android com push real chegando no aparelho — Fases 0–7 do `MOBILE_PLAN.md` completas; logo da instituição em todos os ambientes — `main`).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+
+## 🔖 Checkpoint de sessão (2026-08-13 — app rodando no Android, push real, e a logo da instituição em todo lugar)
+
+**Contexto**: continuação direta do checkpoint abaixo, na mesma virada de noite. Objetivo do usuário: "colocar o app pra rodar" antes de mexer em aparência. Terminou com o app instalado num emulador Android, recebendo push de verdade. Tudo em `main`.
+
+1. **Live-test da pele família** (o usuário criou a conta de responsável no Dashboard; o `user_id` foi ligado por SQL à entidade MAXWELL ROGER, que já tinha papel RESPONSAVEL e vínculo com o aluno ISAQUE). **Achou 3 bugs que quebravam 100% dos responsáveis**, no app *e* no portal web que já era dado como pronto:
+   - `usePortalData` mandava `performed_by = guardian.user_id` ao criar `interaction`, mas a FK aponta pra `profiles` (staff) — todo envio de mensagem falhava com violação de FK. Agora vai `null`; quem falou já está em `entity_type`/`entity_id` + `direction='outbound'`.
+   - `erp_integration_config` é staff-only, então `getERPConfig` caía no default "desligado" e o financeiro dizia "indisponível" com o ERP ativo. Como a tabela guarda o `signing_secret`, a saída foi a função `erp_financeiro_ativo()` devolvendo só o booleano — não abrir a linha pro responsável.
+   - `financial_transactions` não tinha policy de guardian: o responsável não veria as próprias mensalidades. Policy nova restrita a `guardian_id = current_guardian_id()`. Migration `20260812060000`.
+2. **Fase 7 — Capacitor**: `capacitor.config.ts` (`ai.novus.educacional`, `webDir: dist`, sem `server.url`), redirect nativo `/` → `/m` via `src/lib/native.ts`, status bar clara, `viewport-fit=cover` no `index.html` (sem isso `env(safe-area-inset-*)` volta 0 em tela com notch), projeto `android/` commitado, scripts `android:sync`/`android:open`. **Capacitor 8 exige JDK 21** — a máquina só tinha 17; instalado o Temurin 21, e o caminho vai por `JAVA_HOME` na hora do build, nunca no `gradle.properties` (arquivo de repo).
+3. **App rodando**: SDK já existia mas sem emulador; o usuário instalou o Android Studio, baixamos a imagem `android-35 google_apis_playstore`, criamos o AVD `novus_pixel`, e o APK debug (13,2 MB) foi instalado e aberto. Confirmado ao vivo: boot em `/` → `/m` → login do portal, e depois a pele família inteira com login real.
+4. **Fase 6 — push (FCM HTTP v1)**: o usuário criou o projeto Firebase (`novusai-78017`), pôs `google-services.json` em `android/app/` e cadastrou o secret `FCM_SERVICE_ACCOUNT`. Código: `sendPush()` no `notify-dispatch` com OAuth do service account assinado por WebCrypto (RS256 — a legacy key foi desligada pelo Google e não há lib no Deno), token morto (`UNREGISTERED`) apagado, usuário sem token vira `skipped` e não `failed`; `usePushRegistration` pede permissão, cria o canal e faz upsert do token; tocar na notificação navega pro `payload.route`. **Pegadinha real**: sem `default_notification_channel_id` no `AndroidManifest`, o FCM entrega e o Android não desenha nada — aconteceu nos dois primeiros testes ("Missing Default Notification Channel metadata" no logcat). Depois do canal, a notificação apareceu na bandeja do emulador.
+5. **Chamada offline persistente** (`src/lib/attendanceQueue.ts`): a pausa de mutation do react-query vive em memória e fechar o app perdia a chamada. Agora o payload vai pro `localStorage` **antes** da tentativa de rede e só sai quando o servidor confirma; drena ao montar a tela e no evento `online`. Reenvio é seguro porque o upsert é idempotente pela UNIQUE — por isso a fila pôde ser burra, sem merge nem versionamento. 4 testes novos.
+6. **Logo da instituição em todos os ambientes** (pedido explícito do usuário): componente único `OrgLogo` no desktop, no portal e no cabeçalho do app, com o nome da instituição como fallback textual. Não funcionaria pro responsável — `erp_integration_config` e `organizations` são as duas staff-only —, então nasceu a RPC `org_branding()` (migration `20260813000000`), SECURITY DEFINER, devolvendo só nome, logo local e os dois campos públicos que montam a URL da logo no ERP. `useEmpresaLogo` virou `useOrgBranding`.
+
+**Verificação**: `typecheck` limpo, **54/54** testes, `build` verde, APK compilando. Push testado ponta a ponta contra o FCM real; financeiro do responsável testado com uma parcela de teste (removida depois).
+
+**Pendências**:
+- **iOS inteiro** — exige Mac + conta Apple paga (US$ 99/ano); nada foi feito.
+- Portal web e desktop com o `OrgLogo` novo **não foram vistos ao vivo** (a extensão do Chrome caiu no meio); só o app mobile foi conferido. Mesmo componente, mesma RPC.
+- Push em foreground não desenha nada (comportamento do Android): se quiser aviso com o app aberto, precisa `LocalNotifications`.
+- Service worker tenta pré-cachear `favicon.ico`, que não existe no bundle (`bad-precaching-response` no log). Inofensivo, não corrigido.
+- UI do app considerada fraca pelo usuário — "funilaria" adiada de propósito para depois da mecânica.
+- Dado de teste mantido a pedido: aviso "TESTE mobile aviso", chamada de 12/08 da turma TESTE, mensagem de teste na thread do responsável, e 3 linhas em `notification_queue` dos testes de push.
 
 ## 🔖 Checkpoint de sessão (2026-08-12 — live-test do app mobile staff + varredura de datas + Fase 5)
 

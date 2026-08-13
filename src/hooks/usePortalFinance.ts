@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { getERPConfig } from '@/lib/featureFlags';
+
 import { useOrganization } from './useOrganization';
 import { usePortalData } from './usePortalData';
 
@@ -48,12 +48,19 @@ export function usePortalFinance(periodDays?: number) {
   const { orgId } = useOrganization();
   const { guardian } = usePortalData();
 
-  const { data: erpConfig } = useQuery({
-    queryKey: ['erp-config', orgId],
-    queryFn: () => getERPConfig(orgId || ''),
+  // RPC em vez de getERPConfig: erp_integration_config guarda o signing_secret
+  // e só é legível por staff — o responsável lia default "desligado" e via
+  // "financeiro indisponível" com o ERP ativo.
+  const { data: hasERP = false } = useQuery({
+    queryKey: ['erp-financeiro-ativo', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('erp_financeiro_ativo');
+      if (error) throw error;
+      return !!data;
+    },
     enabled: !!orgId,
+    staleTime: 5 * 60 * 1000,
   });
-  const hasERP = !!erpConfig?.enabled && !erpConfig?.mock;
 
   const query = useQuery({
     queryKey: ['portal-financial', orgId, guardian?.id, periodDays ?? 'all'],

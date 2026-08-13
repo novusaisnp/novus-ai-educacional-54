@@ -86,7 +86,10 @@ export const usePortalData = () => {
           entity_type: 'guardian',
           entity_id: guardian.id,
           direction: 'outbound',
-          performed_by: guardian.user_id,
+          // performed_by é FK pra profiles (staff). Responsável não tem profile,
+          // então mandar o user_id dele quebrava todo envio com violação de FK.
+          // Quem falou já está em entity_type/entity_id + direction='outbound'.
+          performed_by: null,
           ...data,
         });
 

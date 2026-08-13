@@ -3658,6 +3658,7 @@ export type Database = {
       current_guardian_id: { Args: never; Returns: string }
       current_guardian_org_id: { Args: never; Returns: string }
       current_org_id: { Args: never; Returns: string }
+      erp_financeiro_ativo: { Args: never; Returns: boolean }
       get_current_user_role: { Args: never; Returns: string }
       is_authenticated: { Args: never; Returns: boolean }
       set_request_status: {

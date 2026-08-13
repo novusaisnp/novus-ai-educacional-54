@@ -23,7 +23,9 @@ const STATUS_UI: Record<AttendanceStatus, { label: string; className: string }> 
   justificada: { label: 'J', className: 'bg-info text-info-foreground' },
 };
 
-const today = () => new Date().toISOString().split('T')[0];
+// 'en-CA' formata como YYYY-MM-DD no fuso local. toISOString() daria UTC e, à
+// noite no Brasil (UTC-3), a chamada abriria já no dia seguinte.
+const today = () => new Date().toLocaleDateString('en-CA');
 
 export default function MobileStaffChamada() {
   const [classId, setClassId] = useState<string>('');

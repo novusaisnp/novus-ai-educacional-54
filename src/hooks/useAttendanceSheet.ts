@@ -106,8 +106,14 @@ export function useAttendanceSheet(params: { classId?: string; subjectId?: strin
     enabled: !!classId && !!subjectId && !!date && !!orgId,
   });
 
+  // Todo aluno da turma entra no mapa já como 'presente': a UI sempre exibiu
+  // esse default, mas ele não existia no estado — abrir a chamada e salvar sem
+  // tocar em ninguém gravava zero linhas e ainda assim dizia "registrada".
   useEffect(() => {
     const map: Record<string, AttendanceRecord> = {};
+    students.forEach((student) => {
+      map[student.id] = { student_id: student.id, status: 'presente' };
+    });
     existingAttendance.forEach((record) => {
       map[record.student_id] = {
         student_id: record.student_id,
@@ -116,7 +122,7 @@ export function useAttendanceSheet(params: { classId?: string; subjectId?: strin
       };
     });
     setAttendanceData(map);
-  }, [existingAttendance]);
+  }, [existingAttendance, students]);
 
   const save = useMutation({
     // mutationKey nomeada: é por ela que a UI enxerga a mutation pausada

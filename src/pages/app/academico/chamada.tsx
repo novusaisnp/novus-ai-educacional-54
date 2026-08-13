@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { format, startOfDay } from 'date-fns';
+import { useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { UserCheck, Calendar, Users, BookOpen, Save, Copy, RotateCcw, AlertTriangle } from 'lucide-react';
 
@@ -21,9 +21,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/hooks/useOrganization';
-import { useSession } from '@/hooks/useSession';
-import { useUserRole } from '@/hooks/useUserRole';
-import { useClassSubjects } from '@/hooks/useClassSubjects';
+import { useAttendanceSheet, type AttendanceStatus, type AttendanceRecord } from '@/hooks/useAttendanceSheet';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
 import { isSchoolDay } from '@/lib/schoolCalendar';
@@ -36,34 +34,12 @@ const attendanceSchema = z.object({
 
 type AttendanceFormData = z.infer<typeof attendanceSchema>;
 
-// Valores devem bater com o CHECK constraint de public.attendance.status no banco
-// (attendance_status_check: presente/falta/atraso/justificada) — não são livres.
-type AttendanceStatus = 'presente' | 'falta' | 'atraso' | 'justificada';
-
-interface AttendanceRecord {
-  student_id: string;
-  status: AttendanceStatus;
-  note?: string;
-}
-
-interface StudentWithAttendance {
-  id: string;
-  first_name: string;
-  last_name: string;
-  status?: AttendanceStatus;
-  note?: string;
-}
-
 export default function Chamada() {
   const searchParams = new URLSearchParams(window.location.search);
   const initialDate = searchParams.get('date') === 'today' ? new Date() : undefined;
 
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const { data: orgData } = useOrganization();
-  
-  const [attendanceData, setAttendanceData] = useState<Record<string, AttendanceRecord>>({});
-  const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
 
   const form = useForm<AttendanceFormData>({
     resolver: zodResolver(attendanceSchema),
@@ -74,60 +50,24 @@ export default function Chamada() {
 
   const { watch } = form;
   const [classId, subjectId, date] = watch(['classId', 'subjectId', 'date']);
+  const dateStr = date ? format(date, 'yyyy-MM-dd') : undefined;
 
-  // Query para listar turmas
-  const { data: classes = [] } = useQuery({
-    queryKey: ['classes', orgData?.organization_id],
-    queryFn: async () => {
-      if (!orgData?.organization_id) return [];
-      
-      const { data, error } = await supabase
-        .from('classes')
-        .select('id, name, year, series:series_id(name)')
-        .eq('organization_id', orgData.organization_id)
-        .order('name');
-        
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!orgData?.organization_id,
-  });
-
-  // Query para listar disciplinas
-  const { data: subjects = [] } = useQuery({
-    queryKey: ['subjects', orgData?.organization_id],
-    queryFn: async () => {
-      if (!orgData?.organization_id) return [];
-
-      const { data, error } = await supabase
-        .from('subjects')
-        .select('id, name, code')
-        .eq('organization_id', orgData.organization_id)
-        .order('name');
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!orgData?.organization_id,
-  });
-
-  // Currículo da turma selecionada (Fase 3 — atribuição disciplina↔turma↔professor).
-  // Turma sem nenhuma atribuição configurada ainda cai no fallback "mostrar todas as
-  // disciplinas" (transição, não quebra chamada.tsx pra turmas não configuradas).
-  const { user: currentUser } = useSession();
-  const { data: userRole } = useUserRole();
-  const { data: classSubjects = [] } = useClassSubjects(classId || undefined);
-
-  const availableSubjects = useMemo(() => {
-    if (classSubjects.length === 0) return subjects;
-
-    const assigned = userRole === 'professor'
-      ? classSubjects.filter((cs) => cs.teacher_id === currentUser?.id)
-      : classSubjects;
-
-    const assignedIds = new Set(assigned.map((cs) => cs.subject_id));
-    return subjects.filter((s) => assignedIds.has(s.id));
-  }, [subjects, classSubjects, userRole, currentUser?.id]);
+  // Turmas/disciplinas/alunos/upsert vivem no hook compartilhado com /m/staff/chamada.
+  const {
+    classes,
+    subjects,
+    availableSubjects,
+    students,
+    studentsLoading,
+    attendanceData,
+    setAttendanceData,
+    toggleStatus,
+    setNote,
+    markAllAs,
+    clearAll,
+    statusCounts,
+    save,
+  } = useAttendanceSheet({ classId, subjectId, date: dateStr });
 
   // Query para calendário letivo (períodos + exceções), usada só pro aviso não-bloqueante abaixo
   const { data: periods = [] } = useQuery({
@@ -163,50 +103,6 @@ export default function Chamada() {
     return isSchoolDay(date, periods, calendarExceptions as { date: string; type: 'feriado' | 'recesso' | 'reposicao' }[]);
   }, [date, periods, calendarExceptions]);
 
-  // Query para buscar alunos da turma
-  const { data: students = [], isLoading: studentsLoading } = useQuery({
-    queryKey: ['students-by-class', classId, orgData?.organization_id],
-    queryFn: async () => {
-      if (!classId || !orgData?.organization_id) return [];
-      
-      const { data, error } = await supabase
-        .from('enrollments')
-        .select(`
-          student_id,
-          students!inner(id, first_name, last_name)
-        `)
-        .eq('class_id', classId)
-        .eq('status', 'ativa')
-        .eq('organization_id', orgData.organization_id);
-        
-      if (error) throw error;
-      return data.map(enrollment => enrollment.students).filter(Boolean);
-    },
-    enabled: !!classId && !!orgData?.organization_id,
-  });
-
-  // Query para buscar registros de presença existentes
-  const { data: existingAttendance = [] } = useQuery({
-    queryKey: ['attendance', classId, subjectId, date?.toISOString()?.split('T')[0], orgData?.organization_id],
-    queryFn: async () => {
-      if (!classId || !subjectId || !date || !orgData?.organization_id) return [];
-      
-      const dateStr = format(date, 'yyyy-MM-dd');
-      
-      const { data, error } = await supabase
-        .from('attendance')
-        .select('*')
-        .eq('class_id', classId)
-        .eq('subject_id', subjectId)
-        .eq('date', dateStr)
-        .eq('organization_id', orgData.organization_id);
-        
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!classId && !!subjectId && !!date && !!orgData?.organization_id,
-  });
-
   // Query para buscar registros do dia anterior
   const { data: previousDayAttendance = [] } = useQuery({
     queryKey: ['previous-attendance', classId, subjectId, date?.toISOString()?.split('T')[0], orgData?.organization_id],
@@ -231,169 +127,26 @@ export default function Chamada() {
     enabled: !!classId && !!subjectId && !!date && !!orgData?.organization_id,
   });
 
-  // Mutation para salvar registros de presença
-  const saveAttendanceMutation = useMutation({
-    mutationFn: async (records: AttendanceRecord[]) => {
-      if (!classId || !subjectId || !date || !orgData?.organization_id) {
-        throw new Error('Dados incompletos');
-      }
-
-      const dateStr = format(date, 'yyyy-MM-dd');
-      
-      const attendanceRecords = records.map(record => ({
-        organization_id: orgData.organization_id,
-        class_id: classId,
-        subject_id: subjectId,
-        student_id: record.student_id,
-        date: dateStr,
-        status: record.status,
-        note: record.note || null,
-      }));
-
-      // A constraint UNIQUE real em public.attendance é (class_id, subject_id,
-      // student_id, date) — sem organization_id. Um onConflict com coluna que não
-      // faz parte de nenhuma constraint única faz o Postgres rejeitar com 400
-      // (42P10, "no unique or exclusion constraint matching the ON CONFLICT
-      // specification").
-      const { error } = await supabase
-        .from('attendance')
-        .upsert(attendanceRecords, {
-          onConflict: 'class_id,subject_id,student_id,date',
-        });
-
-      if (error) throw error;
-
-      // Auditoria: registrar operação em massa
-      const statusCounts = records.reduce((acc, record) => {
-        acc[record.status] = (acc[record.status] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-
-      await supabase
-        .from('audit_logs')
-        .insert({
-          organization_id: orgData.organization_id,
-          table_name: 'attendance',
-          action: 'attendance_upsert_many',
-          actor: (await supabase.auth.getUser()).data.user?.id,
-          diff: {
-            class_id: classId,
-            subject_id: subjectId,
-            date: dateStr,
-            total_records: records.length,
-            status_counts: statusCounts,
-          },
-        });
-    },
-    onSuccess: () => {
-      toast({
-        title: 'Sucesso',
-        description: 'Presença registrada com sucesso!',
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['attendance', classId, subjectId, date?.toISOString()?.split('T')[0], orgData?.organization_id],
-      });
-    },
-    onError: (error) => {
-      console.error('Erro ao salvar presença:', error);
-      toast({
-        title: 'Erro',
-        description: 'Erro ao salvar presença. Tente novamente.',
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Sincronizar dados existentes com o estado local
-  useEffect(() => {
-    const attendanceMap: Record<string, AttendanceRecord> = {};
-    existingAttendance.forEach(record => {
-      attendanceMap[record.student_id] = {
-        student_id: record.student_id,
-        status: record.status as AttendanceStatus,
-        note: record.note || undefined,
-      };
-    });
-    setAttendanceData(attendanceMap);
-  }, [existingAttendance]);
-
-  // Funções auxiliares
-  const toggleStatus = (studentId: string) => {
-    const currentStatus = attendanceData[studentId]?.status || 'presente';
-    const statuses: AttendanceStatus[] = ['presente', 'falta', 'atraso', 'justificada'];
-    const currentIndex = statuses.indexOf(currentStatus);
-    const nextStatus = statuses[(currentIndex + 1) % statuses.length];
-    
-    setAttendanceData(prev => ({
-      ...prev,
-      [studentId]: {
-        student_id: studentId,
-        status: nextStatus,
-        note: prev[studentId]?.note,
-      },
-    }));
-  };
-
-  const setNote = (studentId: string, note: string) => {
-    setAttendanceData(prev => ({
-      ...prev,
-      [studentId]: {
-        student_id: studentId,
-        status: prev[studentId]?.status || 'presente',
-        note: note || undefined,
-      },
-    }));
-  };
-
-  const markAllAs = (status: AttendanceStatus) => {
-    const newData: Record<string, AttendanceRecord> = {};
-    students.forEach(student => {
-      newData[student.id] = {
-        student_id: student.id,
-        status,
-        note: attendanceData[student.id]?.note,
-      };
-    });
-    setAttendanceData(newData);
-  };
-
-  const clearAll = () => {
-    setAttendanceData({});
-  };
-
   const copyFromPreviousDay = () => {
-    const newData: Record<string, AttendanceRecord> = {};
-    previousDayAttendance.forEach(record => {
-      newData[record.student_id] = {
-        student_id: record.student_id,
-        status: record.status as AttendanceStatus,
-        note: record.note || undefined,
-      };
-    });
-    setAttendanceData(newData);
-    toast({
-      title: 'Copiado',
-      description: 'Dados do dia anterior foram copiados!',
-    });
+    setAttendanceData(
+      Object.fromEntries(
+        previousDayAttendance.map((record) => [
+          record.student_id,
+          {
+            student_id: record.student_id,
+            status: record.status as AttendanceStatus,
+            note: record.note || undefined,
+          } as AttendanceRecord,
+        ])
+      )
+    );
+    toast({ title: 'Copiado', description: 'Dados do dia anterior foram copiados!' });
   };
 
-  const handleSave = () => {
-    const records = Object.values(attendanceData);
-    saveAttendanceMutation.mutate(records);
-  };
+  const handleSave = () => save.mutate(Object.values(attendanceData));
 
-  // Calculadora de resumo
-  const getStatusCounts = () => {
-    const counts = { presente: 0, falta: 0, atraso: 0, justificada: 0 };
-    Object.values(attendanceData).forEach(record => {
-      counts[record.status] = (counts[record.status] || 0) + 1;
-    });
-    return counts;
-  };
-
-  const statusCounts = getStatusCounts();
-  const selectedClass = classes.find(c => c.id === classId);
-  const selectedSubject = subjects.find(s => s.id === subjectId);
+  const selectedClass = classes.find((c) => c.id === classId);
+  const selectedSubject = subjects.find((s) => s.id === subjectId);
 
   const getStatusColor = (status: AttendanceStatus) => {
     switch (status) {
@@ -623,11 +376,11 @@ export default function Chamada() {
 
               <Button 
                 onClick={handleSave}
-                disabled={saveAttendanceMutation.isPending || Object.keys(attendanceData).length === 0}
+                disabled={save.isPending || Object.keys(attendanceData).length === 0}
                 className="w-full"
               >
                 <Save className="h-4 w-4 mr-2" />
-                {saveAttendanceMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
+                {save.isPending ? 'Salvando...' : 'Salvar Alterações'}
               </Button>
 
               <Button asChild variant="outline" className="w-full">

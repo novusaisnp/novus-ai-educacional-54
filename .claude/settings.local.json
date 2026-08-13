@@ -75,7 +75,8 @@
       "Bash(vercel env *)",
       "Bash(vercel deploy *)",
       "Bash(vercel project *)",
-      "Bash(vercel link *)"
+      "Bash(vercel link *)",
+      "Bash(powershell -Command \"netstat -ano | findstr :8080\")"
     ]
   }
 }

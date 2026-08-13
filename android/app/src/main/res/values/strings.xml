@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">NOVUS.AI Educacional</string>
+    <string name="title_activity_main">NOVUS.AI Educacional</string>
+    <string name="package_name">ai.novus.educacional</string>
+    <string name="custom_url_scheme">ai.novus.educacional</string>
+</resources>

@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom';
+import { isNativeApp } from '@/lib/native';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
@@ -118,7 +119,9 @@ function App() {
         <PWAProvider>
         <Suspense fallback={<div className="p-6 text-sm text-muted-foreground">Carregando…</div>}>
           <Routes>
-            <Route path="/" element={<Index />} />
+            {/* O WebView nativo sempre boota em '/': lá o app é sempre o /m/*,
+                nunca a landing/desktop. No navegador nada muda. */}
+            <Route path="/" element={isNativeApp ? <Navigate to="/m" replace /> : <Index />} />
             <Route path="/auth/login" element={<Login />} />
             <Route path="/auth/select-org" element={<SelectOrg />} />
             <Route path="/auth/register" element={<Register />} />

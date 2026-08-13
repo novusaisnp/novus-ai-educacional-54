@@ -4,7 +4,7 @@
 uma escola cliente". Para o histórico do que foi feito em cada sessão, veja [`STATUS.md`](./STATUS.md);
 para regras e arquitetura estáveis, [`../CLAUDE.md`](../CLAUDE.md).
 
-**Nota global: 89/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12, F1–F10 aplicadas/checadas (F8 e F9 parciais).
+**Nota global: 90/100** (média ponderada pelos pesos da tabela de módulos) — medido em 2026-08-12, F1–F10 aplicadas/checadas (F8 e F9 parciais).
 
 ## Rubrica
 
@@ -35,7 +35,7 @@ no app. O padrão "RLS sem policy" que assombrou este schema está, hoje, resolv
 | [Config/Integrações](#configintegrações-9010) | 4 | **90** | UX (loading no submit da tela) | — |
 | [Portal da Família](#portal-da-família-9210) | 12 | **92** | — | — |
 | [BI](#bi-9810) | 8 | **98** | Funcional (BI Financeiro depende de F10) | F9, F10 |
-| [Integração ERP](#integração-erp-8010) | 10 | **80** | Verificado (saída nunca testada contra sync-webhook real) | — |
+| [Integração ERP](#integração-erp-9210) | 10 | **92** | — | — |
 | [CRM](#crm-7410) | 8 | **74** | Campanhas fora do escopo v1 | F9 (em andamento) |
 | Pedagógico (`app/pedagogico.tsx`) | 1 | **0** | tudo — 4 cards "Em desenvolvimento", zero query | F11 |
 | Eventos (`app/eventos.tsx`) | 1 | **0** | tudo — idem | F11 |
@@ -152,7 +152,16 @@ fixos (sem histórico de conversa persistido, não existe número real pra mostr
 | Campanhas (`crm/campanhas.tsx`) | 5 | "Campanhas em Breve" — fora do escopo da visão nova, decidir manter/remover numa próxima fatia |
 | Hooks (`useCRM.ts`) | 80 | `usePendenciasDoc` honestamente não-implementado; leads/inadimplência reais |
 
-### Integração ERP — 80/100
+### Integração ERP — 92/100
+
+**F10 residual feita (2026-08-12)**: saída Educacional→ERP testada contra o `sync-webhook` real (não
+mock) — achado que os dois lados já estavam configurados de verdade pra Allegra (`erp_integration_config.
+mock=false` + `webhook_configs` ativo com secret no ERP, nenhum dos dois documentado antes). Criado um
+responsável de teste (CPF sintético) via `/app/secretaria/entidades`, confirmado nos dois bancos: apareceu
+na Allegra em 00:01:07, no ERP em 00:01:10 com `origem_sistema='novus-educacional'` e papel `CLIENTE`
+ativo. `createReceivable` não testado isoladamente — usa o mesmo `sendSyncEvent` já provado e o
+`syncFinanceiro` do lado ERP já foi confirmado por código/trigger na F10 original. Dado de teste limpo
+dos dois lados ao final.
 
 **F10 checada (2026-08-12), nenhum código mudado**: os 2 bugs bloqueantes reportados em 2026-08-05 já
 tinham sido corrigidos numa sessão do `novusai-erp` em 2026-08-09 (migration `20260809233000_recorrencia_
@@ -190,7 +199,7 @@ como real** e **botão morto em CTA principal** bloqueiam; tela que se declara "
 | ~~**F7**~~ | ~~Live-test completo do Portal + Mural~~ — feito em 2026-08-12, achou e corrigiu bug real em Documentos | `portal/documentos.tsx` | Portal 69→92, Mural 90→100 |
 | **F8 (parcial)** | ~~Rota `*` cair em `NotFound`~~ feito em 2026-08-12. Captcha continua desligado — depende do usuário adicionar o domínio de produção na allowlist do Cloudflare Turnstile; quando fizer, reativar `security_captcha_enabled` via Supabase Auth API nos dois projetos (educacional + ERP) | painel Cloudflare (ação do usuário) | Auth 90→95, falta captcha pra 100 |
 | **F9 (em andamento)** | CRM v1 "estilo Helena" — escopo fechado (sem WhatsApp/IA autônoma ainda). Fatia 1 (kanban de Leads) feita. Fatia 2 sugerida: mesma UX rica na tela de detalhe do lead (`leads/[id].tsx`) + Interações real | `crm/leads/[id].tsx`, `crm/interacoes.tsx` | CRM 62→? |
-| **F10 (reduzida)** | ~~Corrigir os 2 bugs em `novusai-erp`~~ — já estavam corrigidos, checado em 2026-08-12. Falta só testar `createReceivable`/`upsertClient` contra o `sync-webhook` real (cadastrar `webhook_configs` de um tenant real) | repo irmão, config de org real | BI Financeiro, Portal Financeiro |
+| ~~**F10**~~ | ~~Corrigir bugs + testar saída contra sync-webhook real~~ — feito em 2026-08-12 (bugs já corrigidos em sessão anterior do ERP; `upsertClientByCPF` testado ao vivo end-to-end) | repo irmão | ERP 66→92 |
 | **F11** | Pedagógico e Eventos: definir escopo real ou remover a tela do menu (fachada visível ao cliente é pior que ausência) | `pedagogico.tsx`, `eventos.tsx`, `AppShell.tsx` | +2 global, ganho de percepção maior que o número |
 
 Fora desta fila, já registrado em `STATUS.md` como backlog e não pontuado aqui: dívida de lint (~234 erros,

@@ -6,6 +6,14 @@ import { useSession } from './useSession';
 import { useUserRole } from './useUserRole';
 import { useClassSubjects } from './useClassSubjects';
 import { useToast } from './use-toast';
+import {
+  dequeue,
+  enqueue,
+  flushQueue,
+  pushAttendance,
+  readQueue,
+  type PendingAttendance,
+} from '@/lib/attendanceQueue';
 
 // Valores batem com o CHECK constraint de public.attendance.status
 // (attendance_status_check) — não são livres.
@@ -131,23 +139,24 @@ export function useAttendanceSheet(params: { classId?: string; subjectId?: strin
     mutationFn: async (records: AttendanceRecord[]) => {
       if (!classId || !subjectId || !date || !orgId) throw new Error('Dados incompletos');
 
-      const rows = records.map((record) => ({
-        organization_id: orgId,
-        class_id: classId,
-        subject_id: subjectId,
-        student_id: record.student_id,
+      const pending: PendingAttendance = {
+        capturedAt: new Date().toISOString(),
+        organizationId: orgId,
+        classId,
+        subjectId,
         date,
-        status: record.status,
-        note: record.note || null,
-      }));
+        rows: records.map((record) => ({
+          student_id: record.student_id,
+          status: record.status,
+          note: record.note || null,
+        })),
+      };
 
-      // A UNIQUE real de public.attendance é (class_id, subject_id, student_id,
-      // date) — SEM organization_id. Incluir coluna fora da constraint faz o
-      // Postgres rejeitar com 400 (42P10). Não "melhorar" esta lista.
-      const { error } = await supabase.from('attendance').upsert(rows, {
-        onConflict: 'class_id,subject_id,student_id,date',
-      });
-      if (error) throw error;
+      // Grava em disco ANTES de tentar a rede: se o app for fechado offline, a
+      // chamada continua lá e sobe no próximo boot com rede.
+      enqueue(pending);
+      await pushAttendance(pending);
+      dequeue(pending);
 
       const statusCounts = records.reduce((acc, record) => {
         acc[record.status] = (acc[record.status] || 0) + 1;
@@ -218,17 +227,32 @@ export function useAttendanceSheet(params: { classId?: string; subjectId?: strin
 }
 
 /**
- * Quantas chamadas estão pausadas esperando conexão. O react-query já segura a
- * mutation offline e a dispara sozinho ao voltar a rede (networkMode padrão);
- * isto aqui só existe pro professor VER que ainda não sincronizou.
+ * Quantas chamadas ainda não subiram — as pausadas pelo react-query nesta
+ * sessão mais as que ficaram na fila em disco de sessões anteriores. Serve pro
+ * professor VER que a sala dele ainda não sincronizou.
  *
- * ponytail: pausa vive em memória — fechar o app antes de voltar a rede perde a
- * chamada não sincronizada. Persistir exige @tanstack/query-persist-client-core
- * + persister; adicionar se acontecer na prática.
+ * Também é aqui que a fila é drenada: ao montar e quando a rede volta.
  */
 export function usePendingAttendanceSyncs(): number {
-  return useMutationState({
+  const paused = useMutationState({
     filters: { mutationKey: ATTENDANCE_MUTATION_KEY, status: 'pending' },
     select: (mutation) => mutation.state.isPaused,
   }).filter(Boolean).length;
+
+  const [queued, setQueued] = useState(() => readQueue().length);
+
+  useEffect(() => {
+    const refresh = () => setQueued(readQueue().length);
+    const sync = () => { flushQueue().finally(refresh); };
+
+    sync();
+    window.addEventListener('online', sync);
+    window.addEventListener('attendance-queue-changed', refresh);
+    return () => {
+      window.removeEventListener('online', sync);
+      window.removeEventListener('attendance-queue-changed', refresh);
+    };
+  }, []);
+
+  return paused + queued;
 }

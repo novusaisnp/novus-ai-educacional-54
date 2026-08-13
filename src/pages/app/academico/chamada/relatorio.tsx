@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { FileText, Download, Printer, Calendar, Users, BookOpen, Filter } from 'lucide-react';
+import { FileText, Download, Calendar, Users, BookOpen, Filter } from 'lucide-react';
 import { useSearchParams, Link } from 'react-router-dom';
 
 import { IconBadge } from '@/components/IconBadge';
@@ -19,6 +18,7 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { useOrganization } from '@/hooks/useOrganization';
 import { supabase } from '@/integrations/supabase/client';
+import { generateAttendanceReportPdf } from '@/features/academico/lib/generateAttendanceReportPdf';
 
 const reportSchema = z.object({
   classId: z.string().optional(),
@@ -218,8 +218,33 @@ export default function ChamadaRelatorio() {
     link.click();
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handlePdfExport = async () => {
+    if (attendanceData.length === 0) return;
+
+    const pdfBytes = await generateAttendanceReportPdf({
+      organizationName: orgData?.organizations?.name || 'NOVUS.AI Educacional',
+      className: selectedClass?.name || 'Todas as turmas',
+      subjectName: selectedSubject?.name || 'Todas as disciplinas',
+      dateStart: format(dateStart, 'dd/MM/yyyy'),
+      dateEnd: format(dateEnd, 'dd/MM/yyyy'),
+      summary,
+      rows: attendanceData.map((record) => ({
+        studentName: record.student_name,
+        date: format(new Date(`${record.date}T00:00:00`), 'dd/MM/yyyy'),
+        status: getStatusLabel(record.status),
+        note: record.note || '',
+        className: record.class_name,
+        subjectName: record.subject_name,
+      })),
+      issuedAt: new Date().toISOString(),
+    });
+
+    const url = URL.createObjectURL(new Blob([pdfBytes], { type: 'application/pdf' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `relatorio-chamada-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const selectedClass = classes.find(c => c.id === classId);
@@ -402,9 +427,9 @@ export default function ChamadaRelatorio() {
                   <Download className="h-4 w-4 mr-2" />
                   Exportar CSV
                 </Button>
-                <Button onClick={handlePrint} disabled={attendanceData.length === 0} variant="outline">
-                  <Printer className="h-4 w-4 mr-2" />
-                  Imprimir
+                <Button onClick={handlePdfExport} disabled={attendanceData.length === 0} variant="outline">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Exportar PDF
                 </Button>
               </div>
             </Form>

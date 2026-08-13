@@ -117,7 +117,19 @@ export default function PortalLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    // Coluna, e não rodapé fixo como nos outros layouts: aqui o teclado do
+    // iPhone sobe por cima da tela e cobriria um elemento preso ao fundo,
+    // justamente enquanto o usuário digita a senha.
+    <div className="min-h-screen flex flex-col bg-background p-4">
+      <header className="flex justify-center py-8">
+        <img
+          src="/brand/novus-ai-educacional-logo.png"
+          alt="NOVUS.AI Educacional"
+          className="h-16 max-w-[260px] object-contain mix-blend-multiply dark:mix-blend-normal"
+        />
+      </header>
+
+      <div className="flex flex-1 items-center justify-center">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle>Portal dos Responsáveis</CardTitle>
@@ -155,6 +167,16 @@ export default function PortalLogin() {
           </form>
         </CardContent>
       </Card>
+      </div>
+
+      <footer className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
+        <span>Uma solução</span>
+        <img
+          src="/brand/novus-ai-logo.png"
+          alt="NOVUS.AI"
+          className="h-4 object-contain mix-blend-multiply dark:mix-blend-normal"
+        />
+      </footer>
     </div>
   );
 }

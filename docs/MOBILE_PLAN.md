@@ -60,6 +60,22 @@ Nada de `/app` e `/portal` muda. Duas subárvores dentro de `/m`, reusando os gu
 hoje tem **2.235.492 bytes** porque `src/App.tsx` importa ~50 páginas de forma eager. Se a árvore mobile
 entrar estática, o app nativo baixa o sistema inteiro pra mostrar um anel de frequência.
 
+## Skills de apoio (usar ao construir as telas)
+
+Duas skills se complementam aqui e **as duas devem ser carregadas** quando a UI mobile for desenhada —
+uma dá o vocabulário de app, a outra dá a identidade da marca:
+
+| Skill | Onde | Para quê |
+|---|---|---|
+| `mobile-app-ui-design` | `~/.claude/skills/mobile-app-ui-design/` (instalada em 2026-08-13, de [ceorkm/mobile-app-ui-design](https://github.com/ceorkm/mobile-app-ui-design)) | Padrões de UI/UX mobile de apps de referência (Airbnb, Duolingo, Spotify, Revolut): hierarquia visual, espaçamento, navegação, onboarding, componentes. Tem `references/industry-conventions.md` com as convenções de plataforma. |
+| `novus-satellite-visual-identity` | `~/.claude/skills/novus-satellite-visual-identity/` | Paleta e tratamento do NOVUS.AI: marfim quente + teal + coral + gold, tipografia Sora/Nunito, cards sem borda com sombra em camadas, badges totem. É o que impede o app de virar template genérico. |
+
+Ordem de uso: `mobile-app-ui-design` decide **a estrutura** da tela (o que é bottom sheet, o que é
+full-screen, onde fica o polegar); `novus-satellite-visual-identity` decide **a pele** (cor, sombra,
+badge). Precedente de que isso funciona junto: `src/pages/app/pedagogico.tsx` e
+`src/pages/app/crm/leads.tsx` — a primeira versão do Pedagógico saiu com visual genérico e levou
+feedback do usuário ("fez com preguiça") justamente por pular a segunda camada.
+
 ## Fases
 
 ### Fase 0 — Fundação
@@ -72,6 +88,8 @@ Regra de desempate no dispatcher: **staff ganha** se `useUserRole()` retornar n�
 trabalha na escola). Documentar.
 
 ### Fase 1 — Família: Início + Acadêmico
+> Primeira fase com UI de verdade — carregar as duas skills da seção acima **antes** de escrever tela.
+
 `src/pages/m/familia/{inicio,academico}.tsx` + `src/components/mobile/AttendanceRing.tsx`.
 Anel de frequência em **SVG puro** (`stroke-dasharray`, ~15 linhas) — não puxar `recharts` pro chunk
 mobile (8KB vs 400KB). Reusar `useLinkedStudents`/`useStudentGrades`/`useStudentAttendance` de

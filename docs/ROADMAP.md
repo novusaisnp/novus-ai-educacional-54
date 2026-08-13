@@ -97,7 +97,7 @@ reusa `useLinkedStudents` (FK real via `student_guardians`) e resolve o nome do 
 |---|---|---|
 | Login / Dashboard | 95 | sem loading state explícito no dashboard (cosmético) |
 | Acadêmico (notas/frequência + justificar falta) | 95 | testado, vazio honesto (aluno real ainda sem nota/chamada lançada) |
-| Financeiro | 80 | depende de ERP configurado (F10) — testado, EmptyState correto |
+| Financeiro | 85 | query extraída pra `usePortalFinance` e filtro de período passou a ser aplicado de verdade (2026-08-12); ainda depende de ERP configurado |
 | Documentos | 90 | bug de embed corrigido nesta fatia — testado, vazio honesto |
 | Interações / Demandas | 95 | testado, formulário de nova mensagem/demanda funcional |
 | Configuração do portal (`usePortalConfig.ts`) | 100 | persistido desde F1 |

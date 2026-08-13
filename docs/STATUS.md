@@ -1,6 +1,26 @@
 # STATUS — novus-educacional
 
-**Última atualização: 2026-08-14 (app mobile iniciado: Fases 0–3 do `MOBILE_PLAN.md` construídas + hook da Fase 4, branch `feat/app-mobile`).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+**Última atualização: 2026-08-12 (live-test do `/m/staff/*`, 2 bugs de chamada corrigidos, varredura do padrão `toISOString`, Fase 5 do `MOBILE_PLAN.md` construída — `main`).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
+
+## 🔖 Checkpoint de sessão (2026-08-12 — live-test do app mobile staff + varredura de datas + Fase 5)
+
+**Contexto**: retomada de uma sessão que travou/fechou no desktop antes de fazer o live-test que tinha sido pedido. O commit `d5a857f` (chamada desktop consumindo `useAttendanceSheet`, pendência nº 1 do checkpoint anterior) já estava fechado e verde; a sessão só não tinha chegado a abrir nenhuma tela `/m/*` com login real. Tudo commitado em `main`, **nada empurrado ainda** (4 commits locais à frente de `origin/main`).
+
+1. **Primeiro live-test real do `/m/*`** (login staff owner, Chrome via extensão, 8080). Dispatcher `/m` → `/m/staff/chamada` confirmado (regra "staff ganha"), 4 abas carregando, toggle P/F/A, publicar aviso gravando, Mensagens/Mais renderizando. Salvar chamada foi conferido **no banco** (`ixnpotaccbpcbritxlud`): 3 linhas em `attendance` na data certa.
+2. **Bug achado no live-test — chamada salvava zero linhas**: `useAttendanceSheet` só populava `attendanceData` com os alunos que o professor tocasse. A UI sempre exibiu "P" como default (fallback `?? 'presente'` na renderização), então abrir a chamada, não tocar em ninguém e salvar gravava **nada** e ainda assim mostrava "Presença registrada com sucesso"; o contador mostrava `0P` com a turma inteira verde. No desktop o sintoma era outro (botão Salvar desabilitado sem motivo aparente, `Object.keys(attendanceData).length === 0`). Fix no hook, único ponto de escrita das duas telas: todo aluno da turma entra no mapa como `presente`, e o registro existente sobrescreve.
+3. **Bug de fuso na chamada mobile**: `new Date().toISOString()` devolve data em UTC — às 23h no Brasil (UTC-3) a chamada abria já em 13/08. Trocado por `toLocaleDateString('en-CA')`.
+4. **Varredura do mesmo padrão no repo** (12 arquivos): helper único `toLocalISODate` em `src/lib/utils.ts` (locale `en-CA` formata ISO sem converter fuso). Além do "hoje adiantado", a varredura achou o inverso — `Date` de meia-noite local serializada em UTC volta um dia: **`computeNextDueDate` em `signEnrollmentContract.ts` colocava o vencimento da 1ª mensalidade sempre no dia anterior ao escolhido** (dia 5 virava dia 4), e a data de nascimento das reservas idem. Também trocado o switch de período do `bi-filters.ts` por um mapa de dias. Teste novo `localDate.spec.ts`.
+5. **Fase 5 do `MOBILE_PLAN.md`**: `usePortalFinance.ts` extraído de `portal/financeiro.tsx` (2 consumidores), respeitando o gate `hasERP`; `m/familia/financeiro.tsx` (total em aberto, parcelas, copiar linha digitável via `navigator.clipboard`) e `m/staff/alunos.tsx` (busca + Drawer com ficha resumida + link pra ficha completa no desktop). Rotas `/m/familia/financeiro` e `/m/staff/alunos`; os dois "Mais" deixaram de apontar pro portal/desktop nesses dois itens. Linha digitável sai de `financial_transactions.raw_event` — não existe coluna própria no schema, e emitir título continua sendo papel do ERP.
+6. **Bug de brinde na Fase 5**: o filtro de período do `/portal/financeiro` (30/90/365 dias) nunca era aplicado à query — a tela dizia "Últimos 30 dias" listando o histórico inteiro. Agora filtra. `parseDateOnly`/`formatDateBR` mudaram de `lib/mobile/utils` pra `lib/utils` (o portal sofria do mesmo bug de fuso na data de vencimento); `mobile/utils` reexporta.
+
+**Verificação**: `typecheck` limpo, **50/50** testes (2 novos), `build` verde. Chunk `mobile-*.js` 7,08 KB, `index-*.js` 2.235.740 B (+1,6 KB do baseline, por causa do hook novo que o portal eager também importa).
+
+**Pendências desta empreitada**:
+- **Nada empurrado**: `d5a857f`, `7e5154e`, `cdde501`, `bf951f8` só existem localmente.
+- `/m/familia/*` e o `portal/financeiro` refatorado **nunca foram abertos com login de responsável** — mesma limitação de sempre (nenhum guardian com conta de portal ativa). Todo o lado família do app mobile segue sem live-test.
+- Persistência de mutation entre sessões do app (comentário `ponytail:` em `useAttendanceSheet`): fechar o app antes de a rede voltar ainda perde a chamada pendente.
+- Fases 6 (push/FCM) e 7 (Capacitor) inteiras; a 6 continua bloqueada por Firebase/APNs/conta Apple.
+- Dado de teste **mantido a pedido do usuário**: aviso "TESTE mobile aviso" em `announcements` e a chamada de 2026-08-12 da turma TESTE.
 
 ## 🔖 Checkpoint de sessão (2026-08-14 — app mobile `/m/*`, Fases 0–3 do MOBILE_PLAN)
 

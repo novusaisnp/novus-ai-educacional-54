@@ -1,3 +1,4 @@
+import { toLocalISODate } from './utils';
 /**
  * Utilities para filtros do BI - garante valores controlados e seguros
  */
@@ -28,28 +29,13 @@ export const allOption = (label: string) => ({
 // Converter período para datas
 export const periodToDates = (period: string) => {
   const now = new Date();
-  const endDate = now.toISOString().split('T')[0];
+  const endDate = toLocalISODate(now);
   
-  let startDate: string;
-  switch (period) {
-    case '7d':
-      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      break;
-    case '30d':
-      startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      break;
-    case '90d':
-      startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      break;
-    case '6m':
-      startDate = new Date(now.getTime() - 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      break;
-    case '1y':
-      startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      break;
-    default:
-      startDate = '2024-01-01';
-  }
+  const DAYS: Record<string, number> = { '7d': 7, '30d': 30, '90d': 90, '6m': 180, '1y': 365 };
+  const days = DAYS[period];
+  const startDate = days
+    ? toLocalISODate(new Date(now.getTime() - days * 24 * 60 * 60 * 1000))
+    : '2024-01-01';
   
   return { startDate, endDate };
 };

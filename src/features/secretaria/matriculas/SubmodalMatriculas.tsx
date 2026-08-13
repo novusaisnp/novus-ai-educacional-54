@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EnrollmentInsert, EnrollmentRow, EnrollmentUpdate } from '@/integrations/supabase/db-types';
 import { SecretariaModalContext } from '../types';
+import { toLocalISODate } from '@/lib/utils';
 
 const enrollmentSchema = z.object({
   student_id: z.string().uuid('Selecione um aluno'),
@@ -37,7 +38,7 @@ export function SubmodalMatriculas({ context, editingEnrollment, onEditingChange
       student_id: '',
       class_id: '',
       status: 'ativa',
-      enrollment_date: new Date().toISOString().split('T')[0],
+      enrollment_date: toLocalISODate(),
     },
   });
 
@@ -146,7 +147,7 @@ export function SubmodalMatriculas({ context, editingEnrollment, onEditingChange
         student_id: '',
         class_id: '',
         status: 'ativa',
-        enrollment_date: new Date().toISOString().split('T')[0],
+        enrollment_date: toLocalISODate(),
       });
     }
   }, [editingEnrollment, form]);

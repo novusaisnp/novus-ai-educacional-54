@@ -15,6 +15,7 @@ import { ModalMestre } from '@/features/secretaria/hub/ModalMestre';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { ReEnrollmentRow } from '@/integrations/supabase/db-types';
+import { toLocalISODate } from '@/lib/utils';
 
 type RematriculaWithJoins = ReEnrollmentRow & {
   students: { first_name: string; last_name: string } | null;
@@ -115,7 +116,7 @@ export default function SecretariaRematriculaListPage() {
           student_id: rematricula.student_id,
           class_id: rematricula.target_class_id,
           status: 'ativa',
-          enrollment_date: new Date().toISOString().split('T')[0],
+          enrollment_date: toLocalISODate(),
         });
 
       if (enrollmentError) throw enrollmentError;

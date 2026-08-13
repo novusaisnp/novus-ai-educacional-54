@@ -9,6 +9,7 @@ import { safeToast } from '@/lib/safeToast';
 import { supabase } from '@/integrations/supabase/client';
 import { toCsv, downloadCsv } from '@/lib/csv';
 import type { Json } from '@/integrations/supabase/types';
+import { toLocalISODate } from '@/lib/utils';
 
 interface ExportToolbarProps {
   reportType: 'academico' | 'financeiro' | 'crm';
@@ -50,7 +51,7 @@ export function ExportToolbar({
         Object.keys(data[0]).map(key => ({ key, label: key }));
 
       const csvContent = toCsv(data, columns);
-      const timestamp = new Date().toISOString().split('T')[0];
+      const timestamp = toLocalISODate();
       const filename = `${reportType}-${timestamp}.csv`;
       
       downloadCsv(csvContent, filename);

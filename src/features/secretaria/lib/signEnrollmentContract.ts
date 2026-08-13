@@ -7,6 +7,7 @@ import {
   hashContractText,
 } from './enrollmentContractTemplate';
 import { generateEnrollmentContractPdf } from './generateEnrollmentContractPdf';
+import { toLocalISODate } from '@/lib/utils';
 
 // Logo é decoração do PDF, nunca deve travar a assinatura do contrato — se o
 // fetch falhar ou demorar, segue sem logo. Prioridade: logo real do ERP
@@ -56,7 +57,7 @@ function computeNextDueDate(dueDay: number): string {
   if (candidate < now) {
     candidate.setMonth(candidate.getMonth() + 1);
   }
-  return candidate.toISOString().split('T')[0];
+  return toLocalISODate(candidate);
 }
 
 /**

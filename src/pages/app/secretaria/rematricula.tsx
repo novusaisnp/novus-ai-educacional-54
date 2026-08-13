@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { RotateCcw, Users, Check, ClipboardList } from 'lucide-react';
+import { toLocalISODate } from '@/lib/utils';
 
 export default function SecretariaRematricula() {
   const { data: orgData } = useOrganization();
@@ -118,7 +119,7 @@ export default function SecretariaRematricula() {
         student_id: studentId,
         class_id: classId,
         status: 'ativa',
-        enrollment_date: new Date().toISOString().split('T')[0],
+        enrollment_date: toLocalISODate(),
         organization_id: orgData?.organization_id
       }));
 

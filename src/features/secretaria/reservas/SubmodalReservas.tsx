@@ -19,7 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon, UserCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
+import { cn, toLocalISODate } from '@/lib/utils';
 import { SecretariaModalContext } from '../types';
 import { WaitlistApplicationRow } from '@/integrations/supabase/db-types';
 
@@ -124,7 +124,7 @@ export function SubmodalReservas({
         .from('waitlist_applications')
         .insert({
           student_full_name: data.student_full_name,
-          birth_date: data.birth_date?.toISOString().split('T')[0] || null,
+          birth_date: data.birth_date ? toLocalISODate(data.birth_date) : null,
           guardian_name: data.guardian_name || null,
           guardian_phone: data.guardian_phone || null,
           desired_segment_id: data.desired_segment_id,
@@ -164,7 +164,7 @@ export function SubmodalReservas({
         .from('waitlist_applications')
         .update({
           student_full_name: data.student_full_name,
-          birth_date: data.birth_date?.toISOString().split('T')[0] || null,
+          birth_date: data.birth_date ? toLocalISODate(data.birth_date) : null,
           guardian_name: data.guardian_name || null,
           guardian_phone: data.guardian_phone || null,
           desired_segment_id: data.desired_segment_id,

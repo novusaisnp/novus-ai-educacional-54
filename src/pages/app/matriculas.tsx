@@ -20,6 +20,7 @@ import { useOrganization } from '@/hooks/useOrganization';
 import { SubmodalMatriculas } from '@/features/secretaria/matriculas/SubmodalMatriculas';
 import { ModalMestre } from '@/features/secretaria/hub/ModalMestre';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { toLocalISODate } from '@/lib/utils';
 
 const enrollmentSchema = z.object({
   student_id: z.string().uuid('Selecione um aluno'),
@@ -57,7 +58,7 @@ export default function Matriculas() {
       student_id: '',
       class_id: '',
       status: 'ativa',
-      enrollment_date: new Date().toISOString().split('T')[0],
+      enrollment_date: toLocalISODate(),
     },
   });
 
@@ -321,7 +322,7 @@ export default function Matriculas() {
                 student_id: '',
                 class_id: '',
                 status: 'ativa',
-                enrollment_date: new Date().toISOString().split('T')[0],
+                enrollment_date: toLocalISODate(),
               });
             }}>
               <UserPlus className="mr-2 h-4 w-4" />

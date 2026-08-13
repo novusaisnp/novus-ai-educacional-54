@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { erpEmit } from '@/integrations/erp/emit';
+import { toLocalISODate } from '@/lib/utils';
 
 const PAPEIS = ['RESPONSAVEL', 'VISITANTE'] as const;
 type Papel = (typeof PAPEIS)[number];
@@ -74,7 +75,7 @@ export function FormEntidade({ orgId, entidadeId, papelInicial, onSaved, onCance
       nome: '', email: '', phone: '', cpf: '',
       papeis: papelInicial ? [papelInicial] : [],
       relationship: '', linkedStudents: [],
-      document: '', relation: '', visitDate: new Date().toISOString().split('T')[0], purpose: '', notes: '',
+      document: '', relation: '', visitDate: toLocalISODate(), purpose: '', notes: '',
     },
   });
 
@@ -126,7 +127,7 @@ export function FormEntidade({ orgId, entidadeId, papelInicial, onSaved, onCance
         linkedStudents: existingLinks,
         document: editingEntidade.documento_outro || '',
         relation: dadosVisitante?.relation || '',
-        visitDate: dadosVisitante?.visit_date?.split('T')[0] || new Date().toISOString().split('T')[0],
+        visitDate: dadosVisitante?.visit_date?.split('T')[0] || toLocalISODate(),
         purpose: dadosVisitante?.purpose || '',
         notes: dadosVisitante?.notes || '',
       });

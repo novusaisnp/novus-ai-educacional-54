@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from './useOrganization';
 import { logger } from '@/lib/logger';
+import { toLocalISODate } from '@/lib/utils';
 
 // Hook para dados acadêmicos do BI
 export const useBIAcademico = (filters?: { 
@@ -180,7 +181,7 @@ export const useBIAlertas = () => {
       }
 
       // Buscar alertas de hoje (interactions tipo 'alert')
-      const today = new Date().toISOString().split('T')[0];
+      const today = toLocalISODate();
       const { data: alerts, error: alertsError } = await supabase
         .from('interactions')
         .select('*')

@@ -20,6 +20,7 @@ import { StudentInsert, EnrollmentInsert, WaitlistApplicationRow } from '@/integ
 import { createGuardianForStudent } from '../lib/createGuardianForStudent';
 import { signEnrollmentContract } from '../lib/signEnrollmentContract';
 import { renderContractText, DEFAULT_TEMPLATE_BODY } from '../lib/enrollmentContractTemplate';
+import { toLocalISODate } from '@/lib/utils';
 
 const converterSchema = z.object({
   first_name: z.string().min(1, 'Nome obrigatório'),
@@ -158,7 +159,7 @@ export function ConverterReservaDialog({ open, onClose, application, orgId }: Co
         student_id: student.id,
         class_id: data.class_id,
         status: 'ativa',
-        enrollment_date: new Date().toISOString().split('T')[0],
+        enrollment_date: toLocalISODate(),
       };
 
       const { data: enrollment, error: enrollmentError } = await supabase
@@ -243,7 +244,7 @@ export function ConverterReservaDialog({ open, onClose, application, orgId }: Co
     className: selectedClassForPreview ? `${selectedClassForPreview.name} - ${selectedClassForPreview.year}` : '',
     monthlyFeeAmount: formValues.monthly_fee_amount || 0,
     dueDay: formValues.due_day || 10,
-    enrollmentDate: new Date().toISOString().split('T')[0],
+    enrollmentDate: toLocalISODate(),
   });
 
   return (

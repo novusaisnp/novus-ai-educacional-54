@@ -16,6 +16,7 @@ import {
   type ContractTemplate,
 } from '@/hooks/useContractTemplates';
 import { DEFAULT_TEMPLATE_BODY, renderContractText } from '@/features/secretaria/lib/enrollmentContractTemplate';
+import { toLocalISODate } from '@/lib/utils';
 
 const PREVIEW_SAMPLE_DATA = {
   organizationName: 'Escola Exemplo',
@@ -26,7 +27,7 @@ const PREVIEW_SAMPLE_DATA = {
   className: 'Turma A - 2026',
   monthlyFeeAmount: 850,
   dueDay: 10,
-  enrollmentDate: new Date().toISOString().split('T')[0],
+  enrollmentDate: toLocalISODate(),
 };
 
 export default function ModeloContrato() {

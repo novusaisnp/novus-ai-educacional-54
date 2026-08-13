@@ -19,6 +19,7 @@ const Reset = lazy(() => import('@/pages/auth/reset'));
 const DefinirSenha = lazy(() => import('@/pages/auth/definir-senha'));
 const Dashboard = lazy(() => import('@/pages/app/dashboard'));
 const OrgGate = lazy(() => import('@/components/auth/OrgGate'));
+const MobileRoutes = lazy(() => import('@/routes/mobile'));
 
 // Portal Pages
 const PortalLogin = lazy(() => import('@/pages/portal/login'));
@@ -215,6 +216,9 @@ function App() {
               </Route>
               </Route>
             </Route>
+
+            {/* App mobile — árvore inteira sob demanda, ver src/routes/mobile.tsx */}
+            <Route path="/m/*" element={<MobileRoutes />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

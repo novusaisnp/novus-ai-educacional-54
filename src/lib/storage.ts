@@ -150,6 +150,33 @@ export const uploadGuardianDoc = async (file: File, orgId: string, guardianId: s
   return { data, docData };
 };
 
+// Foto do mural (post type='foto'). `documents` é polimórfico sem FK, então
+// owner_type='announcement' não exige nada de schema — mesmo caminho de
+// uploadDoc/uploadGuardianDoc, só muda o dono.
+export const uploadAnnouncementPhoto = async (file: File, orgId: string, announcementId: string) => {
+  const ext = file.name.split('.').pop();
+  const path = `${orgId}/announcements/${announcementId}/${uuidv4()}.${ext}`;
+
+  const { error } = await supabase.storage.from('docs').upload(path, file);
+  if (error) throw error;
+
+  const { data: docData, error: docError } = await supabase
+    .from('documents')
+    .insert({
+      organization_id: orgId,
+      owner_type: 'announcement',
+      owner_id: announcementId,
+      title: file.name,
+      file_path: `docs/${path}`,
+      tags: ['mural'],
+    })
+    .select()
+    .single();
+
+  if (docError) throw docError;
+  return { path, docData };
+};
+
 export const getSignedUrl = async (bucket: string, path: string, expiresInSec: number = 3600) => {
   const { data, error } = await supabase.storage
     .from(bucket)

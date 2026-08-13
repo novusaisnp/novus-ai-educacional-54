@@ -122,6 +122,82 @@ export type Database = {
           },
         ]
       }
+      announcement_responses: {
+        Row: {
+          announcement_id: string
+          created_at: string
+          guardian_id: string
+          id: string
+          organization_id: string
+          response: Json
+          signed_at: string | null
+          student_id: string | null
+        }
+        Insert: {
+          announcement_id: string
+          created_at?: string
+          guardian_id: string
+          id?: string
+          organization_id: string
+          response?: Json
+          signed_at?: string | null
+          student_id?: string | null
+        }
+        Update: {
+          announcement_id?: string
+          created_at?: string
+          guardian_id?: string
+          id?: string
+          organization_id?: string
+          response?: Json
+          signed_at?: string | null
+          student_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcement_responses_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "announcements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcement_responses_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "entidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcement_responses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcement_responses_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcement_responses_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_risco_evasao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcement_responses_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_students_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       announcements: {
         Row: {
           body: string
@@ -129,7 +205,9 @@ export type Database = {
           created_by: string | null
           id: string
           organization_id: string
+          payload: Json
           title: string
+          type: string
         }
         Insert: {
           body: string
@@ -137,7 +215,9 @@ export type Database = {
           created_by?: string | null
           id?: string
           organization_id: string
+          payload?: Json
           title: string
+          type?: string
         }
         Update: {
           body?: string
@@ -145,7 +225,9 @@ export type Database = {
           created_by?: string | null
           id?: string
           organization_id?: string
+          payload?: Json
           title?: string
+          type?: string
         }
         Relationships: [
           {
@@ -1720,6 +1802,7 @@ export type Database = {
           organization_id: string
           payload: Json | null
           performed_by: string | null
+          read_at: string | null
           summary: string
           updated_at: string
         }
@@ -1733,6 +1816,7 @@ export type Database = {
           organization_id: string
           payload?: Json | null
           performed_by?: string | null
+          read_at?: string | null
           summary: string
           updated_at?: string
         }
@@ -1746,6 +1830,7 @@ export type Database = {
           organization_id?: string
           payload?: Json | null
           performed_by?: string | null
+          read_at?: string | null
           summary?: string
           updated_at?: string
         }
@@ -2360,6 +2445,44 @@ export type Database = {
           },
           {
             foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      push_tokens: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          platform: string
+          token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          platform?: string
+          token: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          platform?: string
+          token?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_tokens_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"

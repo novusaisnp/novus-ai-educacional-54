@@ -45,10 +45,12 @@ export default function StudentSwitcher() {
   const { students, student, setStudentId } = useSelectedStudent();
 
   if (!student) return null;
-  const name = `${student.first_name} ${student.last_name}`.trim();
 
+  // Primeiro nome também no caso de filho único — ele divide a barra do
+  // cabeçalho com o título da tela, e o nome completo estourava a linha no
+  // celular. O menu abaixo mostra o nome inteiro quando é preciso desambiguar.
   if (students.length < 2) {
-    return <span className="text-sm text-muted-foreground">{name}</span>;
+    return <span className="text-sm text-muted-foreground">{student.first_name}</span>;
   }
 
   return (

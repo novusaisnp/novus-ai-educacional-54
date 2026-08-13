@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,12 +8,30 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { logAuditSafe } from '@/utils/auditSafe';
+import { firstName } from '@/lib/utils';
+
+/**
+ * Pra onde o responsável vai depois de entrar.
+ *
+ * 1. A rota que ele tentou abrir antes de ser barrado (`PortalProtectedRoute`
+ *    guarda em `state.from`). Sem isto, quem digitava /m/familia/* caía no
+ *    portal e nunca mais voltava — o caminho de volta existia e era ignorado.
+ * 2. Sem origem, decide pela largura da tela, não pela plataforma: no celular
+ *    a pele certa é o app (/m), no desktop é o portal. `Capacitor.isNativePlatform()`
+ *    não serve aqui — no Safari do iPhone é `false`, e iOS nativo não existe.
+ */
+function destinoAposLogin(state: unknown): string {
+  const from = (state as { from?: string } | null)?.from;
+  if (from) return from;
+  return window.matchMedia('(max-width: 767px)').matches ? '/m/familia/inicio' : '/portal/dashboard';
+}
 
 export default function PortalLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -77,10 +95,10 @@ export default function PortalLogin() {
 
       toast({
         title: 'Login realizado com sucesso',
-        description: `Bem-vindo(a), ${guardian.name}!`,
+        description: `Bem-vindo(a), ${firstName(guardian.name)}!`,
       });
 
-      navigate('/portal/dashboard');
+      navigate(destinoAposLogin(location.state), { replace: true });
     } catch {
       await logAuditSafe('portal_auth', {
         outcome: 'error',

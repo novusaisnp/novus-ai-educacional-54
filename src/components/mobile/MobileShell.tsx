@@ -21,14 +21,28 @@ export default function MobileShell({ tabs }: { tabs: MobileTab[] }) {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* pb: altura da tab bar (56px) + safe area */}
+      {/* Header e rodapé são fixos: o espaço deles sai daqui, não do fluxo.
+          pt = h-24 + h-12 do MobileHeader; pb = tab bar (3.5rem) + assinatura
+          (1.5rem) + safe area. */}
       <main
         className="mx-auto max-w-screen-sm"
-        style={{ paddingBottom: 'calc(3.5rem + env(safe-area-inset-bottom))' }}
+        style={{
+          paddingTop: 'calc(9rem + env(safe-area-inset-top))',
+          paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))',
+        }}
       >
         <Outlet />
       </main>
-      <MobileTabBar tabs={tabs} />
+      <div
+        className="fixed inset-x-0 bottom-0 z-40 bg-secondary/80 backdrop-blur"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        <MobileTabBar tabs={tabs} />
+        <div className="flex h-6 items-center justify-center gap-1.5 border-t border-border/40 text-[11px] text-muted-foreground">
+          <span>Uma solução</span>
+          <img src="/brand/novus-ai-logo.png" alt="NOVUS.AI" className="h-3 object-contain" />
+        </div>
+      </div>
     </div>
   );
 }

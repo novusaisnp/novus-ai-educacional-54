@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { usePortalData } from '@/hooks/usePortalData';
 import { useOrganization } from '@/hooks/useOrganization';
 import { logAudit } from '@/lib/audit/logAudit';
 import { getERPConfig } from '@/lib/featureFlags';
+import { firstName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -23,6 +24,7 @@ import {
 
 export default function PortalDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { orgId } = useOrganization();
   const { guardian, interactions, requests, documents, loading } = usePortalData();
   const [hasERP, setHasERP] = useState(false);
@@ -92,11 +94,18 @@ export default function PortalDashboard() {
   // Recent interactions
   const recentInteractions = interactions?.slice(0, 3) || [];
 
+  // Porta de entrada do portal em tela estreita: manda pra pele de app. Vale só
+  // pra '/portal' — '/portal/dashboard' continua abrindo aqui, senão o item
+  // "Meus dados" do /m (mais.tsx) viraria um botão que volta pra si mesmo.
+  if (location.pathname === '/portal' && window.matchMedia('(max-width: 767px)').matches) {
+    return <Navigate to="/m" replace />;
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
-          Bem-vindo, {guardian?.name}
+          Bem-vindo, {firstName(guardian?.name)}
         </h1>
         <p className="text-muted-foreground">
           Acompanhe as informações dos seus filhos

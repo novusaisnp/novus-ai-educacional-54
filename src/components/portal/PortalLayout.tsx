@@ -117,8 +117,13 @@ export function PortalLayout() {
 
         {/* Main content */}
         <div className="lg:pl-64">
-          {/* Top bar for mobile */}
-          <div className="flex items-center justify-between h-16 px-4 border-b lg:hidden">
+          {/* Barra do topo (mobile): fixa. `sticky` acompanharia a barra de URL
+              do Safari no iOS entrando e saindo durante a rolagem. O spacer
+              logo abaixo reserva o espaço, evitando media query no padding. */}
+          <div
+            className="fixed inset-x-0 top-0 z-30 flex items-center h-16 px-4 border-b bg-secondary/80 backdrop-blur lg:hidden"
+            style={{ paddingTop: 'env(safe-area-inset-top)' }}
+          >
             <Button
               variant="ghost"
               size="sm"
@@ -126,15 +131,35 @@ export function PortalLayout() {
             >
               <Menu className="h-5 w-5" />
             </Button>
-            <OrgLogo className="max-h-10" />
-            <div />
+            {/* Centrada na barra inteira, não no espaço que sobra do hambúrguer:
+                com `justify-between` a logo nascia deslocada pra direita pela
+                largura do botão. `absolute` tira ela do fluxo, `pointer-events-none`
+                garante que não roube o toque de nada por cima. */}
+            <OrgLogo className="pointer-events-none absolute left-1/2 max-h-12 -translate-x-1/2" />
           </div>
+          <div className="h-16 lg:hidden" style={{ marginTop: 'env(safe-area-inset-top)' }} />
 
-          {/* Content */}
-          <main className="flex-1 p-6">
+          {/* Content — pb reserva o rodapé fixo */}
+          <main
+            className="flex-1 p-6"
+            style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom))' }}
+          >
             <Outlet />
           </main>
         </div>
+
+        {/* Rodapé fixo, mesmo padrão do AppShell desktop. `bg-secondary` (teal
+            bem claro) em vez de `card`: destaca as duas barras do conteúdo como
+            moldura sem escurecer a logo da instituição nem a assinatura. */}
+        <footer
+          className="fixed inset-x-0 bottom-0 z-30 border-t bg-secondary/80 backdrop-blur lg:pl-64"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
+          <div className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground">
+            <span>Uma solução</span>
+            <img src="/brand/novus-ai-logo.png" alt="NOVUS.AI" className="h-4 object-contain" />
+          </div>
+        </footer>
 
         <Toaster />
       </div>

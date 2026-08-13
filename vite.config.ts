@@ -22,7 +22,10 @@ export default defineConfig(() => ({
         background_color: '#ffffff',
         display: 'standalone',
         scope: '/',
-        start_url: '/',
+        // Instalada na tela de início (o caminho do iOS enquanto não há app
+        // nativo), a PWA abre a pele de app, não a landing. /m já despacha por
+        // papel: staff cai na chamada, responsável no início da família.
+        start_url: '/m',
         lang: 'pt-BR',
         categories: ['education', 'productivity'],
         icons: [

@@ -10,14 +10,12 @@ export interface MobileTab {
 
 /**
  * Barra inferior do app mobile. Um componente só; a lista de abas vem por prop
- * (família x staff). `pb` respeita a safe area do iPhone/gesture bar do Android.
+ * (família x staff). Quem fixa na tela e trata a safe area é o MobileShell, que
+ * empilha esta barra com a assinatura da marca no mesmo bloco.
  */
 export default function MobileTabBar({ tabs }: { tabs: MobileTab[] }) {
   return (
-    <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-card/95 backdrop-blur"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-    >
+    <nav className="border-t border-border/60">
       <ul className="flex">
         {tabs.map(({ to, label, icon: Icon }) => (
           <li key={to} className="flex-1">

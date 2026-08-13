@@ -24,6 +24,14 @@ export function parseDateOnly(date: string): Date {
   return new Date(`${date}T00:00:00`);
 }
 
+/**
+ * Primeiro nome, pra saudação. Nome completo em cabeçalho de boas-vindas fica
+ * longo demais e quebra a linha no celular.
+ */
+export function firstName(name?: string | null): string {
+  return name?.trim().split(/\s+/)[0] ?? '';
+}
+
 export function formatDateBR(date?: string | null): string {
   if (!date) return '—';
   return parseDateOnly(date).toLocaleDateString('pt-BR');

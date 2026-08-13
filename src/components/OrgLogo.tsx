@@ -22,7 +22,13 @@ export default function OrgLogo({ className }: { className?: string }) {
     <img
       src={data.logoUrl}
       alt={data.name ?? 'Logo da instituição'}
-      className={cn('max-w-[160px] object-contain', className)}
+      // ponytail: `mix-blend-multiply` dissolve fundo branco/claro de PNG e JPEG
+      // sem processar pixel — cobre a esmagadora maioria das logos que as escolas
+      // enviam. Teto conhecido: logo de fundo ESCURO (ou arte branca sobre cor)
+      // fica escurecida em vez de recortada. Se isso aparecer na base real, a
+      // correção é no upload do ERP (recorte + preview antes de salvar), não aqui.
+      // Desligado no tema escuro, onde multiply apagaria a logo contra a barra.
+      className={cn('max-w-[160px] object-contain mix-blend-multiply dark:mix-blend-normal', className)}
     />
   );
 }

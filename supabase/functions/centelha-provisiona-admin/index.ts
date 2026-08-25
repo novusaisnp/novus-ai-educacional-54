@@ -2,7 +2,7 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 // Porta 0.1 — Provisionamento de acesso administrativo (push, NOVUS Centelha → este satélite).
-// Contrato genérico documentado em novusai-erp/docs/CONTRATOS_CANONICOS_ERP.md — qualquer
+// Contrato genérico documentado em novusai-erp/docs/PLANO_MESTRE.md (Parte 1) — qualquer
 // satélite futuro implementa este mesmo endpoint/payload. Mesmo padrão de autenticação do
 // `centelha-provisiona-organizacao`: segredo global (`CENTELHA_PROVISION_SECRET`), não HMAC
 // por-organização.

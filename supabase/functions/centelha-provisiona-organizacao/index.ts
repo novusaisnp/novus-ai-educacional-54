@@ -2,7 +2,7 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 // Porta 0 — Provisionamento (push, NOVUS Centelha → este satélite). Contrato genérico
-// documentado em novusai-erp/docs/CONTRATOS_CANONICOS_ERP.md — qualquer satélite futuro
+// documentado em novusai-erp/docs/PLANO_MESTRE.md (Parte 1) — qualquer satélite futuro
 // implementa este mesmo endpoint/payload. Chamador não tem `erp_integration_config`
 // ainda (é ele quem esta função cria), por isso a autenticação é por segredo global
 // (`CENTELHA_PROVISION_SECRET`), não por HMAC por-organização como o restante da

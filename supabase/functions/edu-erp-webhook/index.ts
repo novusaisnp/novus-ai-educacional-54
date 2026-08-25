@@ -8,7 +8,7 @@ const corsHeaders = {
 }
 
 // Payload segue o schema canônico de Liquidação do contrato ERP
-// (novusai-erp/docs/CONTRATOS_CANONICOS_ERP.md, Porta 2), envelopado com
+// (novusai-erp/docs/PLANO_MESTRE.md, Parte 1 §1.2, Porta 2), envelopado com
 // o tipo de evento e a idempotency_key no formato
 // "novus-educacional:<organization_id>:<numero_documento>".
 interface LiquidacaoEvent {

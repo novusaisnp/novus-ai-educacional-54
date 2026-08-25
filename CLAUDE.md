@@ -4,7 +4,7 @@ Leia isto antes de qualquer mudança. Para saber **o que está pendente agora**,
 
 ## O que é
 
-NOVUS.AI Educacional — SPA React + Vite + shadcn/ui + Supabase. É o **primeiro módulo satélite** do ecossistema NOVUS.AI, cujo hub é o ERP em `../novusai-erp` (pasta irmã, mesmo nível). Satélite cuida da jornada acadêmica (matrícula, notas, frequência, prontuário do aluno); o ERP cuida do dinheiro (contas a receber, cobrança, fiscal). A ponte entre os dois é o contrato canônico documentado em `novusai-erp/docs/CONTRATOS_CANONICOS_ERP.md` (modelo de 3 "portas": Título e Liquidação via push, Autorização via pull síncrono).
+NOVUS.AI Educacional — SPA React + Vite + shadcn/ui + Supabase. É o **primeiro módulo satélite** do ecossistema NOVUS.AI, cujo hub é o ERP em `../novusai-erp` (pasta irmã, mesmo nível). Satélite cuida da jornada acadêmica (matrícula, notas, frequência, prontuário do aluno); o ERP cuida do dinheiro (contas a receber, cobrança, fiscal). A ponte entre os dois é o contrato canônico documentado em `novusai-erp/docs/PLANO_MESTRE.md` (Parte 1 — modelo de 3 "portas": Título e Liquidação via push, Autorização via pull síncrono).
 
 ## Stack e arquitetura
 
@@ -54,8 +54,8 @@ Antes de qualquer commit: `typecheck` limpo e `test` passando (47/47 no momento 
 
 ## Onde ler mais
 
-- **Prontidão para produção (nota x/100 por módulo) e fila de fatias até concluir**: [`docs/ROADMAP.md`](./docs/ROADMAP.md).
+- **Prontidão para produção (nota x/100 por módulo), fila de fatias e arquitetura do app mobile** (documento único — funde o que antes era `ROADMAP.md` + `MOBILE_PLAN.md`): [`docs/PLANO_MESTRE.md`](./docs/PLANO_MESTRE.md).
 - **Estado atual, pendências e próxima ação**: [`docs/STATUS.md`](./docs/STATUS.md).
 - **Notas de segurança/LGPD**: [`docs/SECURITY_NOTES.md`](./docs/SECURITY_NOTES.md).
-- **Contrato de integração com o ERP**: `novusai-erp/docs/CONTRATOS_CANONICOS_ERP.md` (repo irmão).
+- **Contrato de integração com o ERP**: `novusai-erp/docs/PLANO_MESTRE.md` (Parte 1, repo irmão).
 - **Ideias de roadmap** (ainda não formalizadas em plano): `docs/mapa_mental_gestao_novus.pdf` (desktop/backoffice) e `docs/mapa_mental_novus.pdf` (mobile/engajamento), mais a referência visual `docs/Gemini_Generated_Image_e8l053e8l053e8l0.png` usada como base do restyle.

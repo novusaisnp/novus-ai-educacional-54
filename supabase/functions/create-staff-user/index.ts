@@ -25,7 +25,7 @@ async function hmacSha256Hex(body: string, secret: string): Promise<string> {
   return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, '0')).join('')
 }
 
-// Porta 3 — "pessoa já é Colaborador validado no ERP?" (CONTRATOS_CANONICOS_ERP.md §7:
+// Porta 3 — "pessoa já é Colaborador validado no ERP?" (PLANO_MESTRE.md §1.7:
 // não existe usuário solto). Só roda quando a organização tem integração ERP real
 // (enabled && !mock) -- organizações sem ERP configurado continuam convidando staff
 // normalmente, sem regressão (mesmo padrão de skip de `withERP`/`erpEmit`).

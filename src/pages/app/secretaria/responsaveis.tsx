@@ -8,7 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { UserPlus, Search, Edit, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { UserPlus, Search, Edit, Trash2, KeyRound, ShieldCheck } from 'lucide-react';
+import { useInviteGuardianToPortal } from '@/hooks/useGuardianPortal';
 
 /**
  * Lista quem já tem o papel Responsável no Cadastro de Entidades — não cria
@@ -27,7 +33,7 @@ export default function SecretariaResponsaveis() {
       const { data, error } = await supabase
         .from('entidades')
         .select(`
-          id, name:nome, cpf, email, phone:telefone,
+          id, name:nome, cpf, email, phone:telefone, user_id,
           entidade_papeis!inner(dados_papel),
           student_guardians(id)
         `)
@@ -44,6 +50,24 @@ export default function SecretariaResponsaveis() {
     },
     enabled: !!orgData?.organization_id,
   });
+
+  const inviteToPortal = useInviteGuardianToPortal();
+
+  const onInviteToPortal = async (guardian: { id: string; name: string }) => {
+    try {
+      await inviteToPortal.mutateAsync(guardian.id);
+      toast({
+        title: 'Acesso ao portal liberado',
+        description: `Peça pra ${guardian.name} entrar com o e-mail dela nos dois campos (login e senha) no primeiro acesso.`,
+      });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao convidar responsável para o portal',
+        description: error instanceof Error ? error.message : 'Tente novamente em alguns instantes.',
+      });
+    }
+  };
 
   const deleteGuardian = useMutation({
     mutationFn: async (id: string) => {
@@ -134,6 +158,34 @@ export default function SecretariaResponsaveis() {
                     <TableCell>{guardian.student_guardians?.length || 0}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
+                        {guardian.user_id ? (
+                          <Badge variant="outline" className="gap-1">
+                            <ShieldCheck className="h-3 w-3" />Acesso ativo
+                          </Badge>
+                        ) : (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="sm" variant="outline" disabled={inviteToPortal.isPending}>
+                                <KeyRound className="h-4 w-4 mr-1" />Convidar para o Portal
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Convidar {guardian.name} para o portal?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  O ERP vai confirmar que este CPF é um Cliente ativo desta unidade antes de liberar o
+                                  acesso. A senha temporária será o próprio e-mail cadastrado ({guardian.email || 'sem e-mail'}).
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => onInviteToPortal(guardian)}>
+                                  Convidar
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
                         <Button size="sm" variant="outline" onClick={() => navigate(`/app/secretaria/entidades?edit=${guardian.id}`)}>
                           <Edit className="h-4 w-4" />
                         </Button>

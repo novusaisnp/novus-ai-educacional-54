@@ -1,5 +1,52 @@
 # STATUS — novus-educacional
 
+## 🔖 Checkpoint de sessão (2026-08-26 — convite formal de responsável pro portal, gate no ERP; primeiro login real de guardian em produção)
+
+**Contexto**: sessão de consolidação de usuários/permissões entre ERP e Educacional
+(`C:\Users\maxwe\.claude\plans\vamos-consolidar-a-rela-o-mellow-grove.md`, Fases 3/4 —
+Fases 0-2 são do lado ERP, ver `novusai-erp/docs/STATUS.md`). Estendeu pro responsável o
+mesmo padrão de preflight que já existia só pra colaborador/staff.
+
+1. **`create-guardian-user`** (novo, espelha `create-staff-user`): convida um responsável
+   já cadastrado (papel RESPONSAVEL em `entidades`) pro portal só se o ERP confirmar, via
+   `entidade-preflight {cpf, papel:'CLIENTE'}`, que aquele CPF é Cliente ativo da empresa —
+   fail-closed (erro de comunicação bloqueia). Grava em `entidades.user_id`, nunca em
+   `profiles` (responsável não pode virar staff, regra de `20260813020000`). Requer CPF e
+   e-mail já preenchidos na entidade — sem isso, orienta a completar o cadastro em
+   Cadastros → Entidades antes de convidar. Audita em `audit_logs`
+   (`action: 'guardian_portal_access_granted'`) na própria function.
+2. **Botão "Convidar para o Portal"** na tela de Responsáveis (`useGuardianPortal.ts`),
+   badge "Acesso ativo" quando já tem `user_id`. **Simplificação deliberada** frente ao
+   plano original: a function só aceita `{entidade_id}` de uma entidade já existente
+   (sempre UPDATE) — não implementa criar responsável do zero, porque a tela real que
+   chama isso (lista de Responsáveis) só opera sobre entidades já cadastradas.
+3. **Teste ao vivo end-to-end, dado sintético, limpo ao final**: criado responsável de
+   teste com CPF válido (checksum real, não pessoa real) em Cadastros → Entidades →
+   confirmado sync automático como `entidades`+`entidade_papeis papel=CLIENTE` no ERP
+   (`erpEmit.upsertClient` já existente) → `create-guardian-user` autorizado pelo preflight
+   → **login real bem-sucedido no portal** (`/portal/login` → `/portal/dashboard`,
+   "Bem-vindo, TESTE", mural da organização carregado). **Fecha o gap "zero guardian com
+   conta de portal ativa em qualquer organização de teste"** citado repetidamente neste
+   arquivo (linhas antigas 111/160) — é o primeiro login real de responsável no portal
+   desde que o produto existe. Dado de teste (entidade nos dois repos, audit_log, usuário
+   auth) apagado depois de confirmado, sem resíduo.
+4. **Achado de infra, não desta sessão**: o dev server local (`bun run dev`, porta 8080)
+   caiu sozinho no meio da sessão sem relação com o código — religado sem incidente.
+   Também: a extensão do Chrome usada para os testes ao vivo teve instabilidade pontual
+   (screenshot e clique via coordenada falhando silenciosamente); contornado usando
+   `form.requestSubmit()`/eventos nativos via JS quando o clique simulado não surtia
+   efeito — se acontecer de novo, esse é o caminho alternativo confiável.
+
+**Validação**: `bun run typecheck && bun run test && bun run build` limpos (54/54 testes);
+`bunx eslint` limpo nas edge functions tocadas.
+
+**Próxima ação**: nenhuma pendência desta fatia. Item preexistente que segue em aberto:
+mural de avisos e demais fluxos do portal ainda carecem de mais contas de guardian reais
+pra validação de volume — este teste confirma o caminho mecânico funciona, não substitui
+uso real por famílias.
+
+---
+
 **Última atualização: 2026-08-13 (app validado num iPhone real e publicado em HTTPS na Vercel; regra "um e-mail é staff OU responsável" travada por trigger — `main`, tudo empurrado).** Este arquivo deve ser atualizado ao final de cada sessão de trabalho relevante, junto do commit da própria mudança — se estiver desatualizado, ele apodrece como aconteceu com documentos "foto única" no repo irmão `novusai-erp`. Ver [`CLAUDE.md`](../CLAUDE.md) para regras e arquitetura estáveis; este arquivo é só o estado do momento.
 
 ## 🔖 Checkpoint de sessão (2026-08-13 — app aberto num iPhone real pela primeira vez; barras fixas e roteamento por largura de tela)

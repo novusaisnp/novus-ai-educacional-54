@@ -49,11 +49,11 @@ async function checkColaboradorValidado(
     return { blocked: true, reason: 'Integração ERP habilitada, mas mal configurada (URL/secret/empresa ausente) — corrija antes de convidar' }
   }
 
-  const body = JSON.stringify({ cpf })
+  const body = JSON.stringify({ cpf, papel: 'COLABORADOR' })
   const signature = await hmacSha256Hex(body, erpConfig.signing_secret)
 
   try {
-    const response = await fetch(`${erpConfig.base_url}/functions/v1/colaborador-preflight`, {
+    const response = await fetch(`${erpConfig.base_url}/functions/v1/entidade-preflight`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

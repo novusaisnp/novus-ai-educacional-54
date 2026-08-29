@@ -1,5 +1,48 @@
 # STATUS — novus-educacional
 
+## 🔖 Checkpoint de sessão (2026-08-29 — CRM leads/[id] redesign; Fase 1 do split em duas PWAs instaláveis (equipe/família), código pronto, infra Vercel pendente)
+
+**Contexto**: mesma sessão dos checkpoints abaixo, na sequência. Usuário leu um documento
+de pesquisa de mercado (comparando Agenda Edu/ClassApp vs. WhatsApp como canal
+escola↔família) e decidiu investir pesado no Educacional de ponta a ponta: WhatsApp vira
+canal acessório/futuro, o app mobile precisa ser autossuficiente em toda a relação
+escola↔aluno↔responsável, e passa a haver **dois apps mobile diferentes** (interno pra
+equipe, comunicação pra família — substitui o papel do WhatsApp). Plano completo:
+`C:\Users\maxwe\.claude\plans\fancy-painting-mochi.md`.
+
+1. **CRM `leads/[id].tsx` redesenhado** (Fatia 2 do F9, já mapeada antes deste pivô,
+   terminada primeiro por ser rápida/baixo risco): mesmo sistema visual já validado em
+   `leads.tsx` — badges "totem" (`IconBadge variant="totem"`) em vez de `Badge` padrão,
+   cards sem borda via `shadow-card`, botões de ação em pill (`bg-secondary rounded-full`),
+   timeline de interações com indicador de canal colorido. Interações já eram reais
+   (`interacoes.tsx`), não precisou de mudança funcional. `typecheck`+`test` (54/54)
+   verdes.
+2. **Split em duas PWAs instaláveis — código da Fase 1 pronto, deploy ainda não feito**:
+   nova flag de build `VITE_APP_TARGET` (`'staff' | 'familia' | undefined`, `src/lib/appTarget.ts`).
+   Ausente (deploy atual, `educacional.novusai.app`): comportamento idêntico a antes —
+   confirmado com build de regressão (manifest/título/rotas inalterados). Definida: só a
+   árvore de rota do alvo entra no bundle (`App.tsx`, `src/routes/mobile.tsx`,
+   `pages/Index.tsx`) e o manifest/título mudam por alvo (`vite.config.ts`) — staff vira
+   "NOVUS.AI Equipe" (`start_url: /app/dashboard`), família vira "NOVUS.AI Família"
+   (`start_url: /portal/dashboard`). Confirmado com os 3 builds: bundle principal do alvo
+   família caiu de 2,25 MB pra 1,32 MB (código de staff realmente sai do bundle, não só
+   fica escondido em runtime).
+   **Falta pra ir ao ar**: 2 projetos Vercel novos (`equipe.educacional.novusai.app` /
+   `familia.educacional.novusai.app`), cada um com `VITE_APP_TARGET` setado e as mesmas
+   env vars de Supabase/Turnstile do projeto atual — decisão de criar essa infra de
+   produção fica pro usuário confirmar antes (não feito nesta sessão).
+3. **Addendum de casca nativa (Capacitor), achado ao investigar, não implementado ainda**:
+   Android já existe e já roda de verdade desde 2026-08-13 (Fases 0-7 do módulo mobile,
+   `PLANO_MESTRE.md`) — APK debug testado em emulador com login real e push FCM, hoje um
+   app combinado só (appId `ai.novus.educacional`). iOS nunca foi iniciado — bloqueado por
+   exigir Mac + conta Apple Developer paga (US$99/ano); nenhum código resolve isso.
+   Checado `C:\MaxDev\NovusFleet\mobile` (Expo/React Native, stack diferente do Capacitor
+   daqui) — não dá pra reaproveitar o pipeline `eas build` literalmente, só o conceito
+   (build de iOS na nuvem sem Mac local, via Codemagic/Appflow/GitHub Actions `macos`) —
+   e isso não elimina a exigência da conta Apple de qualquer forma. Extensão planejada:
+   espelhar o split em dois projetos Capacitor (`ai.novus.educacional.equipe`/`.familia`)
+   depois que a infra Vercel acima existir.
+
 ## 🔖 Checkpoint de sessão (2026-08-29 — sugestão de role do ERP no convite de staff; fecha exceção de gate ERP em toda a equipe/portal; fix de reset de senha)
 
 **Contexto**: retomada do plano pausado `parallel-baking-narwhal.md`

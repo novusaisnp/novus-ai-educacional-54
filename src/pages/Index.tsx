@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useSession } from '@/hooks/useSession';
+import { APP_TARGET } from '@/lib/appTarget';
 
 const Index = () => {
   const { user, loading } = useSession();
@@ -12,6 +13,9 @@ const Index = () => {
     );
   }
 
+  if (APP_TARGET === 'familia') {
+    return user ? <Navigate to="/portal/dashboard" replace /> : <Navigate to="/portal/login" replace />;
+  }
   return user ? <Navigate to="/app/dashboard" replace /> : <Navigate to="/auth/login" replace />;
 };
 

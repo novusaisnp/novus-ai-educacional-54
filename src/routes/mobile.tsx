@@ -16,6 +16,7 @@ import type { MobileTab } from '@/components/mobile/MobileTabBar';
 import { SelectedStudentProvider } from '@/components/mobile/StudentSwitcher';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import PortalProtectedRoute from '@/components/portal/PortalProtectedRoute';
+import { APP_TARGET } from '@/lib/appTarget';
 
 const OrgGate = lazy(() => import('@/components/auth/OrgGate'));
 const MobileIndex = lazy(() => import('@/pages/m/index'));
@@ -63,40 +64,49 @@ export default function MobileRoutes() {
   );
 }
 
+// Mesma regra de gating do App.tsx: ausente = registra as duas peles (build
+// combinado de sempre); definida = só a do alvo.
+const showFamiliaRoutes = APP_TARGET !== 'staff';
+const showStaffRoutes = APP_TARGET !== 'familia';
+
 const mobileRoutes = (
   <Route path="/">
     <Route index element={<MobileIndex />} />
 
-    <Route element={<PortalProtectedRoute />}>
-      <Route
-        path="familia"
-        element={
-          <SelectedStudentProvider>
-            <MobileShell tabs={FAMILIA_TABS} />
-          </SelectedStudentProvider>
-        }
-      >
-        <Route index element={<FamiliaInicio />} />
-        <Route path="inicio" element={<FamiliaInicio />} />
-        <Route path="academico" element={<FamiliaAcademico />} />
-        <Route path="mural" element={<FamiliaMural />} />
-        <Route path="mensagens" element={<FamiliaMensagens />} />
-        <Route path="financeiro" element={<FamiliaFinanceiro />} />
-        <Route path="mais" element={<FamiliaMais />} />
-      </Route>
-    </Route>
-
-    <Route element={<ProtectedRoute />}>
-      <Route element={<OrgGate />}>
-        <Route path="staff" element={<MobileShell tabs={STAFF_TABS} />}>
-          <Route index element={<StaffChamada />} />
-          <Route path="chamada" element={<StaffChamada />} />
-          <Route path="alunos" element={<StaffAlunos />} />
-          <Route path="publicar" element={<StaffPublicar />} />
-          <Route path="mensagens" element={<StaffMensagens />} />
-          <Route path="mais" element={<StaffMais />} />
+    {showFamiliaRoutes && (
+      <Route element={<PortalProtectedRoute />}>
+        <Route
+          path="familia"
+          element={
+            <SelectedStudentProvider>
+              <MobileShell tabs={FAMILIA_TABS} />
+            </SelectedStudentProvider>
+          }
+        >
+          <Route index element={<FamiliaInicio />} />
+          <Route path="inicio" element={<FamiliaInicio />} />
+          <Route path="academico" element={<FamiliaAcademico />} />
+          <Route path="mural" element={<FamiliaMural />} />
+          <Route path="mensagens" element={<FamiliaMensagens />} />
+          <Route path="financeiro" element={<FamiliaFinanceiro />} />
+          <Route path="mais" element={<FamiliaMais />} />
         </Route>
       </Route>
-    </Route>
+    )}
+
+    {showStaffRoutes && (
+      <Route element={<ProtectedRoute />}>
+        <Route element={<OrgGate />}>
+          <Route path="staff" element={<MobileShell tabs={STAFF_TABS} />}>
+            <Route index element={<StaffChamada />} />
+            <Route path="chamada" element={<StaffChamada />} />
+            <Route path="alunos" element={<StaffAlunos />} />
+            <Route path="publicar" element={<StaffPublicar />} />
+            <Route path="mensagens" element={<StaffMensagens />} />
+            <Route path="mais" element={<StaffMais />} />
+          </Route>
+        </Route>
+      </Route>
+    )}
   </Route>
 );

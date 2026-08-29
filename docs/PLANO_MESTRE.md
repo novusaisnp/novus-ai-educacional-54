@@ -106,7 +106,14 @@ Estado do eixo RLS em 2026-08-12 (verificado por query direta): **todas** as tab
 | BI Financeiro (`bi/financeiro.tsx`) | 10 | tela inteira é EmptyState "ERP não configurado" |
 | Hub BI (`bi.tsx`) | 90 | hub de navegação, por design |
 
-### CRM — 74/100
+### CRM — 76/100
+
+**F9 fatia 2 — redesign visual de `leads/[id].tsx` (feita, 2026-08-29)**: tela de detalhe
+do lead trocou o admin-panel genérico (`Badge` padrão, cards com borda) pelo mesmo sistema
+visual já validado em `leads.tsx` (badges "totem" via `IconBadge`, cards sem borda com
+sombra em camada, botões de ação em pill, timeline de interações com indicador de canal
+colorido). Interações já eram reais desde a fatia de 2026-08-12 abaixo — não precisou de
+mudança funcional, só visual.
 
 **F9 fatia 2 (feita, 2026-08-12)**: "Nova Interação" ganhou dialog real (picker de lead reusando `useLeads`, canal/direção/resumo, grava via `useCreateInteraction`). De brinde: a coluna "Entidade" da tabela sempre mostrava vazio (`entity_name` hardcoded `''`); resolvida no client comparando `entity_id` com os leads já carregados. Picker limitado a leads (visitor) — guardian/student ainda sem picker, gap registrado.
 
@@ -118,7 +125,7 @@ Estado do eixo RLS em 2026-08-12 (verificado por query direta): **todas** as tab
 
 | Submódulo | Nota | O que falta |
 |---|---|---|
-| Leads (`crm/leads.tsx`, `leads/[id].tsx`) | 95 | testado ao vivo ponta a ponta, sem exclusão (por design) |
+| Leads (`crm/leads.tsx`, `leads/[id].tsx`) | 97 | testado ao vivo ponta a ponta, sem exclusão (por design); as duas telas já no mesmo padrão visual |
 | Interações (`crm/interacoes.tsx`) | 90 | picker de "Nova Interação" só cobre leads, sem guardian/student |
 | Demandas (`crm/demandas.tsx`) | 75 | botão "Ver Documentos" morto (aba ainda não implementada) |
 | Assistente IA (`crm/assistente.tsx`) | 70 | sem histórico de conversa persistido — v2 do CRM vai precisar disso |
@@ -165,7 +172,8 @@ Ordenada por pontos ganhos ÷ esforço. Bloqueadores de produção primeiro — 
 | ~~**F6**~~ | ~~`isPending` nos 7 submodais~~ — checado em 2026-08-12: já estava feito | — | Secretaria 87→90 |
 | ~~**F7**~~ | ~~Live-test completo do Portal + Mural~~ — feito em 2026-08-12, achou e corrigiu bug real em Documentos | `portal/documentos.tsx` | Portal 69→92, Mural 90→100 |
 | **F8 (parcial)** | ~~Rota `*` cair em `NotFound`~~ feito em 2026-08-12. Captcha continua desligado — depende do usuário adicionar o domínio de produção na allowlist do Cloudflare Turnstile; quando fizer, reativar `security_captcha_enabled` via Supabase Auth API nos dois projetos (educacional + ERP) | painel Cloudflare (ação do usuário) | Auth 90→95, falta captcha pra 100 |
-| **F9 (em andamento)** | CRM v1 "estilo Helena" — escopo fechado (sem WhatsApp/IA autônoma ainda). Fatia 1 (kanban de Leads) feita. Fatia 2 sugerida: mesma UX rica na tela de detalhe do lead (`leads/[id].tsx`) + Interações real | `crm/leads/[id].tsx`, `crm/interacoes.tsx` | CRM 62→? |
+| ~~**F9**~~ | ~~CRM v1 "estilo Helena"~~ — Fatia 1 (kanban de Leads) feita 2026-08-12, Fatia 2 (redesign visual de `leads/[id].tsx`) feita 2026-08-29. WhatsApp/IA autônoma seguem fora do escopo original — e agora deliberadamente despriorizados (ver F14) | `crm/leads/[id].tsx`, `crm/interacoes.tsx` | CRM 62→76 |
+| **F14 (em andamento)** | **Duas PWAs instaláveis (equipe/família)** — decisão de produto 2026-08-29: investir no Educacional de ponta a ponta, WhatsApp vira acessório, mobile ganha duas peles instaláveis separadas (uma interna, uma de comunicação com a família). Fase 1 (`VITE_APP_TARGET`, split de rota/manifest) com código pronto e verificado (3 builds, typecheck, testes); falta criar os 2 projetos Vercel novos + domínios pra ir ao ar. Addendum de casca nativa (Capacitor duplicado por alvo) ainda não iniciado — Android de hoje já funciona como app único, iOS segue na gaveta (F13). Plano: `C:\Users\maxwe\.claude\plans\fancy-painting-mochi.md` | `vite.config.ts`, `src/App.tsx`, `src/routes/mobile.tsx`, `src/lib/appTarget.ts`, `src/pages/Index.tsx` | App mobile 88→? |
 | ~~**F10**~~ | ~~Corrigir bugs + testar saída contra sync-webhook real~~ — feito em 2026-08-12 | repo irmão | ERP 66→92 |
 | ~~**F11**~~ | ~~Pedagógico e Eventos~~ — ambos feitos em 2026-08-13. Eventos: CRUD real (tabela `events`). Pedagógico: construído por completo (4 CRUDs) | `pedagogico.tsx`, `eventos.tsx`, migrations novas | Pedagógico 0→90, Eventos 0→90 |
 | ~~**F0-F7 mobile**~~ | ~~App mobile v1 completo~~ — fechado em 2026-08-13 (ver Parte 2) | `src/pages/m/**`, `src/components/mobile/**`, `capacitor.config.ts`, `android/` | App mobile 0→88 |

@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom';
 import { isNativeApp } from '@/lib/native';
+import { APP_TARGET } from '@/lib/appTarget';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
@@ -106,6 +107,13 @@ function ErrorPage() {
 }
 
 
+// Sem APP_TARGET (deploy combinado de sempre), as duas árvores registram — igual
+// a hoje. Com APP_TARGET definida (novos projetos "equipe"/"familia", Fase 1 do
+// split em PWAs instaláveis), só a árvore do alvo entra no bundle. Ver plano
+// `fancy-painting-mochi.md` e `src/lib/appTarget.ts`.
+const showStaffRoutes = APP_TARGET !== 'familia';
+const showPortalRoutes = APP_TARGET !== 'staff';
+
 function App() {
   return (
     <ErrorBoundary fallback={<ErrorPage />}>
@@ -122,26 +130,35 @@ function App() {
             {/* O WebView nativo sempre boota em '/': lá o app é sempre o /m/*,
                 nunca a landing/desktop. No navegador nada muda. */}
             <Route path="/" element={isNativeApp ? <Navigate to="/m" replace /> : <Index />} />
-            <Route path="/auth/login" element={<Login />} />
-            <Route path="/auth/select-org" element={<SelectOrg />} />
-            <Route path="/auth/register" element={<Register />} />
-            <Route path="/auth/reset" element={<Reset />} />
-            <Route path="/auth/definir-senha" element={<DefinirSenha />} />
-            
+            {showStaffRoutes && (
+              <>
+                <Route path="/auth/login" element={<Login />} />
+                <Route path="/auth/select-org" element={<SelectOrg />} />
+                <Route path="/auth/register" element={<Register />} />
+                <Route path="/auth/reset" element={<Reset />} />
+                <Route path="/auth/definir-senha" element={<DefinirSenha />} />
+              </>
+            )}
+
             {/* Portal Routes */}
-            <Route path="/portal/login" element={<PortalLogin />} />
-            <Route element={<PortalProtectedRoute />}>
-              <Route element={<PortalLayout />}>
-                <Route path="/portal" element={<PortalDashboard />} />
-                <Route path="/portal/dashboard" element={<PortalDashboard />} />
-                <Route path="/portal/academico" element={<PortalAcademico />} />
-                <Route path="/portal/financeiro" element={<PortalFinanceiro />} />
-                <Route path="/portal/documentos" element={<PortalDocumentos />} />
-                <Route path="/portal/interacoes" element={<PortalInteracoes />} />
-                <Route path="/portal/demandas" element={<PortalDemandas />} />
-              </Route>
-            </Route>
-            
+            {showPortalRoutes && (
+              <>
+                <Route path="/portal/login" element={<PortalLogin />} />
+                <Route element={<PortalProtectedRoute />}>
+                  <Route element={<PortalLayout />}>
+                    <Route path="/portal" element={<PortalDashboard />} />
+                    <Route path="/portal/dashboard" element={<PortalDashboard />} />
+                    <Route path="/portal/academico" element={<PortalAcademico />} />
+                    <Route path="/portal/financeiro" element={<PortalFinanceiro />} />
+                    <Route path="/portal/documentos" element={<PortalDocumentos />} />
+                    <Route path="/portal/interacoes" element={<PortalInteracoes />} />
+                    <Route path="/portal/demandas" element={<PortalDemandas />} />
+                  </Route>
+                </Route>
+              </>
+            )}
+
+            {showStaffRoutes && (
             <Route path="/app" element={<ProtectedRoute />}>
               <Route element={<OrgGate />}>
               <Route element={<AppShell />}>
@@ -219,6 +236,7 @@ function App() {
               </Route>
               </Route>
             </Route>
+            )}
 
             {/* App mobile — árvore inteira sob demanda, ver src/routes/mobile.tsx */}
             <Route path="/m/*" element={<MobileRoutes />} />

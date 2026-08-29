@@ -19,6 +19,15 @@ const MANIFEST_BY_TARGET: Record<'staff' | 'familia', { name: string; short_name
 const targetManifest = APP_TARGET ? MANIFEST_BY_TARGET[APP_TARGET] : null
 const appTitle = targetManifest?.name ?? 'NOVUS.AI Educacional'
 
+// Sem target: /icons/ (arte combinada de sempre). Por alvo: /icons-equipe/ ou
+// /icons-familia/ (arte de https://Design sem nome (1), aplicada 2026-08-29 —
+// livro+família pra família, livro+aperto-de-mãos pra equipe).
+const ICON_DIR_BY_TARGET: Record<'staff' | 'familia', string> = {
+  staff: '/icons-equipe',
+  familia: '/icons-familia',
+}
+const iconDir = APP_TARGET ? ICON_DIR_BY_TARGET[APP_TARGET] : '/icons'
+
 // https://vitejs.dev/config/
 export default defineConfig(() => ({
   server: {
@@ -30,7 +39,9 @@ export default defineConfig(() => ({
     {
       name: 'app-title-by-target',
       transformIndexHtml(html) {
-        return html.replaceAll('NOVUS.AI Educacional', appTitle)
+        return html
+          .replaceAll('NOVUS.AI Educacional', appTitle)
+          .replaceAll('/icons/', iconDir + '/')
       },
     },
     VitePWA({
@@ -53,9 +64,9 @@ export default defineConfig(() => ({
         lang: 'pt-BR',
         categories: ['education', 'productivity'],
         icons: [
-          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-          { src: '/icons/icon-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: `${iconDir}/icon-192.png`, sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: `${iconDir}/icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: `${iconDir}/icon-512-maskable.png`, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {

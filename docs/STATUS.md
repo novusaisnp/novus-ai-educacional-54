@@ -1,6 +1,6 @@
 # STATUS — novus-educacional
 
-## 🔖 Checkpoint de sessão (2026-08-29 — CRM leads/[id] redesign; Fase 1 do split em duas PWAs instaláveis (equipe/família), código pronto, infra Vercel pendente)
+## 🔖 Checkpoint de sessão (2026-08-29 — CRM leads/[id] redesign; Fase 1 do split em duas PWAs instaláveis (equipe/família) fechada e no ar em produção)
 
 **Contexto**: mesma sessão dos checkpoints abaixo, na sequência. Usuário leu um documento
 de pesquisa de mercado (comparando Agenda Edu/ClassApp vs. WhatsApp como canal
@@ -17,7 +17,7 @@ equipe, comunicação pra família — substitui o papel do WhatsApp). Plano com
    timeline de interações com indicador de canal colorido. Interações já eram reais
    (`interacoes.tsx`), não precisou de mudança funcional. `typecheck`+`test` (54/54)
    verdes.
-2. **Split em duas PWAs instaláveis — código da Fase 1 pronto, deploy ainda não feito**:
+2. **Split em duas PWAs instaláveis — Fase 1 completa, no ar em produção**:
    nova flag de build `VITE_APP_TARGET` (`'staff' | 'familia' | undefined`, `src/lib/appTarget.ts`).
    Ausente (deploy atual, `educacional.novusai.app`): comportamento idêntico a antes —
    confirmado com build de regressão (manifest/título/rotas inalterados). Definida: só a
@@ -27,10 +27,17 @@ equipe, comunicação pra família — substitui o papel do WhatsApp). Plano com
    (`start_url: /portal/dashboard`). Confirmado com os 3 builds: bundle principal do alvo
    família caiu de 2,25 MB pra 1,32 MB (código de staff realmente sai do bundle, não só
    fica escondido em runtime).
-   **Falta pra ir ao ar**: 2 projetos Vercel novos (`equipe.educacional.novusai.app` /
-   `familia.educacional.novusai.app`), cada um com `VITE_APP_TARGET` setado e as mesmas
-   env vars de Supabase/Turnstile do projeto atual — decisão de criar essa infra de
-   produção fica pro usuário confirmar antes (não feito nesta sessão).
+   **Infra de produção criada e verificada ao vivo na mesma sessão**: 2 projetos Vercel
+   novos (`novusai-educacional-equipe`, `novusai-educacional-familia`), mesmo repo GitHub,
+   `VITE_APP_TARGET` + `VITE_TURNSTILE_SITE_KEY` configurados em Production/Preview/
+   Development. DNS em `novusai.app` (registrado na Porkbun, não na Cloudflare — achado
+   nesta sessão) — 2 CNAME (`equipe.educacional`/`familia.educacional` →
+   `*.vercel-dns-017.com`) + 2 TXT `_vercel` de verificação de domínio, mesmo padrão já
+   usado por `erp.`/`educacional.`. Confirmado ao vivo no navegador: `equipe.educacional.
+   novusai.app` cai em `/auth/login` (staff), `familia.educacional.novusai.app` cai em
+   `/portal/login` (família), `/app/dashboard` retorna 404 no domínio família — isolamento
+   de rota por bundle funcionando, não só por guard em runtime. `educacional.novusai.app`
+   (domínio combinado atual) não foi tocado, segue servindo os dois lados como sempre.
 3. **Addendum de casca nativa (Capacitor), achado ao investigar, não implementado ainda**:
    Android já existe e já roda de verdade desde 2026-08-13 (Fases 0-7 do módulo mobile,
    `PLANO_MESTRE.md`) — APK debug testado em emulador com login real e push FCM, hoje um

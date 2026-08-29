@@ -1,5 +1,32 @@
 # STATUS — novus-educacional
 
+## 🔖 Checkpoint de sessão (2026-08-29 — ícones próprios equipe/família no ar; esqueleto Capacitor iOS pronto, aguardando conta Apple Developer)
+
+**Contexto**: continuação direta do checkpoint abaixo, mesma sessão.
+
+1. **Ícones próprios por app, no ar**: usuário forneceu arte (livro+família pra
+   `familia`, livro+aperto-de-mãos pra `equipe`). Gerados `public/icons-equipe/` e
+   `public/icons-familia/` (192/512/512-maskable/apple-touch, via `sharp`, maskable a 80%
+   sobre fundo branco — mesmo padrão dos ícones combinados). `vite.config.ts` troca o
+   diretório de ícone por `VITE_APP_TARGET` (`iconDir`), tanto no manifest quanto nos
+   `<link>` do `index.html` (via `transformIndexHtml`, `replaceAll('/icons/', iconDir)`).
+   Confirmado ao vivo nos dois domínios depois do deploy propagar.
+2. **Esqueleto Capacitor iOS pronto pros dois apps, não builda ainda**: usuário pediu pra
+   reusar o modelo do `NovusFleet` (Expo) — investigação mostrou que aquele projeto testa
+   no iPhone via **Expo Go** (app grátis da Expo, interpreta JS sem compilar nada
+   específico — `eas.json` de lá nem tem seção `ios`, não existe `ios/`), não via build
+   nativo real. Capacitor não tem equivalente ao Expo Go, então isso não se aplica aqui.
+   Confirmado por busca: EAS Build é pra projetos React Native, não aceita Capacitor puro.
+   Instalado `@capacitor/ios`; criados `capacitor.config.equipe.ts`/`capacitor.config.
+   familia.ts` (permanentes); geradas `ios-equipe/`/`ios-familia/` via `cap add ios`
+   (troca temporária do `capacitor.config.ts`, restaurado ao original combinado logo
+   depois). `codemagic.yaml` na raiz com 2 workflows de referência (build de iOS em
+   nuvem, sem precisar de Mac) — inerte até existir conta Apple Developer + integração
+   conectada. **Confirmado com o usuário: a conta Apple Developer paga (US$99/ano) ainda
+   não existe** — esse é o único bloqueio real restante, nenhuma ferramenta de nuvem
+   contorna a exigência de assinatura da Apple. Próxima ação é o usuário criar a conta em
+   developer.apple.com.
+
 ## 🔖 Checkpoint de sessão (2026-08-29 — CRM leads/[id] redesign; Fase 1 do split em duas PWAs instaláveis (equipe/família) fechada e no ar em produção)
 
 **Contexto**: mesma sessão dos checkpoints abaixo, na sequência. Usuário leu um documento

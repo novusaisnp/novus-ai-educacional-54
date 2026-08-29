@@ -1,0 +1,100 @@
+# Build de iOS na nuvem (sem precisar de Mac local), pros dois apps Capacitor
+# da Fase 1 do split equipe/família (ver plano fancy-painting-mochi.md e
+# docs/STATUS.md, checkpoint 2026-08-29). NÃO TESTADO ainda — bloqueado até
+# existir conta Apple Developer paga (developer.apple.com, US$99/ano) e ela
+# ser conectada nas Integrations do Codemagic (Teams → Integrations →
+# Apple Developer Portal). Sem isso, `xcode-project use-profiles` e o
+# App Store Connect falham. Placeholders marcados com <PREENCHER>.
+#
+# Por que Codemagic e não EAS Build: EAS é feito pra projetos React
+# Native/Expo, não aceita um projeto Capacitor genérico. Codemagic builda
+# qualquer projeto Xcode, incluindo os gerados por `cap add ios` (confirmado
+# nesta sessão via pesquisa — ver memória do usuário, não deste arquivo).
+#
+# android/, android-equipe/, android-familia/ não entram aqui: Android já
+# builda local (Android Studio) e já foi testado ao vivo antes desta fase.
+
+workflows:
+  ios-equipe:
+    name: iOS Equipe
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: <PREENCHER — nome da integração Apple Developer no Codemagic>
+    environment:
+      ios_signing:
+        distribution_type: ad_hoc # trocar pra app_store quando for pra TestFlight/loja
+        bundle_identifier: ai.novus.educacional.equipe
+      vars:
+        VITE_APP_TARGET: staff
+        XCODE_WORKSPACE: "ios-equipe/App/App.xcworkspace"
+        XCODE_SCHEME: "App"
+    scripts:
+      - name: Instalar dependências (Bun)
+        script: |
+          curl -fsSL https://bun.sh/install | bash
+          export PATH="$HOME/.bun/bin:$PATH"
+          bun install
+      - name: Build web (alvo staff)
+        script: |
+          export PATH="$HOME/.bun/bin:$PATH"
+          VITE_APP_TARGET=staff bun run build
+      - name: Usar o capacitor.config do alvo equipe
+        script: cp capacitor.config.equipe.ts capacitor.config.ts
+      - name: Sincronizar assets web pro projeto nativo
+        script: |
+          export PATH="$HOME/.bun/bin:$PATH"
+          bunx cap sync ios
+      - name: CocoaPods
+        script: cd ios-equipe/App && pod install
+      - name: Configurar assinatura de código
+        script: xcode-project use-profiles
+      - name: Build do .ipa
+        script: |
+          cd ios-equipe/App
+          xcode-project build-ipa --workspace "$XCODE_WORKSPACE" --scheme "$XCODE_SCHEME"
+    artifacts:
+      - ios-equipe/App/build/ios/ipa/*.ipa
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+
+  ios-familia:
+    name: iOS Família
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: <PREENCHER — nome da integração Apple Developer no Codemagic>
+    environment:
+      ios_signing:
+        distribution_type: ad_hoc
+        bundle_identifier: ai.novus.educacional.familia
+      vars:
+        VITE_APP_TARGET: familia
+        XCODE_WORKSPACE: "ios-familia/App/App.xcworkspace"
+        XCODE_SCHEME: "App"
+    scripts:
+      - name: Instalar dependências (Bun)
+        script: |
+          curl -fsSL https://bun.sh/install | bash
+          export PATH="$HOME/.bun/bin:$PATH"
+          bun install
+      - name: Build web (alvo família)
+        script: |
+          export PATH="$HOME/.bun/bin:$PATH"
+          VITE_APP_TARGET=familia bun run build
+      - name: Usar o capacitor.config do alvo família
+        script: cp capacitor.config.familia.ts capacitor.config.ts
+      - name: Sincronizar assets web pro projeto nativo
+        script: |
+          export PATH="$HOME/.bun/bin:$PATH"
+          bunx cap sync ios
+      - name: CocoaPods
+        script: cd ios-familia/App && pod install
+      - name: Configurar assinatura de código
+        script: xcode-project use-profiles
+      - name: Build do .ipa
+        script: |
+          cd ios-familia/App
+          xcode-project build-ipa --workspace "$XCODE_WORKSPACE" --scheme "$XCODE_SCHEME"
+    artifacts:
+      - ios-familia/App/build/ios/ipa/*.ipa
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM

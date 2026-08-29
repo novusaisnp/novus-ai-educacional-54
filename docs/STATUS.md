@@ -1,5 +1,67 @@
 # STATUS — novus-educacional
 
+## 🔖 Checkpoint de sessão (2026-08-29 — sugestão de role do ERP no convite de staff; fecha exceção de gate ERP em toda a equipe/portal; fix de reset de senha)
+
+**Contexto**: retomada do plano pausado `parallel-baking-narwhal.md`
+(`C:\Users\maxwe\.claude\plans\fancy-painting-mochi.md`), mesma sessão que Fases 0-4 de
+`novusai-erp/docs/STATUS.md` (2026-08-26) tinham deixado como próximo passo natural.
+
+1. **`staff-role-suggestion`** (novo, só-leitura): CPF-blur em "Convidar membro"
+   (`equipe.tsx`) chama o ERP via `_shared/entidade-preflight-client.ts` (novo — extraído
+   de `create-staff-user`, elimina duplicação de HMAC/fetch) e pré-preenche o Select de
+   role com base em `cargos.categoria_padrao` do colaborador no ERP. Sugestão, não trava
+   — sobrescrever é permitido, e a origem (`erp_suggestion`/`manual_override`/
+   `no_erp_suggestion`) fica gravada em `profiles.role_assigned_via`/`erp_suggested_role`
+   + `audit_logs` (`action: 'staff_role_assigned'`).
+2. **2 bugs achados no teste ao vivo, corrigidos na mesma sessão**:
+   - Badge mostrava `pedagogico` (vocabulário do ERP, vertical educacional vazando pro
+     schema transversal) — removido o vazamento, badge agora só diz "sugerido pelo ERP".
+     Ver correção do lado ERP no `STATUS.md` dele, mesma data.
+   - Select não pré-preenchia a partir do 2º convite na mesma sessão, quando o CPF era
+     preenchido por último (ordem natural nome→e-mail→CPF) — `form.formState.dirtyFields.role`
+     lido dentro do callback assíncrono do CPF-blur retornava um `true` resíduo do
+     convite anterior mesmo depois de `form.reset()` (staleness clássica do proxy de
+     `formState` do react-hook-form fora de um read de render). Trocado por uma flag
+     própria (`useRef`), zerada explicitamente em `closeDialog`.
+3. **Decisão de arquitetura do usuário, fechada nesta sessão**: "sob hipótese alguma" um
+   satélite cria membro de equipe/portal sem o ERP já confirmar a entidade — o ERP é o
+   "big bang" da existência do sistema numa empresa representada. Fecha uma exceção
+   **pré-existente** (de antes desta sessão) em `create-staff-user`
+   (`checkColaboradorValidado`) e `create-guardian-user` (`checkClienteValidado`): as
+   duas retornavam `{blocked:false}` (passe livre) quando a organização não tinha
+   integração ERP habilitada/ativa. Agora as duas falham fechado nesse caso também, com
+   mensagem explícita orientando a completar a integração primeiro.
+   `create-guardian-user` também foi refatorado nesta correção pra usar o mesmo cliente
+   compartilhado do item 1, em vez de manter sua própria cópia da chamada HTTP/HMAC.
+   **Escopo confirmado**: só afeta convites *adicionais* (staff/guardian) — o admin
+   fundador de uma organização nova continua sendo criado via `onboarding-create-org`,
+   função separada, fora deste gate (mesmo padrão já documentado: gate só no convite,
+   nunca na criação do admin fundador).
+4. **Achado à parte, não relacionado ao plano, corrigido na mesma sessão**: reset de
+   senha estava quebrado ponta a ponta — `site_url` do Auth do Supabase apontava pra uma
+   URL de preview da Vercel protegida por SSO própria da Vercel
+   (`novusai-educacional-maxs-projects-5fa40c76.vercel.app`), então o link do e-mail de
+   recuperação sempre caía numa tela de bloqueio, mesmo com `redirectTo` correto no
+   código (`reset.tsx` já mandava certo, o Supabase ignora silenciosamente quando o
+   `redirectTo` não está em `uri_allow_list` e cai pro `site_url`). Corrigido via
+   Dashboard: `site_url` → `https://educacional.novusai.app` (domínio real de produção,
+   não `*.vercel.app`), `uri_allow_list` ganhou esse domínio + `localhost:8080`.
+   Confirmado salvo via Management API.
+
+**Testado ao vivo em produção** (dev server local, `localhost:8080`, coordenação
+`selftnt@gmail.com`): 3 ciclos de convite reais — aceitar sugestão
+(`role_assigned_via='erp_suggestion'` confirmado no banco), sobrescrever manualmente
+(`role_assigned_via='manual_override'`, `erp_suggested_role` preservado), e confirmação
+final de que o pré-preenchimento funciona na ordem natural de preenchimento após os 2
+fixes acima. Todo dado sintético (3 profiles de staff + entidade/cargo no ERP, CPF de
+teste `11144477735`) apagado ao final, incluindo as linhas de histórico append-only que a
+própria exclusão gerou — zero resíduo confirmado.
+
+**Validação**: `bun run typecheck && bun run test && bun run build` limpos (54/54
+testes); `bunx eslint` limpo nas 3 edge functions tocadas.
+
+---
+
 ## 🔖 Checkpoint de sessão (2026-08-26 — convite formal de responsável pro portal, gate no ERP; primeiro login real de guardian em produção)
 
 **Contexto**: sessão de consolidação de usuários/permissões entre ERP e Educacional

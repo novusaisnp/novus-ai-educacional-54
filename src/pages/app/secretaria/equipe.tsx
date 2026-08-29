@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -19,7 +19,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useUserRole } from '@/hooks/useUserRole';
-import { useStaffList, useCreateStaffUser, useResetStaffPassword, StaffRole } from '@/hooks/useStaff';
+import {
+  useStaffList, useCreateStaffUser, useResetStaffPassword, useStaffRoleSuggestion, StaffRole, StaffRoleSuggestion,
+} from '@/hooks/useStaff';
 import EmptyState from '@/components/EmptyState';
 
 const staffSchema = z.object({
@@ -43,14 +45,45 @@ export default function EquipePage() {
   const canManage = role === 'admin' || role === 'coordenacao';
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [suggestion, setSuggestion] = useState<StaffRoleSuggestion | null>(null);
   const { data: staff = [], isLoading } = useStaffList();
   const createStaffUser = useCreateStaffUser();
   const resetStaffPassword = useResetStaffPassword();
+  const roleSuggestion = useStaffRoleSuggestion();
 
   const form = useForm<StaffFormData>({
     resolver: zodResolver(staffSchema),
     defaultValues: { full_name: '', email: '', cpf: '', role: undefined },
   });
+
+  // Rastreado à parte de `form.formState.dirtyFields.role` de propósito -- esse campo do
+  // RHF ficou resíduo=true entre convites (mesma instância de `form` reusada a cada abertura
+  // do diálogo) mesmo depois de `form.reset()`, fazendo a sugestão do 2º convite em diante
+  // nunca pré-preencher o Select. Flag própria, zerada explicitamente em `closeDialog`, é
+  // determinística e não depende do proxy interno do RHF.
+  const roleTouchedByUserRef = useRef(false);
+
+  const closeDialog = () => {
+    setDialogOpen(false);
+    form.reset();
+    setSuggestion(null);
+    roleTouchedByUserRef.current = false;
+  };
+
+  const onCpfBlur = () => {
+    const cpfDigits = form.getValues('cpf').replace(/\D/g, '');
+    if (cpfDigits.length !== 11) return;
+    roleSuggestion.mutate(cpfDigits, {
+      onSuccess: (data) => {
+        setSuggestion(data);
+        // Só pré-preenche se a pessoa ainda não mexeu no Select à mão -- não
+        // sobrescreve uma escolha manual já feita antes do blur do CPF.
+        if (data.suggestedRole && !roleTouchedByUserRef.current) {
+          form.setValue('role', data.suggestedRole, { shouldValidate: true });
+        }
+      },
+    });
+  };
 
   const onSubmit = async (data: StaffFormData) => {
     try {
@@ -59,13 +92,13 @@ export default function EquipePage() {
         email: data.email,
         cpf: data.cpf.replace(/\D/g, ''),
         role: data.role,
+        suggested_role: suggestion?.suggestedRole ?? null,
       });
       toast({
         title: 'Membro criado',
         description: `Peça pra ${data.full_name} entrar com o e-mail dela nos dois campos (login e senha) no primeiro acesso.`,
       });
-      form.reset();
-      setDialogOpen(false);
+      closeDialog();
     } catch (error) {
       toast({
         title: 'Erro ao criar membro da equipe',
@@ -194,7 +227,7 @@ export default function EquipePage() {
         </Card>
       )}
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={(open) => (open ? setDialogOpen(true) : closeDialog())}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Adicionar membro da equipe</DialogTitle>
@@ -234,7 +267,18 @@ export default function EquipePage() {
                   <FormItem>
                     <FormLabel>CPF *</FormLabel>
                     <FormControl>
-                      <Input placeholder="000.000.000-00" {...field} />
+                      <Input
+                        placeholder="000.000.000-00"
+                        {...field}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          setSuggestion(null);
+                        }}
+                        onBlur={() => {
+                          field.onBlur();
+                          onCpfBlur();
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -245,8 +289,21 @@ export default function EquipePage() {
                 name="role"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Role *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <div className="flex items-center gap-2">
+                      <FormLabel>Role *</FormLabel>
+                      {suggestion?.suggestedRole && (
+                        <Badge variant="secondary" className="text-xs font-normal">
+                          sugerido pelo ERP
+                        </Badge>
+                      )}
+                    </div>
+                    <Select
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        roleTouchedByUserRef.current = true;
+                      }}
+                      value={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione a role" />
@@ -263,7 +320,7 @@ export default function EquipePage() {
                 )}
               />
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                <Button type="button" variant="outline" onClick={closeDialog}>
                   Cancelar
                 </Button>
                 <Button type="submit" disabled={createStaffUser.isPending}>

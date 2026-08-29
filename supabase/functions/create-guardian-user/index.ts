@@ -1,12 +1,11 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { callEntidadePreflight } from '../_shared/entidade-preflight-client.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
-
-const ERP_SOURCE_SYSTEM = 'novus-educacional'
 
 function jsonResponse(body: Record<string, unknown>, status: number) {
   return new Response(JSON.stringify(body), {
@@ -15,65 +14,27 @@ function jsonResponse(body: Record<string, unknown>, status: number) {
   })
 }
 
-async function hmacSha256Hex(body: string, secret: string): Promise<string> {
-  const encoder = new TextEncoder()
-  const key = await crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
-  const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(body))
-  return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, '0')).join('')
-}
-
-// Porta 3 — "este CPF já é Cliente ativo desta empresa no ERP?" (mesmo padrão de
-// checkColaboradorValidado em create-staff-user, chamando o endpoint genérico
-// entidade-preflight com papel:'CLIENTE'). Fail-closed de propósito: erro de
-// comunicação bloqueia o convite -- este é o núcleo do pedido do usuário, só convida
-// pro portal um CPF que o ERP já reconhece como Cliente ativo daquela empresa.
+// Porta 3 — "este CPF já é Cliente ativo desta empresa no ERP?" (mesmo núcleo de
+// checkColaboradorValidado em create-staff-user, via `_shared/entidade-preflight-client.ts`
+// com papel:'CLIENTE'). Fail-closed em toda a extensão, sem exceção pra organização sem
+// integração ERP configurada -- o ERP é o "big bang" da existência do sistema numa
+// empresa representada, nenhum satélite cria acesso independente dele (decisão explícita
+// do usuário 2026-08-29, fecha uma exceção que existia antes disso).
 async function checkClienteValidado(
   adminClient: ReturnType<typeof createClient>,
   organizationId: string,
   cpf: string
 ): Promise<{ blocked: boolean; reason?: string }> {
-  const { data: erpConfig } = await adminClient
-    .from('erp_integration_config')
-    .select('enabled, mock, base_url, signing_secret, empresa_representada_id')
-    .eq('organization_id', organizationId)
-    .maybeSingle()
-
-  if (!erpConfig?.enabled || erpConfig.mock) {
-    return { blocked: false }
-  }
-  if (!erpConfig.base_url || !erpConfig.signing_secret || !erpConfig.empresa_representada_id) {
-    return { blocked: true, reason: 'Integração ERP habilitada, mas mal configurada (URL/secret/empresa ausente) — corrija antes de convidar' }
-  }
-
-  const body = JSON.stringify({ cpf, papel: 'CLIENTE' })
-  const signature = await hmacSha256Hex(body, erpConfig.signing_secret)
-
-  try {
-    const response = await fetch(`${erpConfig.base_url}/functions/v1/entidade-preflight`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-source-system': ERP_SOURCE_SYSTEM,
-        'x-empresa-id': erpConfig.empresa_representada_id,
-        'x-webhook-signature': `sha256=${signature}`,
-      },
-      body,
-    })
-
-    if (!response.ok) {
-      return { blocked: true, reason: 'Não foi possível validar o responsável no ERP (falha de comunicação) — tente novamente' }
+  const result = await callEntidadePreflight(adminClient, organizationId, cpf, 'CLIENTE')
+  if (!result.configured) {
+    return {
+      blocked: true,
+      reason: 'Esta organização ainda não tem integração com o ERP habilitada — não é possível convidar responsáveis para o portal até a integração ser configurada e ativada.',
     }
-
-    const result = await response.json()
-    if (!result.autorizado) {
-      const motivo = result.bloqueios?.[0]?.motivo ?? 'CPF não corresponde a um Cliente ativo no ERP'
-      return { blocked: true, reason: motivo }
-    }
-    return { blocked: false }
-  } catch (error) {
-    console.error('Failed to check cliente preflight:', error)
-    return { blocked: true, reason: 'Não foi possível validar o responsável no ERP (falha de comunicação) — tente novamente' }
   }
+  if (!result.ok) return { blocked: true, reason: result.errorReason }
+  if (!result.autorizado) return { blocked: true, reason: result.motivo ?? 'CPF não corresponde a um Cliente ativo no ERP' }
+  return { blocked: false }
 }
 
 serve(async (req) => {

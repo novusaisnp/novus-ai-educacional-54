@@ -13,6 +13,14 @@ export interface CreateStaffUserInput {
   full_name: string;
   role: StaffRole;
   cpf: string;
+  /** Sugestão que `useStaffRoleSuggestion` já buscou pro mesmo CPF, se houver -- usada
+   * pelo backend só pra saber se `role` foi aceita como veio ou sobrescrita. */
+  suggested_role?: StaffRole | null;
+}
+
+export interface StaffRoleSuggestion {
+  suggestedRole: StaffRole | null;
+  cargoCategoria: string | null;
 }
 
 export const useStaffList = () => {
@@ -65,6 +73,21 @@ export const useCreateStaffUser = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['staff'] });
+    },
+  });
+};
+
+export const useStaffRoleSuggestion = () => {
+  return useMutation({
+    mutationFn: async (cpf: string): Promise<StaffRoleSuggestion> => {
+      const { data, error } = await supabase.functions.invoke('staff-role-suggestion', {
+        body: { cpf },
+      });
+
+      if (error) {
+        throw new Error(await extractFunctionErrorMessage(error));
+      }
+      return data as StaffRoleSuggestion;
     },
   });
 };

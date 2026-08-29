@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { callEntidadePreflight } from '../_shared/entidade-preflight-client.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,8 +10,6 @@ const corsHeaders = {
 const STAFF_ROLES = ['professor', 'coordenacao', 'secretario'] as const
 type StaffRole = (typeof STAFF_ROLES)[number]
 
-const ERP_SOURCE_SYSTEM = 'novus-educacional'
-
 function jsonResponse(body: Record<string, unknown>, status: number) {
   return new Response(JSON.stringify(body), {
     status,
@@ -18,66 +17,27 @@ function jsonResponse(body: Record<string, unknown>, status: number) {
   })
 }
 
-async function hmacSha256Hex(body: string, secret: string): Promise<string> {
-  const encoder = new TextEncoder()
-  const key = await crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
-  const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(body))
-  return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, '0')).join('')
-}
-
 // Porta 3 — "pessoa já é Colaborador validado no ERP?" (PLANO_MESTRE.md §1.7:
-// não existe usuário solto). Só roda quando a organização tem integração ERP real
-// (enabled && !mock) -- organizações sem ERP configurado continuam convidando staff
-// normalmente, sem regressão (mesmo padrão de skip de `withERP`/`erpEmit`).
-// Fail-closed de propósito: se o ERP não responder, bloqueia o convite em vez de deixar
-// passar -- o objetivo desta checagem é ser um prerequisito de verdade, não best-effort.
+// não existe usuário solto). Fail-closed em toda a extensão: o ERP é o "big bang" da
+// existência do sistema numa empresa representada, nenhum satélite cria membro de
+// equipe independente dele -- inclusive quando a própria integração ERP da organização
+// não está configurada/ativa, que **não é** uma passagem livre (decisão explícita do
+// usuário 2026-08-29, fecha uma exceção que existia antes disso).
 async function checkColaboradorValidado(
   adminClient: ReturnType<typeof createClient>,
   organizationId: string,
   cpf: string
 ): Promise<{ blocked: boolean; reason?: string }> {
-  const { data: erpConfig } = await adminClient
-    .from('erp_integration_config')
-    .select('enabled, mock, base_url, signing_secret, empresa_representada_id')
-    .eq('organization_id', organizationId)
-    .maybeSingle()
-
-  if (!erpConfig?.enabled || erpConfig.mock) {
-    return { blocked: false }
-  }
-  if (!erpConfig.base_url || !erpConfig.signing_secret || !erpConfig.empresa_representada_id) {
-    return { blocked: true, reason: 'Integração ERP habilitada, mas mal configurada (URL/secret/empresa ausente) — corrija antes de convidar' }
-  }
-
-  const body = JSON.stringify({ cpf, papel: 'COLABORADOR' })
-  const signature = await hmacSha256Hex(body, erpConfig.signing_secret)
-
-  try {
-    const response = await fetch(`${erpConfig.base_url}/functions/v1/entidade-preflight`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-source-system': ERP_SOURCE_SYSTEM,
-        'x-empresa-id': erpConfig.empresa_representada_id,
-        'x-webhook-signature': `sha256=${signature}`,
-      },
-      body,
-    })
-
-    if (!response.ok) {
-      return { blocked: true, reason: 'Não foi possível validar o colaborador no ERP (falha de comunicação) — tente novamente' }
+  const result = await callEntidadePreflight(adminClient, organizationId, cpf, 'COLABORADOR')
+  if (!result.configured) {
+    return {
+      blocked: true,
+      reason: 'Esta organização ainda não tem integração com o ERP habilitada — não é possível convidar membros da equipe até a integração ser configurada e ativada.',
     }
-
-    const result = await response.json()
-    if (!result.autorizado) {
-      const motivo = result.bloqueios?.[0]?.motivo ?? 'Pessoa não é um colaborador validado no ERP'
-      return { blocked: true, reason: motivo }
-    }
-    return { blocked: false }
-  } catch (error) {
-    console.error('Failed to check colaborador preflight:', error)
-    return { blocked: true, reason: 'Não foi possível validar o colaborador no ERP (falha de comunicação) — tente novamente' }
   }
+  if (!result.ok) return { blocked: true, reason: result.errorReason }
+  if (!result.autorizado) return { blocked: true, reason: result.motivo ?? 'Pessoa não é um colaborador validado no ERP' }
+  return { blocked: false }
 }
 
 serve(async (req) => {
@@ -169,6 +129,10 @@ serve(async (req) => {
     const fullName = typeof body.full_name === 'string' ? body.full_name.trim() : ''
     const role = body.role as StaffRole
     const cpf = typeof body.cpf === 'string' ? body.cpf.replace(/\D/g, '') : ''
+    // Sugestão que o frontend já buscou em `staff-role-suggestion` (CPF-blur, antes do
+    // submit) -- não vale a pena chamar o ERP de novo aqui só pra descobrir a origem da
+    // escolha. `null`/ausente = sem sugestão (ERP não configurado ou cargo sem categoria).
+    const suggestedRole = STAFF_ROLES.includes(body.suggested_role) ? (body.suggested_role as StaffRole) : null
 
     if (!email || !email.includes('@')) {
       return jsonResponse({ error: 'E-mail inválido' }, 400)
@@ -245,6 +209,8 @@ serve(async (req) => {
       return jsonResponse({ error: 'Falha ao enviar convite: ' + (inviteError?.message ?? 'erro desconhecido') }, 500)
     }
 
+    const roleAssignedVia = suggestedRole === null ? 'no_erp_suggestion' : role === suggestedRole ? 'erp_suggestion' : 'manual_override'
+
     const { error: profileError } = await adminClient.from('profiles').upsert({
       id: inviteRes.user.id,
       organization_id: callerProfile.organization_id,
@@ -253,11 +219,25 @@ serve(async (req) => {
       cpf,
       email,
       senha_pendente: true,
+      role_assigned_via: roleAssignedVia,
+      erp_suggested_role: suggestedRole,
     })
 
     if (profileError) {
       console.error('Failed to upsert staff profile:', profileError)
       return jsonResponse({ error: 'Convite enviado, mas falha ao vincular perfil: ' + profileError.message }, 500)
+    }
+
+    const { error: auditError } = await adminClient.from('audit_logs').insert({
+      organization_id: callerProfile.organization_id,
+      actor: callerData.user.id,
+      action: 'staff_role_assigned',
+      table_name: 'profiles',
+      row_id: inviteRes.user.id,
+      diff: { role, erp_suggested_role: suggestedRole, role_assigned_via: roleAssignedVia, cpf },
+    })
+    if (auditError) {
+      console.error('Failed to write audit log for staff role assignment:', auditError)
     }
 
     const { error: membershipError } = await adminClient.from('user_organizations').upsert(

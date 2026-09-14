@@ -166,6 +166,7 @@ export async function signEnrollmentContract(input: SignEnrollmentContractInput)
     await supabase
       .from('enrollment_contracts')
       .update({
+        numero_documento: numeroDocumento,
         erp_receivable_status: erpResult.skipped ? 'skipped' : erpResult.mock ? 'mock' : erpResult.ok ? 'ok' : 'error',
         erp_receivable_error: erpResult.error || null,
         erp_receivable_synced_at: new Date().toISOString(),

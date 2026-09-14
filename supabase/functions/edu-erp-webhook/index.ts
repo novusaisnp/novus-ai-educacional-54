@@ -183,8 +183,21 @@ serve(async (req) => {
       .eq('external_id', event.data.titulo_id)
       .maybeSingle();
 
+    // Resolve o responsável pela mensalidade via enrollment_contracts, casado
+    // pelo numero_documento (todas as parcelas recorrentes de uma matrícula
+    // reusam o mesmo numero_documento no ERP — ver migration
+    // 20260914140000). Sem isso o portal do responsável nunca teria como
+    // filtrar a transação certa (usePortalFinance.ts filtra por guardian_id).
+    const { data: enrollment } = await supabase
+      .from('enrollment_contracts')
+      .select('guardian_id')
+      .eq('organization_id', correlation.organizationId)
+      .eq('numero_documento', correlation.numeroDocumento)
+      .maybeSingle();
+
     const row = {
       organization_id: correlation.organizationId,
+      guardian_id: enrollment?.guardian_id ?? null,
       external_id: event.data.titulo_id,
       numero_documento: correlation.numeroDocumento,
       amount: event.data.valor_pago,
